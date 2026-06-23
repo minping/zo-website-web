@@ -56,8 +56,8 @@
               </div>
               <p class="api-description">{{ apiData.description }}</p>
               <div class="api-tags">
-                <span class="api-tag" :style="{ background: apiData.tagColor + '20', color: apiData.tagColor }">
-                  {{ apiData.tag }}
+                <span v-for="t in apiData.tags" :key="t.value" class="api-tag" :style="{ background: t.color + '20', color: t.color }">
+                  {{ t.text }}
                 </span>
               </div>
             </div>
@@ -90,7 +90,7 @@
                   <polyline points="12 6 12 12 16 14"/>
                 </svg>
               </div>
-              <span class="stat-value">{{ apiData.stats.avgTime }}ms</span>
+              <span class="stat-value">{{ apiData.responseTime }}ms</span>
               <span class="stat-label">平均响应</span>
             </div>
             <div class="stat-card">
@@ -144,7 +144,6 @@
                 <span class="method-badge" :style="{ background: methodColors[apiData.method] }">
                   {{ apiData.method }}
                 </span>
-                <span class="method-desc">{{ getMethodDesc(apiData.method) }}</span>
               </div>
             </div>
 
@@ -159,32 +158,7 @@
                 <span>返回格式</span>
               </div>
               <div class="format-info">
-                <span class="format-badge">JSON</span>
-                <span class="format-desc">统一返回 JSON 格式数据</span>
-              </div>
-            </div>
-
-            <!-- 请求示例 -->
-            <div class="detail-card full-width">
-              <div class="detail-header">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="16 18 22 12 16 6"/>
-                  <polyline points="8 6 2 12 8 18"/>
-                </svg>
-                <span>请求示例</span>
-              </div>
-              <div class="code-example">
-                <pre><code>{{ getRequestExample(apiData) }}</code></pre>
-                <button class="copy-btn" @click="copyExample">
-                  <svg v-if="!exampleCopied" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-                  </svg>
-                  <svg v-else xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="20 6 9 17 4 12"/>
-                  </svg>
-                  {{ exampleCopied ? '已复制' : '复制' }}
-                </button>
+                <span class="format-badge">{{ apiData.responseFormat }}</span>
               </div>
             </div>
 
@@ -214,38 +188,7 @@
               </div>
             </div>
 
-            <!-- 状态码说明 -->
-            <div class="detail-card full-width">
-              <div class="detail-header">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                  <polyline points="22 4 12 14.01 9 11.01"/>
-                </svg>
-                <span>状态码说明</span>
-              </div>
-              <div class="status-codes">
-                <div class="status-item">
-                  <span class="status-code success">200</span>
-                  <span class="status-desc">请求成功</span>
-                </div>
-                <div class="status-item">
-                  <span class="status-code error">400</span>
-                  <span class="status-desc">请求参数错误</span>
-                </div>
-                <div class="status-item">
-                  <span class="status-code error">401</span>
-                  <span class="status-desc">未授权访问</span>
-                </div>
-                <div class="status-item">
-                  <span class="status-code error">429</span>
-                  <span class="status-desc">请求过于频繁</span>
-                </div>
-                <div class="status-item">
-                  <span class="status-code error">500</span>
-                  <span class="status-desc">服务器内部错误</span>
-                </div>
-              </div>
-            </div>
+
           </div>
         </div>
       </div>
@@ -259,7 +202,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { openApis, methodColors } from '../api/modules'
+import { getApiDetail, methodColors } from '../api/modules'
 import Navbar from './Navbar.vue'
 import Footer from './Footer.vue'
 
@@ -270,17 +213,21 @@ const loading = ref(true)
 const error = ref(null)
 const apiData = ref(null)
 const copied = ref(false)
-const exampleCopied = ref(false)
 const responseCopied = ref(false)
 
 // 获取 API 详情
-const fetchApiDetail = (id) => {
-  const api = openApis.find(a => a.id === Number(id))
-  if (api) {
-    apiData.value = api
-    loading.value = false
-  } else {
-    error.value = 'API 不存在'
+const fetchApiDetail = async (id) => {
+  try {
+    const res = await getApiDetail(id)
+    if (res.success && res.data) {
+      apiData.value = res.data
+    } else {
+      error.value = res.message || 'API 不存在'
+    }
+  } catch (err) {
+    console.error('获取 API 详情失败:', err)
+    error.value = '网络错误'
+  } finally {
     loading.value = false
   }
 }
@@ -301,17 +248,6 @@ const copyEndpoint = async () => {
   }
 }
 
-// 复制示例代码
-const copyExample = async () => {
-  try {
-    await navigator.clipboard.writeText(getRequestExample(apiData.value))
-    exampleCopied.value = true
-    setTimeout(() => { exampleCopied.value = false }, 2000)
-  } catch (err) {
-    console.error('复制失败:', err)
-  }
-}
-
 // 复制返回示例
 const copyResponse = async () => {
   try {
@@ -323,40 +259,12 @@ const copyResponse = async () => {
   }
 }
 
-// 获取方法描述
-const getMethodDesc = (method) => {
-  const descs = {
-    GET: '获取资源数据',
-    POST: '创建新资源',
-    PUT: '更新完整资源',
-    DELETE: '删除资源'
-  }
-  return descs[method] || ''
-}
-
-// 获取请求示例
-const getRequestExample = (api) => {
-  if (api.method === 'GET') {
-    return `curl -X GET "${api.endpoint}" \\
-  -H "Content-Type: application/json" \\
-  -H "Authorization: Bearer YOUR_TOKEN"`
-  } else {
-    return `curl -X POST "${api.endpoint}" \\
-  -H "Content-Type: application/json" \\
-  -H "Authorization: Bearer YOUR_TOKEN" \\
-  -d '{"param": "value"}'`
-  }
-}
-
 // 获取返回示例
 const getResponseExample = (api) => {
-  return `{
+  return api.responseExample || `{
   "code": 200,
   "message": "success",
-  "data": {
-    "result": "...",
-    "timestamp": ${Date.now()}
-  }
+  "data": {}
 }`
 }
 
@@ -628,7 +536,7 @@ onMounted(() => {
 /* 详情卡片 */
 .api-details-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: 2fr 1fr 1fr;
   gap: 20px;
 }
 
@@ -713,10 +621,8 @@ onMounted(() => {
   border-radius: 6px;
 }
 
-.method-desc {
-  color: var(--text-secondary);
-  font-size: 0.95rem;
-}
+
+
 
 /* 格式信息 */
 .format-info {

@@ -12,6 +12,16 @@ const request = async (path, options = {}) => {
   return response.json()
 }
 
+// 文件上传专用请求
+const uploadRequest = async (path, formData) => {
+  const url = getApiUrl(path)
+  const response = await fetch(url, {
+    method: 'POST',
+    body: formData
+  })
+  return response.json()
+}
+
 // API 接口
 export const api = {
   // 获取文章列表（首页）
@@ -113,28 +123,279 @@ export const api = {
     return res
   },
 
-  // 获取技术标签列表
-  async getTags() {
-    const res = await request(API_PATHS.tags)
-    // 适配新接口字段: tag_id -> id, tag_name -> name
+  // ========== API 标签 ==========
+
+  // 获取 API 标签列表
+  async getApiTags() {
+    const res = await request(API_PATHS.apiTags)
     if (res.data) {
       res.data = res.data.map(tag => ({
         id: tag.tag_id,
         name: tag.tag_name,
-        color: tag.color || '#42b883'
+        color: tag.tag_color || tag.color || '#42b883'
       }))
     }
     return res
   },
 
-  // 新增标签
-  async insertTag(tagName, tagColor) {
-    return await request(API_PATHS.insertTag(tagName, tagColor))
+  // 获取公开 API 标签（前端 ApiPage 筛选用）
+  async getPublicApiTags() {
+    const res = await request(API_PATHS.publicApiTags)
+    if (res.data) {
+      res.data = res.data.map(tag => ({
+        id: tag.tag_id,
+        name: tag.tag_name,
+        color: tag.tag_color || '#6366f1'
+      }))
+    }
+    return res
   },
 
-  // 删除标签
+  // 兼容旧调用（标签管理页面使用）
+  async getTags() {
+    return this.getApiTags()
+  },
+
+  // 保存/编辑 API 标签
+  async saveApiTag(id, name, color) {
+    return await request(API_PATHS.saveApiTag(id, name, color), {
+      method: 'POST'
+    })
+  },
+
+  // 删除 API 标签
+  async deleteApiTag(tagId) {
+    return await request(API_PATHS.deleteApiTag(tagId))
+  },
+
+  // 上传图片
+  async uploadImage(file) {
+    const formData = new FormData()
+    formData.append('file', file)
+    return await uploadRequest(API_PATHS.uploadImage, formData)
+  },
+
+  // ========== 文章标签 ==========
+
+  // 获取文章标签列表
+  async getArticleTags() {
+    const res = await request(API_PATHS.articleTags)
+    if (res.data) {
+      res.data = res.data.map(tag => ({
+        id: tag.tag_id || tag.id,
+        name: tag.tag_name || tag.name,
+        color: tag.tag_color || tag.color || '#42b883'
+      }))
+    }
+    return res
+  },
+
+  // 获取所有标签统计数据
+  async getAllTagStatics() {
+    const res = await request(API_PATHS.allTagStatics)
+    if (res.data) {
+      res.data = res.data.map(tag => ({
+        id: tag.tag_id || tag.id,
+        name: tag.tag_name || tag.name,
+        color: tag.tag_color || tag.color || '#42b883',
+        articleCount: tag.num ?? tag.article_count ?? tag.articleCount ?? 0,
+        viewCount: tag.view_count ?? tag.viewCount ?? 0,
+        likeCount: tag.like_count ?? tag.likeCount ?? 0
+      }))
+    }
+    return res
+  },
+
+  // 新增/编辑文章标签
+  async insertArticleTag(id, name, color) {
+    return await request(API_PATHS.insertArticleTag(id || '', name, color), {
+      method: 'POST'
+    })
+  },
+
+  // 删除文章标签
+  async deleteArticleTag(tagId) {
+    return await request(API_PATHS.deleteArticleTag(tagId))
+  },
+
+
+
+
+  // ========== 兼容旧方法（已废弃，保留向后兼容） ==========
+
+  // @deprecated 使用 deleteApiTag 替代
   async deleteTag(tagId) {
-    return await request(API_PATHS.deleteTag(tagId))
+    return await this.deleteApiTag(tagId)
+  },
+
+
+
+
+  // ========== 开放 API 管理 ==========
+
+  // 获取 API 列表
+  async getApiList() {
+    const res = await request(API_PATHS.openApis)
+    if (res.data) {
+      res.data = res.data.map(item => ({
+        id: item.id || item.api_id || item.zo_website_api_id,
+        name: item.name,
+        description: item.description,
+        endpoint: item.endpoint,
+        method: item.method || 'GET',
+        tagValue: item.tag_value || '',
+        tagText: item.tag_text || '',
+        tag: item.tag || item.tag_text,
+        tagColor: item.tag_color || item.color || '#6366f1',
+        isFree: item.is_free ?? true,
+        price: item.price || 0,
+        requestExample: item.request_example || '',
+        responseExample: item.response_example || '',
+        responseFormat: item.response_format || 'JSON',
+        responseTime: item.response_time || 0,
+        status: item.status ?? 1,
+        inputParams: item.param_list || item.paramList || item.input_params || item.parameters || null,
+        stats: {
+          calls: item.call_count || 0,
+          successRate: item.success_rate || 0,
+          avgTime: item.avg_time || 0
+        }
+      }))
+    }
+    return res
+  },
+
+  // 保存 API（新增/编辑统一）
+  async saveApi(data) {
+    return await request(API_PATHS.saveApi, {
+      method: 'POST',
+      body: JSON.stringify(data)
+    })
+  },
+
+  // 根据 ID 查询 API
+  async queryApiById(id) {
+    const res = await request(API_PATHS.queryApiById(id))
+    if (res.data) {
+      const item = res.data
+      res.data = {
+        id: item.id || item.api_id || item.zo_website_api_id,
+        name: item.name,
+        description: item.description,
+        endpoint: item.endpoint,
+        method: item.method || 'GET',
+        tagValue: item.tag_value || '',
+        tagText: item.tag_text || '',
+        tag: item.tag || item.tag_text,
+        tagColor: item.tag_color || item.color || '#6366f1',
+        isFree: item.is_free ?? true,
+        price: item.price || 0,
+        requestExample: item.request_example || '',
+        responseExample: item.response_example || '',
+        responseFormat: item.response_format || 'JSON',
+        responseTime: item.response_time || 0,
+        status: item.status ?? 1,
+        inputParams: item.param_list || item.paramList || item.input_params || item.parameters || null
+      }
+    }
+    return res
+  },
+
+  // 删除 API
+  async deleteApi(id) {
+    return await request(API_PATHS.deleteApi(id))
+  },
+
+  // ========== 前端公开 API（首页/ApiPage/ApiDetail） ==========
+
+  // 公共：映射 API 列表数据
+  _mapApiList(data) {
+    return data.map(item => {
+      const rawTags = item.tags || []
+      const mappedTags = rawTags.map(t => ({
+        text: t.tag_name || '',
+        value: t.tag_id || '',
+        color: t.tag_color || '#6366f1'
+      }))
+      const first = mappedTags[0] || {}
+      return {
+        id: item.id || item.api_id || item.zo_website_api_id,
+        name: item.name,
+        description: item.description,
+        endpoint: item.endpoint,
+        method: item.method || 'GET',
+        tags: mappedTags,
+        tag: first.text || '',
+        tagColor: first.color || '#6366f1',
+        tagValue: first.value || '',
+        tagText: first.text || '',
+        isFree: item.is_free ?? true,
+        price: item.price || 0,
+        responseTime: item.response_time || 0,
+        stats: {
+          calls: item.call_count || 0,
+          successRate: item.success_rate || 0,
+          avgTime: item.avg_time || 0,
+          likes: item.like_count || 0
+        }
+      }
+    })
+  },
+
+  // 首页开放 API 列表
+  async getHomeApiList() {
+    const res = await request(API_PATHS.homeApis)
+    if (res.data) res.data = api._mapApiList(res.data)
+    return res
+  },
+
+  // ApiPage API 列表（支持搜索和标签筛选）
+  async getPublicApiList(searchValue = '', tag = '') {
+    const res = await request(API_PATHS.publicApis(searchValue, tag))
+    if (res.data) res.data = api._mapApiList(res.data)
+    return res
+  },
+
+  // 获取公开 API 详情
+  async getPublicApiDetail(id) {
+    const res = await request(API_PATHS.publicApiDetail(id))
+    if (res.data) {
+      const item = res.data
+      const rawTags = item.tags || []
+      const mappedTags = rawTags.map(t => ({
+        text: t.tag_name || '',
+        value: t.tag_id || '',
+        color: t.tag_color || '#6366f1'
+      }))
+      const first = mappedTags[0] || {}
+      res.data = {
+        id: item.id || item.api_id || item.zo_website_api_id,
+        name: item.name,
+        description: item.description,
+        endpoint: item.endpoint,
+        method: item.method || 'GET',
+        tags: mappedTags,
+        tag: first.text || '',
+        tagColor: first.color || '#6366f1',
+        tagValue: first.value || '',
+        tagText: first.text || '',
+        isFree: item.is_free ?? true,
+        price: item.price || 0,
+        requestExample: item.request_example || '',
+        responseExample: item.response_example || '',
+        responseFormat: item.response_format || 'JSON',
+        responseTime: item.response_time || 0,
+        status: item.status ?? 1,
+        inputParams: item.param_list || item.paramList || item.input_params || item.parameters || null,
+        stats: {
+          calls: item.call_count || 0,
+          successRate: item.success_rate || 0,
+          avgTime: item.avg_time || 0,
+          likes: item.like_count || 0
+        }
+      }
+    }
+    return res
   },
 
   // ========== 后台管理 API ==========

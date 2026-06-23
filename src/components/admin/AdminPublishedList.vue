@@ -175,7 +175,7 @@ const availableTags = computed(() => tags.value)
 // 加载标签
 const loadTags = async () => {
   try {
-    const res = await api.getTags()
+    const res = await api.getArticleTags()
     if (res.success) {
       tags.value = res.data || []
     }

@@ -250,7 +250,7 @@ let pendingArticle = null
 // 加载标签列表
 const loadTags = async () => {
   try {
-    const res = await api.getTags()
+    const res = await api.getArticleTags()
     if (res.success && res.data) {
       availableTags.value = res.data
       // 如果有待回显的文章，根据 tagValue 匹配 selectedTag
@@ -363,7 +363,7 @@ onMounted(() => {
 
 <style scoped>
 .article-editor {
-  max-width: 1200px;
+  max-width: 80vw;
 }
 
 .content-header {

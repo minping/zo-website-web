@@ -32,7 +32,7 @@
           <option value="">全部标签</option>
           <option v-for="tag in availableTags" :key="tag.id" :value="tag.id">{{ tag.name }}</option>
         </select>
-        <button class="btn btn-tag-manage" @click="openTagModal">
+        <button class="btn btn-tag-manage" @click="goToTagManage">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
             <line x1="7" y1="7" x2="7.01" y2="7"/>
@@ -145,63 +145,6 @@
       </div>
     </div>
 
-    <!-- 标签管理弹窗 -->
-    <div v-if="showTagModal" class="modal-overlay" @click.self="showTagModal = false">
-      <div class="modal-content tag-modal">
-        <h3>标签管理</h3>
-        
-        <div class="tag-add-form">
-          <input 
-            v-model="newTagName" 
-            type="text" 
-            placeholder="输入新标签名称"
-            @keyup.enter="addTag"
-          />
-          <input 
-            v-model="newTagColor" 
-            type="color" 
-            class="color-picker-small"
-            title="选择标签颜色"
-          />
-          <button class="btn btn-primary" @click="addTag" :disabled="!newTagName.trim()">
-            添加
-          </button>
-        </div>
-
-        <div class="tag-list">
-          <div v-for="tag in availableTags" :key="tag.id" class="tag-item">
-            <span class="tag-dot" :style="{ background: tag.color || '#42b883' }"></span>
-            <span class="tag-name">{{ tag.name }}</span>
-            <button class="tag-delete" @click="confirmDeleteTag(tag)" title="删除标签">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18"/>
-                <line x1="6" y1="6" x2="18" y2="18"/>
-              </svg>
-            </button>
-          </div>
-          <div v-if="availableTags.length === 0" class="tag-empty">
-            暂无标签，请添加
-          </div>
-        </div>
-
-        <div class="modal-actions">
-          <button class="btn btn-secondary" @click="showTagModal = false">关闭</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 删除标签确认弹窗 -->
-    <div v-if="showDeleteTagModal" class="modal-overlay" @click.self="showDeleteTagModal = false">
-      <div class="modal-content">
-        <h3>确认删除标签</h3>
-        <p>确定要删除标签「{{ tagToDelete.name }}」吗？使用此标签的文章不会被删除。</p>
-        <div class="modal-actions">
-          <button class="btn btn-secondary" @click="showDeleteTagModal = false">取消</button>
-          <button class="btn btn-danger" @click="deleteTag">删除</button>
-        </div>
-      </div>
-    </div>
-
     <!-- Toast 提示 -->
     <div v-if="toast.show" class="toast" :class="toast.type">
       {{ toast.message }}
@@ -224,11 +167,6 @@ const currentPage = ref(1)
 const pageSize = 10
 const showDeleteModal = ref(false)
 const articleToDelete = ref(null)
-const showTagModal = ref(false)
-const showDeleteTagModal = ref(false)
-const tagToDelete = ref(null)
-const newTagName = ref('')
-const newTagColor = ref('#42b883')
 
 // Toast
 const toast = ref({
@@ -267,7 +205,7 @@ const availableTags = ref([])
 // 加载标签
 const loadTags = async () => {
   try {
-    const res = await api.getTags()
+    const res = await api.getArticleTags()
     if (res.success && res.data) {
       availableTags.value = res.data
     }
@@ -276,56 +214,9 @@ const loadTags = async () => {
   }
 }
 
-// 打开标签弹窗
-const openTagModal = async () => {
-  await loadTags()
-  showTagModal.value = true
-}
-
-// 添加标签
-const addTag = async () => {
-  if (!newTagName.value.trim()) {
-    showToast('请输入标签名称', 'error')
-    return
-  }
-  try {
-    const res = await api.insertTag(newTagName.value, newTagColor.value)
-    if (res.success) {
-      await loadTags()
-      newTagName.value = ''
-      newTagColor.value = '#42b883'
-      showToast('标签添加成功')
-    } else {
-      showToast(res.message || '添加失败', 'error')
-    }
-  } catch (error) {
-    console.error('添加标签失败:', error)
-    showToast('添加标签失败', 'error')
-  }
-}
-
-// 确认删除标签
-const confirmDeleteTag = (tag) => {
-  tagToDelete.value = tag
-  showDeleteTagModal.value = true
-}
-
-// 删除标签
-const deleteTag = async () => {
-  try {
-    const res = await api.deleteTag(tagToDelete.value.id)
-    if (res.success) {
-      await loadTags()
-      showToast('标签已删除')
-    } else {
-      showToast(res.message || '删除失败', 'error')
-    }
-  } catch (error) {
-    console.error('删除标签失败:', error)
-    showToast('删除标签失败', 'error')
-  }
-  showDeleteTagModal.value = false
-  tagToDelete.value = null
+// 跳转到标签管理页面
+const goToTagManage = () => {
+  router.push('/admin/tags')
 }
 
 // 筛选文章（调用后端接口）
@@ -821,123 +712,6 @@ onMounted(() => {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
-}
-
-.tag-modal {
-  max-width: 480px;
-}
-
-.tag-modal h3 {
-  margin-bottom: 20px;
-}
-
-.tag-add-form {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 24px;
-}
-
-.tag-add-form input {
-  flex: 1;
-  padding: 12px 16px;
-  background: var(--admin-bg-primary);
-  border: 1px solid var(--admin-border-color);
-  border-radius: 8px;
-  color: var(--admin-text-primary);
-  font-size: 14px;
-}
-
-.tag-add-form input:focus {
-  outline: none;
-  border-color: var(--admin-accent-primary);
-}
-
-.tag-add-form input::placeholder {
-  color: var(--admin-text-secondary);
-}
-
-.color-picker-small {
-  width: 44px;
-  height: 44px;
-  padding: 4px;
-  background: var(--admin-bg-primary);
-  border: 1px solid var(--admin-border-color);
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-.color-picker-small::-webkit-color-swatch-wrapper {
-  padding: 0;
-}
-
-.color-picker-small::-webkit-color-swatch {
-  border: none;
-  border-radius: 4px;
-}
-
-.tag-list {
-  max-height: 300px;
-  overflow-y: auto;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 24px;
-  padding: 16px;
-  background: var(--admin-bg-primary);
-  border-radius: 8px;
-}
-
-.tag-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  background: var(--admin-bg-card);
-  border: 1px solid var(--admin-border-color);
-  border-radius: 6px;
-}
-
-.tag-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.tag-name {
-  font-size: 14px;
-  color: var(--admin-text-primary);
-}
-
-.tag-delete {
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: none;
-  color: var(--admin-text-secondary);
-  cursor: pointer;
-  border-radius: 4px;
-  transition: all 0.2s;
-}
-
-.tag-delete:hover {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-}
-
-.tag-empty {
-  width: 100%;
-  text-align: center;
-  color: var(--admin-text-secondary);
-  font-size: 14px;
-  padding: 20px;
-}
-
-.delete-tag-modal {
-  z-index: 1001;
 }
 
 /* Toast */

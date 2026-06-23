@@ -13,16 +13,16 @@
       <div class="container">
         <div class="hero-badge">
           <span class="badge-dot"></span>
-          欢迎来到技术世界
+          欢迎~
         </div>
+
         <h1 class="hero-title">
-          探索<span class="gradient-text">无限</span>可能<br>
-          记录技术成长之路
+          深入深出 <span class="gradient-text">无限</span>进步<br>
         </h1>
-        <p class="hero-desc">
+        <!-- <p class="hero-desc">
           分享前沿技术、编程技巧与实战经验。<br>
           用代码改变世界，用文字传递价值。
-        </p>
+        </p> -->
         <div class="hero-actions">
           <button class="btn btn-primary">
             <span>开始阅读</span>
@@ -95,8 +95,8 @@
             </div>
             <p class="api-desc">{{ api.description }}</p>
             <div class="api-tags">
-              <span class="api-tag" :style="{ background: api.tagColor + '20', color: api.tagColor }">
-                {{ api.tag }}
+              <span v-for="t in api.tags" :key="t.value" class="api-tag" :style="{ background: t.color + '20', color: t.color }">
+                {{ t.text }}
               </span>
               <span v-if="!api.isFree" class="api-tag paid-tag">
                 付费
@@ -120,7 +120,7 @@
                   <circle cx="12" cy="12" r="10"/>
                   <polyline points="12 6 12 12 16 14"/>
                 </svg>
-                {{ api.stats.avgTime }}ms
+                {{ api.responseTime }}ms
               </span>
               <span class="api-stat" data-tip="用户点赞数">
                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -185,19 +185,55 @@
       </div>
     </section>
 
-    <!-- 标签云 -->
+    <!-- 技术标签星图 -->
     <section class="tags">
       <div class="container">
         <h2 class="section-title">技术标签</h2>
-        <div class="tags-cloud">
-          <a v-for="tag in tags" :key="tag.name" href="#" class="tag-item" :style="{ '--tag-color': tag.color }">
-            {{ tag.name }}
-          </a>
-          <div v-if="tags.length === 0 && !loading" class="empty-tags">
-            暂无标签
+        <div class="star-map-wrapper">
+          <canvas ref="starCanvas" class="star-canvas"></canvas>
+          <div class="star-nodes">
+            <div
+              v-for="tag in tags"
+              :key="tag.id"
+              class="star-node"
+              :class="{ active: hoveredTag?.id === tag.id }"
+              :style="{
+                '--x': tag._x + '%',
+                '--y': tag._y + '%',
+                '--node-color': tag.color,
+                '--size': tag._size + 'px',
+                animationDelay: tag._delay + 's'
+              }"
+              @mouseenter="showTagTooltip(tag)"
+              @mouseleave="hideTagTooltip"
+            >
+              <span class="node-name">{{ tag.name }}</span>
+              <span class="node-glow" :style="{ background: tag.color }"></span>
+              <!-- 小弹框 -->
+              <div v-if="hoveredTag?.id === tag.id" class="tag-tooltip" :style="{ '--tip-color': tag.color }">
+                <div class="tip-arrow"></div>
+                <div class="tip-row">
+                  <span class="tip-val">{{ tag.articleCount ?? '-' }}</span>
+                  <span class="tip-lbl">文章</span>
+                </div>
+                <div class="tip-row">
+                  <span class="tip-val">{{ tag.viewCount ?? '-' }}</span>
+                  <span class="tip-lbl">浏览</span>
+                </div>
+                <div class="tip-row">
+                  <span class="tip-val">{{ tag.likeCount ?? '-' }}</span>
+                  <span class="tip-lbl">点赞</span>
+                </div>
+              </div>
+            </div>
+            <div v-if="tags.length === 0 && !loading" class="empty-tags">
+              暂无标签
+            </div>
           </div>
         </div>
       </div>
+
+
     </section>
 
     <!-- 页脚 -->
@@ -219,10 +255,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { api } from '../api/article'
-import { methodColors, getApis } from '../api/modules'
+import { methodColors, getHomeApis } from '../api/modules'
 import Navbar from './Navbar.vue'
 import Footer from './Footer.vue'
 
@@ -233,6 +269,8 @@ const openApis = ref([])
 const showBackTop = ref(false)
 const loading = ref(true)
 const tags = ref([])
+const starCanvas = ref(null)
+const hoveredTag = ref(null)
 const stats = ref({
   articleCount: 0,
   likeCount: 0,
@@ -260,12 +298,20 @@ const goToApiDetail = (api) => {
   router.push(`/api/${api.id}`)
 }
 
-// 获取技术标签
+// 获取技术标签及统计数据
 const fetchTags = async () => {
   try {
-    const res = await api.getTags()
-    if (res.success) {
-      tags.value = res.data
+    const res = await api.getAllTagStatics()
+    if (res.success && res.data.length > 0) {
+      tags.value = res.data.map((tag) => ({
+        ...tag,
+        _x: 30 + Math.random() * 40,
+        _y: 15 + Math.random() * 70,
+        _size: 48 + Math.random() * 24,
+        _delay: Math.random() * 4
+      }))
+    } else if (res.success) {
+      tags.value = []
     }
   } catch (error) {
     console.error('获取标签失败:', error)
@@ -336,22 +382,92 @@ const scrollToTop = () => {
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
-onMounted(() => {
+// 星图背景动画
+let starAnimationId = null
+let bgStars = []
+
+const initStarCanvas = () => {
+  const canvas = starCanvas.value
+  if (!canvas) return
+  const ctx = canvas.getContext('2d')
+  const dpr = window.devicePixelRatio || 1
+  
+  const resizeCanvas = () => {
+    const rect = canvas.parentElement.getBoundingClientRect()
+    canvas.width = rect.width * dpr
+    canvas.height = rect.height * dpr
+    canvas.style.width = rect.width + 'px'
+    canvas.style.height = rect.height + 'px'
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+  }
+  resizeCanvas()
+  window.addEventListener('resize', resizeCanvas)
+
+  // 生成背景星星
+  const w = () => canvas.width / dpr
+  const h = () => canvas.height / dpr
+  bgStars = []
+  for (let i = 0; i < 80; i++) {
+    bgStars.push({
+      x: Math.random() * w(),
+      y: Math.random() * h(),
+      r: Math.random() * 1.8,
+      twinkle: Math.random() * Math.PI * 2,
+      speed: 0.01 + Math.random() * 0.03
+    })
+  }
+
+  const animate = () => {
+    ctx.clearRect(0, 0, w(), h())
+    bgStars.forEach(star => {
+      star.twinkle += star.speed
+      const alpha = 0.3 + Math.sin(star.twinkle) * 0.3
+      ctx.beginPath()
+      ctx.arc(star.x, star.y, star.r, 0, Math.PI * 2)
+      ctx.fillStyle = `rgba(99, 102, 241, ${alpha})`
+      ctx.fill()
+    })
+    starAnimationId = requestAnimationFrame(animate)
+  }
+  animate()
+}
+
+const destroyStarCanvas = () => {
+  if (starAnimationId) {
+    cancelAnimationFrame(starAnimationId)
+    starAnimationId = null
+  }
+}
+
+// 触碰显示小弹框
+const showTagTooltip = (tag) => {
+  hoveredTag.value = tag
+}
+
+// 离开隐藏
+const hideTagTooltip = () => {
+  hoveredTag.value = null
+}
+
+onMounted(async () => {
   fetchArticles()
   fetchStats()
-  fetchTags()
   fetchApis()
+  await fetchTags()
+  await nextTick()
+  initStarCanvas()
   window.addEventListener('scroll', handleScroll)
 })
 
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll)
+  destroyStarCanvas()
 })
 
 // 获取 API 列表
 const fetchApis = async () => {
   try {
-    const res = await getApis()
+    const res = await getHomeApis()
     if (res.success) {
       openApis.value = res.data
     }
@@ -763,7 +879,7 @@ const getTagGradient = (tag) => {
 /* 最新文章 */
 .articles {
   position: relative;
-  padding: 100px 0;
+  padding: 40px 0 20px;
   z-index: 1;
 }
 
@@ -848,7 +964,7 @@ const getTagGradient = (tag) => {
 
 .articles-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 24px;
 }
 
@@ -989,42 +1105,175 @@ const getTagGradient = (tag) => {
   color: var(--accent-secondary);
 }
 
-/* 标签云 */
+/* 标签星图 */
 .tags {
   position: relative;
-  padding: 80px 0;
+  padding: 20px 0 60px;
   z-index: 1;
 }
 
 .tags .section-title {
-  margin-bottom: 40px;
+  margin-bottom: 16px;
   text-align: center;
 }
 
-.tags-cloud {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 16px;
+.star-map-wrapper {
+  position: relative;
+  width: 100%;
+  height: 380px;
+  overflow: hidden;
 }
 
-.tag-item {
-  padding: 10px 20px;
+.star-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.star-nodes {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.star-node {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: var(--size);
+  height: var(--size);
+  margin-left: calc(var(--size) / -2);
+  margin-top: calc(var(--size) / -2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+  animation: nodeFloat 6s ease-in-out infinite;
+  z-index: 2;
+}
+
+.star-node:hover {
+  transform: scale(1.25);
+  z-index: 10;
+}
+
+.star-node.active {
+  transform: scale(1.3);
+  z-index: 10;
+}
+
+.node-glow {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  opacity: 0.15;
+  filter: blur(8px);
+  transition: opacity 0.3s ease, filter 0.3s ease;
+}
+
+.star-node:hover .node-glow {
+  opacity: 0.35;
+  filter: blur(16px);
+}
+
+.node-name {
+  position: relative;
+  padding: 8px 18px;
+  background: var(--bg-card);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 100px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(12px);
+}
+
+.star-node:hover .node-name {
+  border-color: var(--node-color);
+  color: var(--node-color);
+  box-shadow: 0 0 24px rgba(255, 255, 255, 0.08);
+}
+
+@keyframes nodeFloat {
+  0%, 100% { transform: translateY(0px); }
+  25% { transform: translateY(-8px); }
+  50% { transform: translateY(4px); }
+  75% { transform: translateY(-6px); }
+}
+
+/* 小弹框 */
+.tag-tooltip {
+  position: absolute;
+  top: calc(100% + 12px);
+  left: 50%;
+  transform: translateX(-50%);
   background: var(--bg-card);
   border: 1px solid var(--border-color);
-  border-radius: 100px;
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: var(--text-secondary);
-  transition: all 0.3s ease;
+  border-radius: 12px;
+  padding: 10px 16px;
+  display: flex;
+  gap: 14px;
+  white-space: nowrap;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(12px);
+  z-index: 100;
+  animation: tooltipIn 0.2s ease;
+  pointer-events: none;
 }
 
-.tag-item:hover {
-  border-color: var(--tag-color);
-  color: var(--tag-color);
-  background: rgba(255, 255, 255, 0.05);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+.tip-arrow {
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 6px solid var(--border-color);
+}
+
+.tip-arrow::after {
+  content: '';
+  position: absolute;
+  top: 1px;
+  left: -5px;
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 5px solid var(--bg-card);
+}
+
+.tip-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.tip-val {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.tip-lbl {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+}
+
+@keyframes tooltipIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(4px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
 /* 页脚 */
@@ -1102,12 +1351,18 @@ const getTagGradient = (tag) => {
 
 /* 响应式 */
 @media (max-width: 1200px) {
+  .articles-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
   .api-grid {
     grid-template-columns: repeat(3, 1fr);
   }
 }
 
 @media (max-width: 992px) {
+  .articles-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
   .api-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -1136,6 +1391,10 @@ const getTagGradient = (tag) => {
     gap: 16px;
   }
   
+  .articles-grid {
+    grid-template-columns: 1fr;
+  }
+
   .api-grid {
     grid-template-columns: 1fr;
   }

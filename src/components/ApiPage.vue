@@ -44,11 +44,11 @@
           </button>
           <button 
             v-for="tag in allTags" 
-            :key="tag.name"
+            :key="tag.id"
             class="filter-tag"
-            :class="{ active: selectedTag === tag.name }"
-            :style="selectedTag === tag.name ? { background: tag.color + '20', color: tag.color, borderColor: tag.color } : {}"
-            @click="selectedTag = tag.name"
+            :class="{ active: selectedTag === tag.id }"
+            :style="selectedTag === tag.id ? { background: tag.color + '20', color: tag.color, borderColor: tag.color } : {}"
+            @click="selectedTag = tag.id"
           >
             {{ tag.name }}
           </button>
@@ -56,7 +56,7 @@
 
         <!-- 筛选结果统计 -->
         <div class="search-stats">
-          共找到 <span class="stat-highlight">{{ filteredApis.length }}</span> 个 API
+          共找到 <span class="stat-highlight">{{ apiList.length }}</span> 个 API
         </div>
       </div>
     </section>
@@ -64,9 +64,14 @@
     <!-- API 列表 -->
     <section class="api-list-section">
       <div class="container">
+        <div v-if="loading" class="loading-state">
+          <div class="loading-spinner"></div>
+          <span>加载中...</span>
+        </div>
+        <template v-else>
         <div class="api-grid">
           <div 
-            v-for="api in filteredApis" 
+            v-for="api in apiList" 
             :key="api.id" 
             class="api-card"
             @click="goToApiDetail(api)"
@@ -79,8 +84,8 @@
             </div>
             <p class="api-desc">{{ api.description }}</p>
             <div class="api-tags">
-              <span class="api-tag" :style="{ background: api.tagColor + '20', color: api.tagColor }">
-                {{ api.tag }}
+              <span v-for="t in api.tags" :key="t.value" class="api-tag" :style="{ background: t.color + '20', color: t.color }">
+                {{ t.text }}
               </span>
               <span v-if="!api.isFree" class="api-tag paid-tag">
                 付费
@@ -104,7 +109,7 @@
                   <circle cx="12" cy="12" r="10"/>
                   <polyline points="12 6 12 12 16 14"/>
                 </svg>
-                {{ api.stats.avgTime }}ms
+                {{ api.responseTime }}ms
               </span>
               <span class="api-stat" data-tip="用户点赞数">
                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -117,7 +122,7 @@
         </div>
 
         <!-- 空状态 -->
-        <div v-if="filteredApis.length === 0" class="empty-state">
+        <div v-if="apiList.length === 0" class="empty-state">
           <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="11" cy="11" r="8"/>
             <line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -125,6 +130,7 @@
           <p>未找到匹配的 API</p>
           <span>尝试其他关键词或筛选条件</span>
         </div>
+        </template>
       </div>
     </section>
 
@@ -134,50 +140,46 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Navbar from './Navbar.vue'
 import Footer from './Footer.vue'
-import { openApis } from '../api/modules'
+import { getApis, getApiTags, methodColors } from '../api/modules'
 
 const router = useRouter()
 
 const searchQuery = ref('')
 const selectedTag = ref('')
+const apiList = ref([])
+const allTags = ref([])
+const loading = ref(true)
+let searchTimer = null
 
-const methodColors = {
-  GET: '#10b981',
-  POST: '#3b82f6',
-  PUT: '#f59e0b',
-  DELETE: '#ef4444'
+const fetchApis = async () => {
+  loading.value = true
+  try {
+    const res = await getApis(searchQuery.value, selectedTag.value)
+    if (res.success && res.data) {
+      apiList.value = res.data
+    }
+  } catch (err) {
+    console.error('获取 API 列表失败:', err)
+  } finally {
+    loading.value = false
+  }
 }
 
-const allTags = [
-  { name: '图片', color: '#10b981' },
-  { name: '生活', color: '#3b82f6' },
-  { name: '工具', color: '#8b5cf6' },
-  { name: 'AI', color: '#f97316' }
-]
+// 标签变化立即请求
+watch(selectedTag, () => {
+  fetchApis()
+})
 
-const filteredApis = computed(() => {
-  let result = openApis
-  
-  // 按标签筛选
-  if (selectedTag.value) {
-    result = result.filter(api => api.tag === selectedTag.value)
-  }
-  
-  // 按关键词搜索
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase()
-    result = result.filter(api => 
-      api.name.toLowerCase().includes(query) ||
-      api.description.toLowerCase().includes(query) ||
-      api.tag.toLowerCase().includes(query)
-    )
-  }
-  
-  return result
+// 搜索关键词防抖请求
+watch(searchQuery, () => {
+  clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => {
+    fetchApis()
+  }, 400)
 })
 
 const handleNavigate = (menu) => {
@@ -187,6 +189,23 @@ const handleNavigate = (menu) => {
 const goToApiDetail = (api) => {
   router.push(`/api/${api.id}`)
 }
+
+// 初次加载
+onMounted(async () => {
+  try {
+    const [apiRes, tagRes] = await Promise.all([getApis(), getApiTags()])
+    if (apiRes.success && apiRes.data) {
+      apiList.value = apiRes.data
+    }
+    if (tagRes.success && tagRes.data) {
+      allTags.value = tagRes.data
+    }
+  } catch (err) {
+    console.error('获取 API 数据失败:', err)
+  } finally {
+    loading.value = false
+  }
+})
 </script>
 
 <style scoped>
@@ -486,6 +505,30 @@ const goToApiDetail = (api) => {
   border: 5px solid transparent;
   border-top-color: var(--border-color);
   z-index: 10;
+}
+
+/* 加载状态 */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 80px 0;
+  color: var(--text-secondary, #a1a1aa);
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(99, 102, 241, 0.1);
+  border-top-color: #6366f1;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 /* 空状态 */

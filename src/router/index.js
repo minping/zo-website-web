@@ -11,6 +11,8 @@ import AdminDraftList from '../components/admin/AdminDraftList.vue'
 import AdminPublishedList from '../components/admin/AdminPublishedList.vue'
 import AdminArticleEditor from '../components/admin/AdminArticleEditor.vue'
 import AdminApiList from '../components/admin/AdminApiList.vue'
+import AdminApiEditor from '../components/admin/AdminApiEditor.vue'
+import AdminTagManagement from '../components/admin/AdminTagManagement.vue'
 import AdminLogin from '../components/admin/AdminLogin.vue'
 
 const routes = [
@@ -87,6 +89,18 @@ const routes = [
     path: '/admin/apis',
     name: 'AdminApiList',
     component: AdminApiList,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/admin/apis/editor',
+    name: 'AdminApiEditor',
+    component: AdminApiEditor,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/admin/tags',
+    name: 'AdminTagManagement',
+    component: AdminTagManagement,
     meta: { requiresAuth: true }
   },
   ]
