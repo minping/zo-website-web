@@ -8,6 +8,9 @@
         </div>
         <p class="footer-copy">&copy; 2026 Zode. All rights reserved.</p>
         <div class="icp-info">
+          <a href="https://beian.mps.gov.cn/#/query/webSearch?code=36100202000734" rel="noreferrer" target="_blank"><img width="16px" src="../../public/images/back.png">赣公网安备36100202000734号</a>
+        </div>
+        <div class="icp-info">
           <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">
             <svg class="icp-icon" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
               <path fill="#3b82f6" d="M10 1L3 4v5c0 4.3 2.9 8.3 7 9.5 4.1-1.2 7-5.2 7-9.5V4L10 1zm0 2.2l5 2.4v4.4c0 3.3-2.1 6.4-5 7.5-2.9-1.1-5-4.2-5-7.5V5.6l5-2.4z"/>

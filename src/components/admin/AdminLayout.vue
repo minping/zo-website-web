@@ -87,6 +87,9 @@ const getActiveNav = () => {
   if (path.includes('/admin/published')) {
     return 'published'
   }
+  if (path.includes('/admin/tags')) {
+    return 'tags'
+  }
   if (path.includes('/admin/articles') || path.includes('/admin/editor')) {
     return 'articles'
   }
@@ -153,6 +156,13 @@ const PublishedIcon = {
   ])
 }
 
+const TagIcon = {
+  render: () => h('svg', { xmlns: 'http://www.w3.org/2000/svg', width: '20', height: '20', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, [
+    h('path', { d: 'M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z' }),
+    h('line', { x1: '7', y1: '7', x2: '7.01', y2: '7' })
+  ])
+}
+
 const navItems = [
   { id: 'dashboard', label: '仪表盘', icon: DashboardIcon, path: '/admin/dashboard' },
   { 
@@ -161,8 +171,10 @@ const navItems = [
     icon: ArticlesIcon, 
     path: '/admin/articles',
     children: [
+      { id: 'tags', label: '标签管理', icon: TagIcon, path: '/admin/tags' },
       { id: 'drafts', label: '草稿箱', icon: DraftsIcon, path: '/admin/drafts' },
       { id: 'published', label: '已发布', icon: PublishedIcon, path: '/admin/published' }
+      
     ]
   },
   { id: 'apis', label: 'API 管理', icon: ApisIcon, path: '/admin/apis' }
@@ -192,7 +204,7 @@ watch(() => route.path, () => {
   activeNav.value = getActiveNav()
   // 自动展开文章管理菜单
   const path = route.path
-  if (path.includes('/admin/articles') || path.includes('/admin/drafts') || path.includes('/admin/published') || path.includes('/admin/editor')) {
+  if (path.includes('/admin/articles') || path.includes('/admin/drafts') || path.includes('/admin/published') || path.includes('/admin/editor') || path.includes('/admin/tags')) {
     if (!expandedMenus.value.includes('articles')) {
       expandedMenus.value.push('articles')
     }

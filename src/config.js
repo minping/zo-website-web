@@ -1,6 +1,7 @@
 // API 配置文件
 // 后端接口地址
-export const API_BASE_URL = 'http://127.0.0.1:9066/website'
+// export const API_BASE_URL = 'https://www.mpgapay.cn/website'
+export const API_BASE_URL = 'http://localhost:8014/website'
 
 // API 接口路径配置
 export const API_PATHS = {
@@ -10,7 +11,14 @@ export const API_PATHS = {
   queryRecommendArticle: (id) => `/index/article/queryRecommendArticle?id=${id}`,
   articleLike: (id) => `/index/article/likeArticle?id=${id}`,
   viewArticle: (id) => `/index/article/viewArticle?id=${id}`,
-  tags: '/index/article/queryAllTags',
+  // API 标签（后台）
+  apiTags: '/admin/api/queryApiTagList',
+  // API 标签（前端开放）
+  publicApiTags: '/index/api/queryApiTagList',
+  // 文章标签
+  articleTags: '/admin/article/queryAllTags',
+  // 标签统计
+  allTagStatics: '/index/article/queryAllTagStatics',
   statics: '/index/queryStatics',
 
   // 管理相关
@@ -23,12 +31,32 @@ export const API_PATHS = {
   queryArticleDetail: (id) => `/admin/article/queryArticleDetail?id=${id}`,
   queryArticleStatics: '/admin/article/queryArticleStatics',
 
-  // 开放 API 相关
-  openApis: '/open-apis',
+  // ========== Admin 端 API 管理（后台） ==========
+  openApis: '/admin/api/queryApiList',
 
-  // 标签相关
-  insertTag: (tagName, tagColor) => `/admin/article/insertTag?tagName=${encodeURIComponent(tagName)}&tagColor=${encodeURIComponent(tagColor)}`,
-  deleteTag: (tagId) => `/admin/article/deleteTag?tagId=${tagId}`
+  // ========== 前端公开 API 展示 ==========
+  // 首页开放 API
+  homeApis: '/index/api/querySomeApiList',
+  // ApiPage API 列表（支持搜索和标签筛选）
+  publicApis: (searchValue = '', tag = '') => `/index/api/queryAllApiList?searchValue=${encodeURIComponent(searchValue)}&tag=${encodeURIComponent(tag)}`,
+  // API 详情
+  publicApiDetail: (id) => `/index/api/queryApiById?id=${id}`,
+
+  // API 管理
+  saveApi: '/admin/api/saveApi',
+  deleteApi: (id) => `/admin/api/deleteApi?id=${id}`,
+  queryApiById: (id) => `/admin/api/queryApiById?id=${id}`,
+
+  // API 标签
+  saveApiTag: (id, name, color) => `/admin/api/saveApiTag?id=${id || ''}&name=${encodeURIComponent(name)}&color=${encodeURIComponent(color)}`,
+  deleteApiTag: (tagId) => `/admin/api/deleteApiTag?id=${tagId}`,
+
+  // 图片上传
+  uploadImage: '/admin/article/uploadImage',
+
+  // 文章标签
+  insertArticleTag: (id, name, color) => `/admin/article/insertTag?id=${id || ''}&tagName=${encodeURIComponent(name)}&tagColor=${encodeURIComponent(color)}`,
+  deleteArticleTag: (tagId) => `/admin/article/deleteTag?id=${tagId}`,
 }
 
 // 完整 API URL

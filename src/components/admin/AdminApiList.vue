@@ -68,13 +68,15 @@
           </div>
           <p class="api-desc">{{ api.description }}</p>
           <div class="api-tags">
-            <span class="api-tag" :style="{ background: (api.tagColor || '#6366f1') + '20', color: api.tagColor || '#6366f1' }">{{ api.tag }}</span>
+            <span v-for="tag in getApiTags(api)" :key="tag" class="api-tag" :style="{ background: (getTagColor(tag) || '#6366f1') + '20', color: getTagColor(tag) || '#6366f1' }">{{ tag }}</span>
             <span v-if="!api.isFree" class="api-tag paid-tag">付费</span>
+            <span class="api-tag status-tag" :class="api.status === 1 ? 'status-on' : 'status-off'">{{ api.status === 1 ? '已上架' : '已下架' }}</span>
           </div>
           <div class="api-stats">
             <span><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>{{ api.stats?.calls || 0 }}</span>
             <span><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>{{ api.stats?.successRate || 0 }}%</span>
             <span><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>{{ api.stats?.avgTime || 0 }}ms</span>
+            <span v-if="api.responseTime > 0" class="stat-response"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>{{ api.responseTime }}ms</span>
           </div>
         </div>
       </div>
@@ -94,12 +96,10 @@
     <!-- 标签管理弹窗 -->
     <div v-if="showTagModal" class="modal-overlay" @click.self="closeTagModal">
       <div class="tag-modal">
-        <div class="form-header">
-          <h3>管理标签</h3>
-          <button class="close-btn" @click="closeTagModal">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </button>
-        </div>
+        <button class="modal-close-btn" @click="closeTagModal" title="关闭">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+        <h3 class="modal-title">管理标签</h3>
         <div class="tag-form">
           <div class="tag-input-row">
             <input v-model="tagForm.name" type="text" placeholder="标签名称" />
@@ -116,7 +116,7 @@
               <button class="action-btn edit" @click="editTag(tag)" title="编辑">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
               </button>
-              <button class="action-btn delete" @click="deleteTag(tag.name)" title="删除">
+              <button class="action-btn delete" @click="deleteTag(tag.id)" title="删除">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
               </button>
             </div>
@@ -138,71 +138,20 @@
       </div>
     </div>
 
-    <!-- API 表单弹窗 -->
-    <div v-if="showFormModal" class="modal-overlay" @click.self="closeForm">
-      <div class="form-modal">
-        <div class="form-header">
-          <h3>{{ editingApi ? '编辑 API' : '新建 API' }}</h3>
-          <button class="close-btn" @click="closeForm">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </button>
-        </div>
-        <form @submit.prevent="handleSubmit">
-          <div class="form-row">
-            <div class="form-group">
-              <label>API 名称 *</label>
-              <input v-model="formData.name" type="text" placeholder="输入 API 名称" required />
-            </div>
-            <div class="form-group">
-              <label>请求方法 *</label>
-              <select v-model="formData.method" required>
-                <option value="GET">GET</option>
-                <option value="POST">POST</option>
-                <option value="PUT">PUT</option>
-                <option value="DELETE">DELETE</option>
-              </select>
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>接口地址 *</label>
-              <input v-model="formData.endpoint" type="text" placeholder="/api/v1/example" required />
-            </div>
-            <div class="form-group">
-              <label>分类标签 *</label>
-              <select v-model="formData.tag" required>
-                <option value="">选择分类</option>
-                <option v-for="tag in tags" :key="tag.name" :value="tag.name">{{ tag.name }}</option>
-              </select>
-            </div>
-          </div>
-          <div class="form-group">
-            <label>接口描述</label>
-            <textarea v-model="formData.description" rows="2" placeholder="详细描述该 API"></textarea>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label><input type="checkbox" v-model="formData.isFree" /> 免费 API</label>
-            </div>
-            <div class="form-group" v-if="!formData.isFree">
-              <label>价格 (元/月)</label>
-              <input v-model.number="formData.price" type="number" min="0" />
-            </div>
-          </div>
-          <div class="form-actions">
-            <button type="button" class="btn btn-secondary" @click="closeForm">取消</button>
-            <button type="submit" class="btn btn-primary">{{ editingApi ? '保存' : '创建' }}</button>
-          </div>
-        </form>
-      </div>
+    <!-- Toast -->
+    <div v-if="toast.show" class="toast" :class="toast.type">
+      {{ toast.message }}
     </div>
   </AdminLayout>
 </template>
 
 <script setup>
 import { ref, computed, reactive, onMounted } from 'vue'
-import { getApis } from '../../api/modules'
+import { useRouter } from 'vue-router'
+import { api } from '../../api/article'
 import AdminLayout from './AdminLayout.vue'
+
+const router = useRouter()
 
 const apiList = ref([])
 const loading = ref(true)
@@ -212,12 +161,6 @@ const currentPage = ref(1)
 const pageSize = 12
 const showDeleteModal = ref(false)
 const deletingApi = ref(null)
-const showFormModal = ref(false)
-const editingApi = ref(null)
-
-const formData = reactive({
-  name: '', method: 'GET', endpoint: '', tag: '', description: '', isFree: true, price: 0
-})
 
 // 标签管理
 const tags = ref([])
@@ -225,24 +168,31 @@ const showTagModal = ref(false)
 const editingTag = ref(null)
 const tagForm = reactive({ name: '', color: '#6366f1' })
 
-const loadTags = () => {
-  const saved = localStorage.getItem('adminApiTags')
-  if (saved) {
-    tags.value = JSON.parse(saved)
-  } else {
-    // 默认标签
-    tags.value = [
-      { name: '用户', color: '#10b981' },
-      { name: '内容', color: '#3b82f6' },
-      { name: '数据', color: '#f59e0b' },
-      { name: '工具', color: '#ef4444' }
-    ]
-    localStorage.setItem('adminApiTags', JSON.stringify(tags.value))
-  }
+const getApiTags = (api) => {
+  if (api.tagText) return api.tagText.split('^').filter(Boolean)
+  if (Array.isArray(api.tags)) return api.tags
+  if (api.tag) return [api.tag]
+  return []
 }
 
-const saveTags = () => {
-  localStorage.setItem('adminApiTags', JSON.stringify(tags.value))
+// Toast
+const toast = ref({ show: false, message: '', type: 'success' })
+const showToast = (message, type = 'success') => {
+  toast.value = { show: true, message, type }
+  setTimeout(() => { toast.value.show = false }, 3000)
+}
+
+// ========== 标签操作（调用 3 个真实接口） ==========
+
+const loadTags = async () => {
+  try {
+    const res = await api.getApiTags()
+    if (res.success && res.data) {
+      tags.value = res.data
+    }
+  } catch (error) {
+    console.error('获取标签失败:', error)
+  }
 }
 
 const closeTagModal = () => {
@@ -252,21 +202,22 @@ const closeTagModal = () => {
   tagForm.color = '#6366f1'
 }
 
-const addTag = () => {
+const addTag = async () => {
   if (!tagForm.name.trim()) return
-  if (editingTag.value) {
-    const i = tags.value.findIndex(t => t.name === editingTag.value.name)
-    if (i !== -1) {
-      tags.value[i] = { name: tagForm.name.trim(), color: tagForm.color }
+  try {
+    const id = editingTag.value ? editingTag.value.id : ''
+    const res = await api.saveApiTag(id, tagForm.name.trim(), tagForm.color)
+    if (res.success) {
+      showToast(editingTag.value ? '标签已更新' : '标签已添加')
+      await loadTags()
+      closeTagModal()
+    } else {
+      showToast(res.message || '操作失败', 'error')
     }
-    editingTag.value = null
-  } else {
-    if (tags.value.some(t => t.name === tagForm.name.trim())) return
-    tags.value.push({ name: tagForm.name.trim(), color: tagForm.color })
+  } catch (error) {
+    console.error('操作标签失败:', error)
+    showToast('操作失败', 'error')
   }
-  saveTags()
-  tagForm.name = ''
-  tagForm.color = '#6366f1'
 }
 
 const editTag = (tag) => {
@@ -275,20 +226,25 @@ const editTag = (tag) => {
   tagForm.color = tag.color
 }
 
-const deleteTag = (name) => {
-  tags.value = tags.value.filter(t => t.name !== name)
-  saveTags()
+const deleteTag = async (tagId) => {
+  try {
+    const res = await api.deleteApiTag(tagId)
+    if (res.success) {
+      showToast('标签已删除')
+      await loadTags()
+    } else {
+      showToast(res.message || '删除失败', 'error')
+    }
+  } catch (error) {
+    console.error('删除标签失败:', error)
+    showToast('删除失败', 'error')
+  }
 }
+
+// ========== 筛选 ==========
 
 const filterTags = computed(() => {
   const allTags = ['全部', ...tags.value.map(t => t.name)]
-  // 如果有API使用了不在标签列表中的标签，也显示出来
-  const usedTags = new Set(apiList.value.map(api => api.tag))
-  usedTags.forEach(tag => {
-    if (!tags.value.some(t => t.name === tag)) {
-      allTags.push(tag)
-    }
-  })
   return allTags
 })
 
@@ -299,7 +255,10 @@ const filteredApis = computed(() => {
     result = result.filter(api => api.name.toLowerCase().includes(query) || api.description?.toLowerCase().includes(query))
   }
   if (selectedTag.value !== '全部') {
-    result = result.filter(api => api.tag === selectedTag.value)
+    result = result.filter(api => {
+      const apiTags = Array.isArray(api.tags) ? api.tags : (api.tag ? [api.tag] : [])
+      return apiTags.includes(selectedTag.value)
+    })
   }
   return result
 })
@@ -318,15 +277,14 @@ const getTagColor = (tagName) => {
   return tag ? tag.color : '#6366f1'
 }
 
+// ========== API 操作 ==========
+
 const fetchApis = async () => {
   try {
     loading.value = true
-    const savedApis = localStorage.getItem('adminApis')
-    if (savedApis) {
-      apiList.value = JSON.parse(savedApis)
-    } else {
-      const res = await getApis()
-      if (res.success) apiList.value = res.data
+    const res = await api.getApiList()
+    if (res.success && res.data) {
+      apiList.value = res.data
     }
   } catch (error) {
     console.error('获取 API 列表失败:', error)
@@ -336,50 +294,39 @@ const fetchApis = async () => {
 }
 
 const openEditor = () => {
-  editingApi.value = null
-  Object.assign(formData, { name: '', method: 'GET', endpoint: '', tag: '', description: '', isFree: true, price: 0 })
-  showFormModal.value = true
+  router.push('/admin/apis/editor')
 }
 
-const editApi = (api) => {
-  editingApi.value = api
-  Object.assign(formData, { name: api.name, method: api.method, endpoint: api.endpoint || '', tag: api.tag, description: api.description || '', isFree: api.isFree ?? true, price: api.price || 0 })
-  showFormModal.value = true
+const editApi = (apiItem) => {
+  router.push({ path: '/admin/apis/editor', query: { id: apiItem.id } })
 }
 
-const closeForm = () => {
-  showFormModal.value = false
-  editingApi.value = null
-}
-
-const handleSubmit = () => {
-  if (!formData.name || !formData.endpoint || !formData.tag) return
-  let apis = JSON.parse(localStorage.getItem('adminApis') || '[]')
-  const data = { id: editingApi.value ? editingApi.value.id : Date.now(), ...formData, stats: editingApi.value?.stats || { calls: 0, successRate: 0, avgTime: 0 } }
-  if (editingApi.value) {
-    const i = apis.findIndex(a => a.id === editingApi.value.id)
-    if (i !== -1) apis[i] = data
-  } else {
-    apis.push(data)
-  }
-  localStorage.setItem('adminApis', JSON.stringify(apis))
-  apiList.value = apis
-  closeForm()
-}
-
-const confirmDelete = (api) => {
-  deletingApi.value = api
+const confirmDelete = (apiItem) => {
+  deletingApi.value = apiItem
   showDeleteModal.value = true
 }
 
-const deleteApi = () => {
-  apiList.value = apiList.value.filter(a => a.id !== deletingApi.value.id)
-  localStorage.setItem('adminApis', JSON.stringify(apiList.value))
+const deleteApi = async () => {
+  try {
+    const res = await api.deleteApi(deletingApi.value.id)
+    if (res.success) {
+      showToast('API 已删除')
+      await fetchApis()
+    } else {
+      showToast(res.message || '删除失败', 'error')
+    }
+  } catch (error) {
+    console.error('删除 API 失败:', error)
+    showToast('删除失败', 'error')
+  }
   showDeleteModal.value = false
   deletingApi.value = null
 }
 
-onMounted(() => { fetchApis(); loadTags() })
+onMounted(() => {
+  fetchApis()
+  loadTags()
+})
 </script>
 
 <style scoped>
@@ -591,6 +538,16 @@ onMounted(() => { fetchApis(); loadTags() })
   color: #f59e0b;
 }
 
+.status-tag.status-on {
+  background: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+}
+
+.status-tag.status-off {
+  background: rgba(161, 161, 170, 0.1);
+  color: #a1a1aa;
+}
+
 .api-stats {
   display: flex;
   gap: 16px;
@@ -604,6 +561,11 @@ onMounted(() => { fetchApis(); loadTags() })
   gap: 4px;
   font-size: 12px;
   color: var(--admin-text-secondary);
+}
+
+.stat-response {
+  color: #22c55e !important;
+  font-weight: 500;
 }
 
 /* 分页 */
@@ -762,97 +724,7 @@ onMounted(() => { fetchApis(); loadTags() })
   opacity: 0.9;
 }
 
-/* 表单弹窗 */
-.form-modal {
-  background: var(--admin-bg-card);
-  border: 1px solid var(--admin-border-color);
-  border-radius: 12px;
-  padding: 24px;
-  max-width: 600px;
-  width: 90%;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-}
-
-.form-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.form-header h3 {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--admin-text-primary);
-  margin: 0;
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  color: var(--admin-text-secondary);
-  cursor: pointer;
-  padding: 4px;
-}
-
-.close-btn:hover {
-  color: var(--admin-text-primary);
-}
-
-.form-modal .form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-bottom: 16px;
-}
-
-.form-modal .form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.form-modal .form-group label {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--admin-text-primary);
-}
-
-.form-modal .form-group input,
-.form-modal .form-group select,
-.form-modal .form-group textarea {
-  padding: 10px 12px;
-  border: 1px solid var(--admin-border-color);
-  border-radius: 6px;
-  font-size: 14px;
-  background: var(--admin-bg-primary);
-  color: var(--admin-text-primary);
-}
-
-.form-modal .form-group input:focus,
-.form-modal .form-group select:focus,
-.form-modal .form-group textarea:focus {
-  outline: none;
-  border-color: var(--admin-accent-primary);
-}
-
-.form-modal .form-group textarea {
-  resize: vertical;
-  min-height: 60px;
-}
-
-.form-modal .form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  margin-top: 20px;
-  padding-top: 16px;
-  border-top: 1px solid var(--admin-border-color);
-}
-
-/* 标签管理弹窗 */
+/* 弹窗 */
 .tag-modal {
   background: var(--admin-bg-card);
   border: 1px solid var(--admin-border-color);
@@ -863,6 +735,37 @@ onMounted(() => { fetchApis(); loadTags() })
   max-height: 80vh;
   overflow-y: auto;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  position: relative;
+}
+
+.modal-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--admin-text-primary);
+  margin: 0 0 16px 0;
+}
+
+.modal-close-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--admin-text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  z-index: 10;
+}
+
+.modal-close-btn:hover {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
 }
 
 .tag-form {
@@ -964,5 +867,28 @@ onMounted(() => { fetchApis(); loadTags() })
   .api-grid {
     grid-template-columns: 1fr;
   }
+}
+
+.toast {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 14px 28px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  z-index: 2000;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.toast.success {
+  background: #22c55e;
+  color: white;
+}
+
+.toast.error {
+  background: #ef4444;
+  color: white;
 }
 </style>
