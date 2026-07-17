@@ -1,12 +1,27 @@
 <template>
-  <div class="about-page">
+  <div class="about-page" :class="{ 'resume-mode': isResumeMode }">
     <!-- 背景效果 -->
-    <div class="bg-grid"></div>
-    <div class="bg-glow bg-glow-1"></div>
-    <div class="bg-glow bg-glow-2"></div>
+    <div v-if="!isResumeMode" class="bg-grid"></div>
+    <div v-if="!isResumeMode" class="bg-glow bg-glow-1"></div>
+    <div v-if="!isResumeMode" class="bg-glow bg-glow-2"></div>
 
     <!-- 导航栏 -->
-    <Navbar activeMenu="关于" @navigate="handleNavigate" />
+    <Navbar v-if="!isResumeMode" activeMenu="关于" @navigate="handleNavigate" />
+
+    <!-- 简历模式切换按钮 -->
+    <button class="resume-toggle" :class="{ active: isResumeMode }" @click="isResumeMode = !isResumeMode" :title="isResumeMode ? '返回普通模式' : '切换简历模式'">
+      <svg v-if="!isResumeMode" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="16" y1="13" x2="8" y2="13"/>
+        <line x1="16" y1="17" x2="8" y2="17"/>
+        <polyline points="10 9 9 9 8 9"/>
+      </svg>
+      <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"/>
+        <line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
 
     <!-- 关于博主 -->
     <section class="about-hero">
@@ -65,7 +80,7 @@
     </section>
 
     <!-- 数据统计 -->
-    <section class="stats-section">
+    <section v-if="!isResumeMode" class="stats-section">
       <div class="container">
         <div class="stats-grid">
           <div class="stat-card clickable" @click="goToArticles">
@@ -162,8 +177,80 @@
       </div>
     </section>
 
+    <!-- 项目经历 -->
+    <section class="projects-section">
+      <div class="container">
+        <h2 class="section-title">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+          </svg>
+          项目经历
+        </h2>
+        <div class="projects-list">
+          <div class="project-item" v-for="(project, index) in projects" :key="index">
+            <div class="project-timeline">
+              <span class="project-period">{{ project.startDate }} ~ {{ project.endDate || '至今' }}</span>
+            </div>
+            <div class="project-detail">
+              <h3 class="project-name">{{ project.name }}</h3>
+              <span class="project-role">{{ project.role }}</span>
+              <p class="project-desc">{{ project.description }}</p>
+              <div class="project-tags" v-if="project.tags && project.tags.length">
+                <span class="project-tag" v-for="tag in project.tags" :key="tag">{{ tag }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 自研项目 -->
+    <section class="self-projects-section">
+      <div class="container">
+        <h2 class="section-title">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="16 18 22 12 16 6"/>
+            <polyline points="8 6 2 12 8 18"/>
+          </svg>
+          自研项目
+        </h2>
+        <div class="self-projects-grid">
+          <div class="self-project-card" v-for="(project, index) in selfProjects" :key="index">
+            <div class="self-project-icon" v-if="project.icon">{{ project.icon }}</div>
+            <div class="self-project-icon fallback" v-else>
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="16 18 22 12 16 6"/>
+                <polyline points="8 6 2 12 8 18"/>
+              </svg>
+            </div>
+            <h3 class="self-project-name">{{ project.name }}</h3>
+            <p class="self-project-desc">{{ project.description }}</p>
+            <div class="self-project-tags" v-if="project.tags && project.tags.length">
+              <span class="self-project-tag" v-for="tag in project.tags" :key="tag">{{ tag }}</span>
+            </div>
+            <div class="self-project-links">
+              <a v-if="project.demoUrl" :href="project.demoUrl" target="_blank" class="self-project-link">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                  <polyline points="15 3 21 3 21 9"/>
+                  <line x1="10" y1="14" x2="21" y2="3"/>
+                </svg>
+                在线演示
+              </a>
+              <a v-if="project.githubUrl" :href="project.githubUrl" target="_blank" class="self-project-link">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+                </svg>
+                源代码
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- 联系方式 -->
-    <section class="contact-section">
+    <section v-if="!isResumeMode" class="contact-section">
       <div class="container">
         <h2 class="section-title">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -206,10 +293,10 @@
     </section>
 
     <!-- 页脚 -->
-    <Footer />
+    <Footer v-if="!isResumeMode" />
 
     <!-- 微信二维码弹窗 -->
-    <div v-if="showWechatQR" class="qr-modal-overlay" @click.self="showWechatQR = false">
+    <div v-if="!isResumeMode && showWechatQR" class="qr-modal-overlay" @click.self="showWechatQR = false">
       <div class="qr-modal">
         <div class="qr-modal-header">
           <h3>扫码添加微信</h3>
@@ -237,6 +324,7 @@ import { ref } from 'vue'
 
 const router = useRouter()
 const showWechatQR = ref(false)
+const isResumeMode = ref(false)
 
 const skills = ['Vue.js', 'React', 'Node.js', 'Python', 'Go', 'Docker']
 
@@ -280,6 +368,58 @@ const handleNavigate = (menu) => {
 const goToArticles = () => {
   router.push('/articles')
 }
+
+const projects = [
+  {
+    name: 'Zo 博客系统',
+    role: '全栈开发',
+    startDate: '2024-03',
+    endDate: '',
+    description: '基于 Vue 3 + Spring Boot 构建的个人技术博客平台，支持文章管理、API 开放、标签星图等功能。',
+    tags: ['Vue 3', 'Spring Boot', 'PostgreSQL', 'MyBatis Plus']
+  },
+  {
+    name: '企业内部管理系统',
+    role: '后端开发',
+    startDate: '2023-06',
+    endDate: '2024-02',
+    description: '参与企业级后台管理系统开发，负责权限管理模块、数据报表模块的设计与实现。',
+    tags: ['Spring Cloud', 'Redis', 'MySQL', 'RabbitMQ']
+  },
+  {
+    name: '电商数据分析平台',
+    role: '前端开发',
+    startDate: '2022-09',
+    endDate: '2023-05',
+    description: '负责数据可视化大屏的前端开发，使用 ECharts 实现实时数据展示与交互。',
+    tags: ['React', 'ECharts', 'TypeScript', 'Ant Design']
+  }
+]
+
+const selfProjects = [
+  {
+    name: 'Zo 开放 API',
+    icon: '🔌',
+    description: '面向开发者提供免费开放 API 接口，涵盖各类实用数据服务。',
+    tags: ['Vue 3', 'Spring Boot', 'RESTful'],
+    demoUrl: '#',
+    githubUrl: 'https://github.com/minping'
+  },
+  {
+    name: '星图可视化',
+    icon: '✨',
+    description: '技术标签知识星图，3D 可视化展示技术栈关联关系。',
+    tags: ['D3.js', 'Canvas', 'Vue Composition API'],
+    githubUrl: 'https://github.com/minping'
+  },
+  {
+    name: 'Markdown 编辑器',
+    icon: '📝',
+    description: '基于 Milkdown 的所见即所得 Markdown 编辑器，支持实时预览。',
+    tags: ['Milkdown', 'ProseMirror', 'Vue 3'],
+    githubUrl: 'https://github.com/minping'
+  }
+]
 </script>
 
 <style scoped>
@@ -624,6 +764,187 @@ const goToArticles = () => {
   line-height: 1.6;
 }
 
+/* 项目经历 */
+.projects-section {
+  padding: 0 0 80px;
+  position: relative;
+  z-index: 1;
+}
+
+.projects-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.project-item {
+  display: flex;
+  gap: 28px;
+  padding: 20px 0 24px;
+  border-left: 2px solid var(--border-color);
+  padding-left: 28px;
+  position: relative;
+}
+
+.project-item:last-child {
+  border-left-color: transparent;
+}
+
+.project-item::before {
+  content: '';
+  position: absolute;
+  left: -6px;
+  top: 24px;
+  width: 10px;
+  height: 10px;
+  background: var(--accent-primary);
+  border-radius: 50%;
+}
+
+.project-timeline {
+  flex-shrink: 0;
+  width: 120px;
+  padding-top: 2px;
+}
+
+.project-period {
+  font-size: 13px;
+  color: var(--accent-primary);
+  font-weight: 500;
+}
+
+.project-detail {
+  flex: 1;
+}
+
+.project-name {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 4px 0;
+}
+
+.project-role {
+  font-size: 13px;
+  color: var(--accent-primary);
+  display: block;
+  margin-bottom: 8px;
+}
+
+.project-desc {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  margin: 0 0 12px 0;
+}
+
+.project-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.project-tag {
+  padding: 3px 10px;
+  background: var(--accent-glow);
+  color: var(--accent-primary);
+  border-radius: 100px;
+  font-size: 12px;
+}
+
+/* 自研项目 */
+.self-projects-section {
+  padding: 0 0 80px;
+  position: relative;
+  z-index: 1;
+}
+
+.self-projects-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.self-project-card {
+  padding: 24px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  transition: all 0.3s;
+  display: flex;
+  flex-direction: column;
+}
+
+.self-project-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--accent-primary);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+.self-project-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: var(--accent-glow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-primary);
+  font-size: 22px;
+  margin-bottom: 14px;
+}
+
+.self-project-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 8px 0;
+}
+
+.self-project-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0 0 14px 0;
+  flex: 1;
+}
+
+.self-project-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.self-project-tag {
+  padding: 3px 10px;
+  background: var(--accent-glow);
+  color: var(--accent-primary);
+  border-radius: 100px;
+  font-size: 12px;
+}
+
+.self-project-links {
+  display: flex;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-color);
+}
+
+.self-project-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color 0.3s;
+}
+
+.self-project-link:hover {
+  color: var(--accent-primary);
+}
+
 /* 联系方式 */
 .contact-section {
   padding: 0 0 100px;
@@ -798,6 +1119,10 @@ const goToArticles = () => {
   .skills-grid {
     grid-template-columns: 1fr;
   }
+  
+  .self-projects-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (max-width: 768px) {
@@ -828,6 +1153,539 @@ const goToArticles = () => {
   
   .social-link {
     justify-content: center;
+  }
+  
+  .project-item {
+    flex-direction: column;
+    gap: 6px;
+  }
+  
+  .project-timeline {
+    width: auto;
+  }
+  
+  .self-projects-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ========== 简历模式 ========== */
+.resume-mode {
+  --resume-bg: #ffffff;
+  --resume-text: #1a1a2e;
+  --resume-text-secondary: #4a4a6a;
+  --resume-accent: #4f46e5;
+  --resume-border: #e2e8f0;
+  --resume-light-bg: #f8fafc;
+}
+
+.resume-mode .bg-grid,
+.resume-mode .bg-glow {
+  display: none;
+}
+
+/* 简历模式 - 整体容器 */
+.resume-mode {
+  background: #f0f2f5;
+  min-height: 100vh;
+  padding: 40px 0;
+}
+
+.resume-mode .container {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* 简历纸张效果 */
+.resume-mode .about-hero,
+.resume-mode .skills-section,
+.resume-mode .timeline-section,
+.resume-mode .projects-section,
+.resume-mode .self-projects-section {
+  background: var(--resume-bg);
+  margin-bottom: 0;
+  padding: 0;
+}
+
+.resume-mode .about-hero {
+  padding: 48px 48px 0;
+  border-radius: 12px 12px 0 0;
+}
+
+.resume-mode .skills-section {
+  padding: 36px 48px;
+  border-bottom: 1px solid var(--resume-border);
+}
+
+.resume-mode .timeline-section {
+  padding: 36px 48px;
+  border-bottom: 1px solid var(--resume-border);
+}
+
+.resume-mode .projects-section {
+  padding: 36px 48px;
+  border-bottom: 1px solid var(--resume-border);
+}
+
+.resume-mode .self-projects-section {
+  padding: 36px 48px 48px;
+  border-radius: 0 0 12px 12px;
+}
+
+/* 简历模式 - 头部个人信息 */
+.resume-mode .about-card {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 32px;
+  padding: 0 0 32px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid var(--resume-accent);
+  border-radius: 0;
+}
+
+.resume-mode .avatar-ring {
+  width: 90px;
+  height: 90px;
+  padding: 0;
+  background: transparent;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid var(--resume-border);
+}
+
+.resume-mode .avatar-ring img {
+  background: #f1f5f9;
+}
+
+.resume-mode .status-dot {
+  bottom: 4px;
+  right: 4px;
+  width: 14px;
+  height: 14px;
+  border-color: var(--resume-bg);
+}
+
+.resume-mode .about-info {
+  flex: 1;
+}
+
+.resume-mode .about-name {
+  font-size: 1.75rem;
+  color: var(--resume-text);
+  margin-bottom: 4px;
+}
+
+.resume-mode .about-title {
+  font-size: 1rem;
+  color: var(--resume-accent);
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+
+.resume-mode .about-bio {
+  font-size: 14px;
+  color: var(--resume-text-secondary);
+  line-height: 1.7;
+  margin-bottom: 14px;
+}
+
+/* 简历模式 - 顶部联系方式（紧凑） */
+.resume-mode .about-tags {
+  display: none;
+}
+
+.resume-mode .about-links {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.resume-mode .social-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--resume-text-secondary);
+  font-size: 13px;
+  cursor: default;
+  pointer-events: none; /* 简历模式禁止点击 */
+}
+
+.resume-mode .social-link svg {
+  width: 15px;
+  height: 15px;
+  color: var(--resume-accent);
+}
+
+.resume-mode .social-link:hover {
+  color: var(--resume-text-secondary);
+  background: none;
+  border: none;
+}
+
+/* 简历模式 - 区块标题 */
+.resume-mode .section-title {
+  font-size: 1.15rem;
+  color: var(--resume-text);
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--resume-accent);
+  gap: 8px;
+}
+
+.resume-mode .section-title svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* 简历模式 - 技术栈 */
+.resume-mode .skills-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.resume-mode .skill-category {
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+}
+
+.resume-mode .skill-category-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--resume-accent);
+  margin-bottom: 8px;
+}
+
+.resume-mode .skill-items {
+  gap: 6px;
+}
+
+.resume-mode .skill-item {
+  padding: 2px 0;
+  background: none;
+  color: var(--resume-text-secondary);
+  font-size: 13px;
+  border-radius: 0;
+  cursor: default;
+  position: relative;
+  padding-left: 14px;
+}
+
+.resume-mode .skill-item::before {
+  content: '•';
+  position: absolute;
+  left: 0;
+  color: var(--resume-accent);
+}
+
+.resume-mode .skill-item:hover {
+  background: none;
+  color: var(--resume-text);
+}
+
+/* 简历模式 - 历程 */
+.resume-mode .timeline {
+  padding-left: 0;
+}
+
+.resume-mode .timeline::before {
+  display: none;
+}
+
+.resume-mode .timeline-item {
+  padding: 0 0 12px;
+  border-left: none;
+  padding-left: 0;
+}
+
+.resume-mode .timeline-marker {
+  display: none;
+}
+
+.resume-mode .timeline-content {
+  display: flex;
+  gap: 16px;
+  align-items: baseline;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+}
+
+.resume-mode .timeline-year {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--resume-accent);
+  min-width: 42px;
+  margin-bottom: 0;
+}
+
+.resume-mode .timeline-text {
+  font-size: 14px;
+  color: var(--resume-text-secondary);
+  line-height: 1.5;
+}
+
+/* 简历模式 - 项目经历 */
+.resume-mode .projects-list {
+  gap: 0;
+}
+
+.resume-mode .project-item {
+  padding: 0 0 20px;
+  border-left: none;
+  padding-left: 0;
+  display: block;
+  position: relative;
+}
+
+.resume-mode .project-item:last-child {
+  padding-bottom: 0;
+}
+
+.resume-mode .project-item::before {
+  display: none;
+}
+
+.resume-mode .project-timeline {
+  width: auto;
+  margin-bottom: 4px;
+}
+
+.resume-mode .project-period {
+  font-size: 13px;
+  color: var(--resume-text-secondary);
+  font-weight: 400;
+}
+
+.resume-mode .project-detail {
+  padding: 0;
+}
+
+.resume-mode .project-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--resume-text);
+  margin-bottom: 2px;
+  display: inline;
+}
+
+.resume-mode .project-role {
+  display: inline;
+  font-size: 13px;
+  color: var(--resume-accent);
+  margin-left: 8px;
+}
+
+.resume-mode .project-desc {
+  font-size: 13px;
+  color: var(--resume-text-secondary);
+  line-height: 1.6;
+  margin: 6px 0 0;
+  padding-left: 14px;
+  position: relative;
+}
+
+.resume-mode .project-desc::before {
+  content: '▸';
+  position: absolute;
+  left: 0;
+  color: var(--resume-accent);
+  font-size: 12px;
+}
+
+.resume-mode .project-tags {
+  margin-top: 8px;
+  gap: 12px;
+}
+
+.resume-mode .project-tag {
+  padding: 0;
+  background: none;
+  color: var(--resume-text-secondary);
+  font-size: 12px;
+  border-radius: 0;
+}
+
+.resume-mode .project-tag::before {
+  content: '#';
+  color: var(--resume-accent);
+  margin-right: 1px;
+}
+
+/* 简历模式 - 自研项目 */
+.resume-mode .self-projects-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.resume-mode .self-project-card {
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  display: block;
+  transform: none !important;
+}
+
+.resume-mode .self-project-card:hover {
+  transform: none !important;
+  border: none;
+  box-shadow: none;
+}
+
+.resume-mode .self-project-icon {
+  display: none;
+}
+
+.resume-mode .self-project-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--resume-text);
+  margin-bottom: 2px;
+  display: inline;
+}
+
+.resume-mode .self-project-desc {
+  display: inline;
+  font-size: 13px;
+  color: var(--resume-text-secondary);
+  line-height: 1.6;
+}
+
+.resume-mode .self-project-desc::before {
+  content: ' — ';
+  color: var(--resume-text-secondary);
+}
+
+.resume-mode .self-project-tags {
+  margin-top: 6px;
+  gap: 10px;
+}
+
+.resume-mode .self-project-tag {
+  padding: 0;
+  background: none;
+  color: var(--resume-text-secondary);
+  font-size: 12px;
+  border-radius: 0;
+}
+
+.resume-mode .self-project-tag::before {
+  content: '#';
+  color: var(--resume-accent);
+  margin-right: 1px;
+}
+
+.resume-mode .self-project-links {
+  display: none;
+}
+
+/* 简历模式 - 切换按钮 */
+.resume-toggle {
+  position: fixed;
+  top: 20px;
+  right: 24px;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--bg-secondary, #fff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  color: var(--text-secondary, #64748b);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  transition: all 0.3s;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+
+.resume-toggle:hover {
+  border-color: var(--accent-primary, #4f46e5);
+  color: var(--accent-primary, #4f46e5);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+}
+
+.resume-toggle.active {
+  background: var(--accent-primary, #4f46e5);
+  border-color: var(--accent-primary, #4f46e5);
+  color: #fff;
+}
+
+.resume-toggle.active:hover {
+  opacity: 0.9;
+}
+
+/* 简历模式 - 响应式 */
+@media (max-width: 768px) {
+  .resume-mode {
+    padding: 16px 0;
+  }
+
+  .resume-mode .container {
+    padding: 0 12px;
+  }
+
+  .resume-mode .about-hero {
+    padding: 32px 24px 0;
+  }
+
+  .resume-mode .skills-section,
+  .resume-mode .timeline-section,
+  .resume-mode .projects-section,
+  .resume-mode .self-projects-section {
+    padding: 24px;
+  }
+
+  .resume-mode .about-card {
+    flex-direction: row;
+    gap: 20px;
+  }
+
+  .resume-mode .avatar-ring {
+    width: 64px;
+    height: 64px;
+  }
+
+  .resume-mode .about-name {
+    font-size: 1.35rem;
+  }
+
+  .resume-mode .about-links {
+    gap: 12px;
+  }
+
+  .resume-mode .skills-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .resume-mode .resume-toggle {
+    top: 12px;
+    right: 12px;
+    width: 36px;
+    height: 36px;
+  }
+}
+
+@media print {
+  .resume-toggle {
+    display: none !important;
+  }
+  
+  .resume-mode {
+    background: #fff !important;
+    padding: 0 !important;
   }
 }
 </style>

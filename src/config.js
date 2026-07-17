@@ -1,7 +1,7 @@
 // API 配置文件
 // 后端接口地址
-// export const API_BASE_URL = 'https://www.mpgapay.cn/website'
-export const API_BASE_URL = 'http://localhost:8014/website'
+export const API_BASE_URL = 'https://www.mpgapay.cn/website'
+// export const API_BASE_URL = 'http://localhost:8014/website'
 
 // API 接口路径配置
 export const API_PATHS = {
@@ -53,6 +53,10 @@ export const API_PATHS = {
 
   // 图片上传
   uploadImage: '/admin/article/uploadImage',
+  // 附件上传
+  uploadAttachment: '/file/upload',
+  // 附件下载
+  downloadFile: (fileId) => `/file/download/${fileId}`,
 
   // 文章标签
   insertArticleTag: (id, name, color) => `/admin/article/insertTag?id=${id || ''}&tagName=${encodeURIComponent(name)}&tagColor=${encodeURIComponent(color)}`,

@@ -90,8 +90,17 @@ const getActiveNav = () => {
   if (path.includes('/admin/tags')) {
     return 'tags'
   }
-  if (path.includes('/admin/articles') || path.includes('/admin/editor')) {
-    return 'articles'
+  if (path.includes('/admin/editor')) {
+    return 'drafts'
+  }
+  if (path.includes('/admin/projects')) {
+    return 'projects'
+  }
+  if (path.includes('/admin/self-projects')) {
+    return 'self-projects'
+  }
+  if (path.includes('/admin/profile')) {
+    return 'myinfo'
   }
   if (path.includes('/admin/apis')) {
     return 'apis'
@@ -105,7 +114,7 @@ const getActiveNav = () => {
 const activeNav = ref(getActiveNav())
 
 // 展开状态
-const expandedMenus = ref(['articles'])
+const expandedMenus = ref(['articles', 'profile'])
 
 const isExpanded = (item) => {
   return expandedMenus.value.includes(item.id)
@@ -163,21 +172,51 @@ const TagIcon = {
   ])
 }
 
+const ProfileIcon = {
+  render: () => h('svg', { xmlns: 'http://www.w3.org/2000/svg', width: '20', height: '20', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, [
+    h('path', { d: 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2' }),
+    h('circle', { cx: '12', cy: '7', r: '4' })
+  ])
+}
+
+const ProjectsIcon = {
+  render: () => h('svg', { xmlns: 'http://www.w3.org/2000/svg', width: '20', height: '20', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, [
+    h('path', { d: 'M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z' })
+  ])
+}
+
+const SelfProjectsIcon = {
+  render: () => h('svg', { xmlns: 'http://www.w3.org/2000/svg', width: '20', height: '20', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, [
+    h('polyline', { points: '16 18 22 12 16 6' }),
+    h('polyline', { points: '8 6 2 12 8 18' })
+  ])
+}
+
 const navItems = [
   { id: 'dashboard', label: '仪表盘', icon: DashboardIcon, path: '/admin/dashboard' },
   { 
     id: 'articles', 
     label: '文章管理', 
     icon: ArticlesIcon, 
-    path: '/admin/articles',
+    path: '/admin/published',
     children: [
       { id: 'tags', label: '标签管理', icon: TagIcon, path: '/admin/tags' },
       { id: 'drafts', label: '草稿箱', icon: DraftsIcon, path: '/admin/drafts' },
       { id: 'published', label: '已发布', icon: PublishedIcon, path: '/admin/published' }
-      
     ]
   },
-  { id: 'apis', label: 'API 管理', icon: ApisIcon, path: '/admin/apis' }
+  { id: 'apis', label: 'API 管理', icon: ApisIcon, path: '/admin/apis' },
+  {
+    id: 'profile',
+    label: '信息管理',
+    icon: ProfileIcon,
+    path: '/admin/profile',
+    children: [
+      { id: 'myinfo', label: '我的信息', icon: ProfileIcon, path: '/admin/profile' },
+      { id: 'projects', label: '项目经历', icon: ProjectsIcon, path: '/admin/projects' },
+      { id: 'self-projects', label: '自研项目', icon: SelfProjectsIcon, path: '/admin/self-projects' }
+    ]
+  }
 ]
 
 const handleNavClick = (item) => {
@@ -188,6 +227,11 @@ const handleNavClick = (item) => {
       expandedMenus.value.splice(index, 1)
     } else {
       expandedMenus.value.push(item.id)
+    }
+    // 有子菜单的父级也导航到对应页面
+    if (item.path) {
+      activeNav.value = item.id
+      router.push(item.path)
     }
   } else {
     activeNav.value = item.id

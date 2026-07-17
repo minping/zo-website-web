@@ -6,20 +6,22 @@
           <h1>API 管理</h1>
           <p>管理开放 API 接口</p>
         </div>
-        <button class="btn btn-primary" @click="openEditor()">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="12" y1="5" x2="12" y2="19"/>
-            <line x1="5" y1="12" x2="19" y2="12"/>
-          </svg>
-          新建 API
-        </button>
-        <button class="btn btn-secondary" @click="showTagModal = true">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
-            <line x1="7" y1="7" x2="7.01" y2="7"/>
-          </svg>
-          管理标签
-        </button>
+        <div class="header-actions">
+          <button class="btn btn-primary" @click="openEditor()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            新建 API
+          </button>
+          <button class="btn btn-secondary" @click="showTagModal = true">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+              <line x1="7" y1="7" x2="7.01" y2="7"/>
+            </svg>
+            管理标签
+          </button>
+        </div>
       </header>
 
       <!-- 筛选栏 -->
@@ -51,17 +53,14 @@
       </div>
 
       <div v-else class="api-grid">
-        <div v-for="api in paginatedApis" :key="api.id" class="api-card">
+        <div v-for="api in paginatedApis" :key="api.id" class="api-card" @click="editApi(api)">
           <div class="api-card-header">
             <div class="api-title">
               <h3>{{ api.name }}</h3>
               <span class="api-method" :style="{ background: methodColors[api.method] }">{{ api.method }}</span>
             </div>
             <div class="api-actions">
-              <button class="action-btn edit" @click="editApi(api)" title="编辑">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-              </button>
-              <button class="action-btn delete" @click="confirmDelete(api)" title="删除">
+              <button class="action-btn delete" @click.stop="confirmDelete(api)" title="删除">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
               </button>
             </div>
@@ -345,9 +344,11 @@ onMounted(() => {
 
 .content-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .content-header h1 {
@@ -360,6 +361,12 @@ onMounted(() => {
 .content-header p {
   color: var(--admin-text-secondary);
   font-size: 14px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
 }
 
 /* 筛选栏 */
@@ -446,6 +453,7 @@ onMounted(() => {
   padding: 20px;
   transition: all 0.3s;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  cursor: pointer;
 }
 
 .api-card:hover {

@@ -61,46 +61,64 @@
                 </span>
               </div>
             </div>
+            <div class="api-header-right">
+              <button class="export-skill-btn" @click="exportSkill">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="7 10 12 15 17 10"/>
+                  <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                导出 Skill
+              </button>
+            </div>
           </header>
 
           <!-- API 统计数据 -->
           <div class="api-stats-grid">
             <div class="stat-card">
               <div class="stat-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
                 </svg>
               </div>
-              <span class="stat-value">{{ apiData.stats.calls }}</span>
-              <span class="stat-label">累计调用</span>
+              <div class="stat-info">
+                <span class="stat-value">{{ apiData.stats.calls }}</span>
+                <span class="stat-label">累计调用</span>
+              </div>
             </div>
             <div class="stat-card">
               <div class="stat-icon success">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <polyline points="20 6 9 17 4 12"/>
                 </svg>
               </div>
-              <span class="stat-value">{{ apiData.stats.successRate }}%</span>
-              <span class="stat-label">请求成功率</span>
+              <div class="stat-info">
+                <span class="stat-value">{{ apiData.stats.successRate }}%</span>
+                <span class="stat-label">请求成功率</span>
+              </div>
             </div>
             <div class="stat-card">
               <div class="stat-icon time">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <circle cx="12" cy="12" r="10"/>
                   <polyline points="12 6 12 12 16 14"/>
                 </svg>
               </div>
-              <span class="stat-value">{{ apiData.responseTime }}ms</span>
-              <span class="stat-label">平均响应</span>
+              <div class="stat-info">
+                <span class="stat-value">{{ apiData.responseTime }}ms</span>
+                <span class="stat-label">平均响应</span>
+              </div>
             </div>
             <div class="stat-card">
               <div class="stat-icon like">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
                 </svg>
               </div>
-              <span class="stat-value">{{ apiData.stats.likes }}</span>
-              <span class="stat-label">用户点赞</span>
+              <div class="stat-info">
+                <span class="stat-value">{{ apiData.stats.likes }}</span>
+                <span class="stat-label">用户点赞</span>
+              </div>
             </div>
           </div>
 
@@ -162,6 +180,53 @@
               </div>
             </div>
 
+            <!-- 入参列表 -->
+            <div v-if="displayParams.length > 0" class="detail-card full-width">
+              <div class="detail-header">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="16 18 22 12 16 6"/>
+                  <polyline points="8 6 2 12 8 18"/>
+                </svg>
+                <span>入参列表</span>
+              </div>
+              <div class="param-table-wrapper">
+                <table class="param-table">
+                  <colgroup>
+                    <col style="width: 16%">
+                    <col style="width: 10%">
+                    <col style="width: 10%">
+                    <col style="width: 8%">
+                    <col style="width: 32%">
+                    <col style="width: 24%">
+                  </colgroup>
+                  <thead>
+                    <tr>
+                      <th>参数名</th>
+                      <th>类型</th>
+                      <th>传入方法</th>
+                      <th>必填</th>
+                      <th>默认值</th>
+                      <th>说明</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(param, idx) in displayParams" :key="idx">
+                      <td><code :title="param.name">{{ param.name }}</code></td>
+                      <td><span class="type-badge">{{ param.type }}</span></td>
+                      <td><span class="param-method-badge">{{ param.method || '-' }}</span></td>
+                      <td>
+                        <span class="required-badge" :class="{ required: param.required }">
+                          {{ param.required ? '是' : '否' }}
+                        </span>
+                      </td>
+                      <td><code :title="param.defaultValue || '-'">{{ param.defaultValue || '-' }}</code></td>
+                      <td class="param-desc" :title="param.description || '-'">{{ param.description || '-' }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
             <!-- 返回示例 -->
             <div class="detail-card full-width">
               <div class="detail-header">
@@ -188,7 +253,6 @@
               </div>
             </div>
 
-
           </div>
         </div>
       </div>
@@ -200,7 +264,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { getApiDetail, methodColors } from '../api/modules'
 import Navbar from './Navbar.vue'
@@ -214,6 +278,27 @@ const error = ref(null)
 const apiData = ref(null)
 const copied = ref(false)
 const responseCopied = ref(false)
+
+// 解析入参列表（兼容 JSON 字符串格式）
+const displayParams = computed(() => {
+  const raw = apiData.value?.inputParams || apiData.value?.paramList
+  if (!raw) return []
+  let list = raw
+  if (typeof raw === 'string') {
+    try { list = JSON.parse(raw) } catch { return [] }
+  }
+  if (!Array.isArray(list)) return []
+  return list
+    .filter(p => p.deleted !== '1' && p.deleted !== 1)
+    .map(p => ({
+      name: p.para || p.name || '',
+      description: p.desc || p.description || '',
+      type: p.type || 'string',
+      method: p.method || '',
+      required: p.required ?? false,
+      defaultValue: p.defaultValue || p.default_value || ''
+    }))
+})
 
 // 获取 API 详情
 const fetchApiDetail = async (id) => {
@@ -266,6 +351,91 @@ const getResponseExample = (api) => {
   "message": "success",
   "data": {}
 }`
+}
+
+// 导出 Skill - 生成 AI 可用的接口调用文档
+const exportSkill = () => {
+  const api = apiData.value
+  if (!api) return
+
+  const params = displayParams.value
+  const responseExample = getResponseExample(api)
+
+  // 构建参数表格
+  const paramRows = params.length > 0
+    ? params.map(p => {
+        return `| \`${p.name}\` | \`${p.type}\` | ${p.method || '-'} | ${p.required ? '**是**' : '否'} | \`${p.defaultValue || '-'}\` | ${p.description || '-'} |`
+      }).join('\n')
+    : '| - | - | - | - | - | 无参数 |'
+
+  const paramTable = params.length > 0
+    ? `| 参数名 | 类型 | 传入方法 | 必填 | 默认值 | 说明 |
+|--------|------|----------|------|--------|------|
+${paramRows}`
+    : `| 参数名 | 类型 | 传入方法 | 必填 | 默认值 | 说明 |
+|--------|------|----------|------|--------|------|
+${paramRows}`
+
+  const content = `# ${api.name}
+
+## 概述
+
+${api.description || '暂无描述'}
+
+## 接口信息
+
+| 属性 | 值 |
+|------|-----|
+| **请求方法** | \`${api.method}\` |
+| **请求路径** | \`${api.endpoint}\` |
+| **付费状态** | ${api.isFree ? '免费' : '付费'} |
+
+## 入参列表
+
+${paramTable}
+
+## 返回示例
+
+\`\`\`json
+${responseExample}
+\`\`\`
+
+## AI 调用指引
+
+当用户请求调用 **${api.name}** 接口时，请按以下方式构建请求：
+
+1. **请求方法**: \`${api.method}\`
+2. **请求地址**: \`${api.endpoint}\`
+${params.length > 0 ? `3. **请求参数**: 根据入参列表传入对应参数，必填参数必须提供，可选参数按需传入。` : '3. **请求参数**: 无需额外参数。'}
+${params.filter(p => p.method).length > 0 ? `4. **参数传递方式**: 根据各参数的"传入方法"字段，分别通过 Query、Body、Header 等方式传递。` : ''}
+${params.length > 0 ? `
+### 请求示例 (curl)
+
+\`\`\`bash
+curl -X ${api.method} "${api.endpoint}${api.method === 'GET' || api.method === 'DELETE' ? params.length > 0 ? '?' + params.filter(p => p.required).map(p => p.name + '=VALUE').join('&') : '' : ''}" \\
+${api.method === 'POST' || api.method === 'PUT' ? params.length > 0 ? `  -H "Content-Type: application/json" \\
+  -d '{
+${params.filter(p => p.required).map(p => `    "${p.name}": "${p.type === 'number' ? '0' : 'string'}"`).join(',\n')}
+  }'` : '' : ''}
+\`\`\`
+` : ''}
+---
+
+> 此文档由系统自动生成，用于 AI 辅助调用 ${api.name} 接口。
+> 生成时间: ${new Date().toISOString()}
+`
+
+  // 创建 Blob 并触发下载
+  const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  const safeName = api.name.replace(/[\\/:*?"<>|]/g, '_')
+  link.download = `${safeName}-skill.md`
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
 }
 
 // 导航处理
@@ -414,10 +584,19 @@ onMounted(() => {
 /* API 头部 */
 .api-header {
   margin-bottom: 32px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
 }
 
 .api-header-left {
   flex: 1;
+}
+
+.api-header-right {
+  flex-shrink: 0;
+  padding-top: 4px;
 }
 
 .api-title-row {
@@ -475,16 +654,18 @@ onMounted(() => {
 .api-stats-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-  margin-bottom: 40px;
+  gap: 16px;
+  margin-bottom: 24px;
 }
 
 .stat-card {
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-radius: 12px;
-  padding: 24px;
-  text-align: center;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
   transition: all 0.3s ease;
 }
 
@@ -494,15 +675,21 @@ onMounted(() => {
 }
 
 .stat-icon {
-  width: 48px;
-  height: 48px;
-  margin: 0 auto 12px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: rgba(59, 130, 246, 0.1);
-  border-radius: 12px;
+  border-radius: 10px;
   color: var(--accent-primary);
+  flex-shrink: 0;
+}
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .stat-icon.success {
@@ -521,22 +708,21 @@ onMounted(() => {
 }
 
 .stat-value {
-  display: block;
-  font-size: 1.5rem;
+  font-size: 1.3rem;
   font-weight: 700;
   color: var(--text-primary);
-  margin-bottom: 4px;
+  line-height: 1.3;
 }
 
 .stat-label {
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   color: var(--text-secondary);
 }
 
 /* 详情卡片 */
 .api-details-grid {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr;
+  grid-template-columns: 3fr 1fr 1fr;
   gap: 20px;
 }
 
@@ -604,6 +790,30 @@ onMounted(() => {
 .copy-btn:hover {
   border-color: var(--accent-primary);
   color: var(--accent-primary);
+}
+
+/* 导出 Skill 按钮 */
+.export-skill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(59, 130, 246, 0.1));
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 8px;
+  color: #8b5cf6;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.3s ease;
+}
+
+.export-skill-btn:hover {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(59, 130, 246, 0.2));
+  border-color: #8b5cf6;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.2);
 }
 
 /* 方法信息 */
@@ -680,6 +890,97 @@ onMounted(() => {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 16px;
+}
+
+/* 入参列表 */
+.param-table-wrapper {
+  overflow-x: auto;
+}
+
+.param-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+
+.param-table th {
+  padding: 12px 16px;
+  background: var(--bg-card);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.param-table td {
+  padding: 12px 16px;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-color);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 0;
+}
+
+.param-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.param-table tbody tr:hover {
+  background: rgba(59, 130, 246, 0.04);
+}
+
+.param-table code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  color: var(--accent-primary);
+  background: rgba(59, 130, 246, 0.06);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.type-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  background: rgba(139, 92, 246, 0.1);
+  color: #8b5cf6;
+  font-size: 0.8rem;
+  font-weight: 500;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.param-method-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+  font-size: 0.8rem;
+  font-weight: 500;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.required-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  background: rgba(107, 114, 128, 0.1);
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 500;
+  border-radius: 4px;
+}
+
+.required-badge.required {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.param-desc {
+  color: var(--text-secondary);
+  line-height: 1.5;
 }
 
 .status-item {

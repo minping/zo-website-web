@@ -6,7 +6,6 @@ import About from '../components/About.vue'
 import ApiPage from '../components/ApiPage.vue'
 import ApiDetail from '../components/ApiDetail.vue'
 import AdminDashboard from '../components/admin/AdminDashboard.vue'
-import AdminArticleList from '../components/admin/AdminArticleList.vue'
 import AdminDraftList from '../components/admin/AdminDraftList.vue'
 import AdminPublishedList from '../components/admin/AdminPublishedList.vue'
 import AdminArticleEditor from '../components/admin/AdminArticleEditor.vue'
@@ -14,6 +13,9 @@ import AdminApiList from '../components/admin/AdminApiList.vue'
 import AdminApiEditor from '../components/admin/AdminApiEditor.vue'
 import AdminTagManagement from '../components/admin/AdminTagManagement.vue'
 import AdminLogin from '../components/admin/AdminLogin.vue'
+import AdminMyInfo from '../components/admin/AdminMyInfo.vue'
+import AdminProjects from '../components/admin/AdminProjects.vue'
+import AdminSelfProjects from '../components/admin/AdminSelfProjects.vue'
 
 const routes = [
   {
@@ -62,12 +64,6 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
-    path: '/admin/articles',
-    name: 'AdminArticleList',
-    component: AdminArticleList,
-    meta: { requiresAuth: true }
-  },
-  {
     path: '/admin/drafts',
     name: 'AdminDraftList',
     component: AdminDraftList,
@@ -101,6 +97,24 @@ const routes = [
     path: '/admin/tags',
     name: 'AdminTagManagement',
     component: AdminTagManagement,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/admin/profile',
+    name: 'AdminMyInfo',
+    component: AdminMyInfo,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/admin/projects',
+    name: 'AdminProjects',
+    component: AdminProjects,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/admin/self-projects',
+    name: 'AdminSelfProjects',
+    component: AdminSelfProjects,
     meta: { requiresAuth: true }
   },
   ]

@@ -1,12 +1,21 @@
 <template>
-  <div class="article-detail">
+  <div class="article-detail" :class="{ 'immersive-mode': isImmersiveMode }">
     <!-- 背景效果 -->
-    <div class="bg-grid"></div>
-    <div class="bg-glow bg-glow-1"></div>
-    <div class="bg-glow bg-glow-2"></div>
+    <div v-if="!isImmersiveMode" class="bg-grid"></div>
+    <div v-if="!isImmersiveMode" class="bg-glow bg-glow-1"></div>
+    <div v-if="!isImmersiveMode" class="bg-glow bg-glow-2"></div>
 
     <!-- 导航栏 -->
-    <Navbar activeMenu="文章" @navigate="handleNavigate" />
+    <Navbar v-if="!isImmersiveMode" activeMenu="文章" @navigate="handleNavigate" />
+
+    <!-- 沉浸式阅读切换按钮 -->
+    <button class="immersive-toggle" :class="{ active: isImmersiveMode }" @click="toggleImmersiveMode" :title="isImmersiveMode ? '退出沉浸式阅读' : '沉浸式阅读'">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+      </svg>
+      <span class="immersive-label">{{ isImmersiveMode ? '退出' : '沉浸阅读' }}</span>
+    </button>
 
     <!-- 文章内容 -->
     <main class="article-main">
@@ -30,7 +39,7 @@
 
         <article v-else class="article-container">
           <!-- 返回按钮 -->
-          <button class="back-btn" @click="goHome">
+          <button v-if="!isImmersiveMode" class="back-btn" @click="goHome">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <line x1="19" y1="12" x2="5" y2="12"/>
               <polyline points="12 19 5 12 12 5"/>
@@ -41,30 +50,70 @@
           <!-- 文章头部 -->
           <header class="article-header">
             <h1 class="article-title">{{ article.title }}</h1>
-            <div class="article-tag" :style="{ background: article.tagColor }">
-              {{ article.tag }}
-            </div>
-            <div class="article-meta">
-              <div class="article-author">
-                <div class="author-avatar">{{ article.author ? article.author[0] : '' }}</div>
-                <span class="author-name">{{ article.author }}</span>
+            <p class="article-desc">{{ article.desc }}</p>
+            <div v-if="!isImmersiveMode" class="article-info-row">
+              <div class="article-tag" :style="{ background: article.tagColor }">
+                {{ article.tag }}
               </div>
-              <span class="meta-divider">|</span>
-              <span class="article-date">{{ article.date }}</span>
-              <span class="meta-divider">|</span>
-              <span class="article-read">{{ article.readTime }} 分钟阅读</span>
+              <div class="article-meta">
+                <div class="article-author">
+                  <div class="author-avatar">{{ article.author ? article.author[0] : '' }}</div>
+                  <span class="author-name">{{ article.author }}</span>
+                </div>
+                <span class="meta-divider">|</span>
+                <span class="article-date">{{ article.date }}</span>
+                <span class="meta-divider">|</span>
+                <span class="article-read">{{ article.readTime }} 分钟阅读</span>
+              </div>
             </div>
           </header>
 
           <!-- 文章封面 -->
-          <div class="article-cover" :style="{ background: article.gradient }">
+          <!-- <div v-if="!isImmersiveMode" class="article-cover" :style="{ background: article.gradient }">
             <div class="cover-pattern"></div>
-          </div>
+          </div> -->
 
           <!-- 文章正文 -->
           <div class="article-body">
+            <!-- 目录侧边栏 -->
+            <aside v-if="!isImmersiveMode && toc.length > 0" class="article-toc">
+              <div class="toc-container">
+                <div class="toc-header">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="3" y1="6" x2="21" y2="6"/>
+                    <line x1="3" y1="12" x2="21" y2="12"/>
+                    <line x1="3" y1="18" x2="21" y2="18"/>
+                  </svg>
+                  <span>目录</span>
+                </div>
+                <nav class="toc-nav">
+                  <a 
+                    v-for="item in toc" 
+                    :key="item.id"
+                    :href="'#' + item.id"
+                    class="toc-link"
+                    :class="{ 
+                      active: activeHeading === item.id,
+                      'toc-h2': item.level === 2,
+                      'toc-h3': item.level === 3,
+                      'toc-h4': item.level === 4,
+                      'toc-h5': item.level === 5,
+                      'toc-h6': item.level === 6
+                    }"
+                    @click.prevent="scrollToHeading(item.id)"
+                  >
+                    {{ item.text }}
+                  </a>
+                </nav>
+              </div>
+            </aside>
+
+            <div class="article-content">
+              <div v-html="articleContent"></div>
+            </div>
+            
             <!-- 文章推荐侧边栏 -->
-            <aside class="article-sidebar">
+            <aside v-if="!isImmersiveMode" class="article-sidebar">
               <div class="sidebar-section">
                 <div class="sidebar-header">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -99,54 +148,54 @@
                 </div>
               </div>
             </aside>
-
-            <div class="article-content">
-              <p class="lead">{{ article.desc }}</p>
-              <div v-html="articleContent"></div>
-            </div>
-            
-            <!-- 目录侧边栏 -->
-            <aside v-if="toc.length > 0" class="article-toc">
-              <div class="toc-container">
-                <div class="toc-header">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="3" y1="6" x2="21" y2="6"/>
-                    <line x1="3" y1="12" x2="21" y2="12"/>
-                    <line x1="3" y1="18" x2="21" y2="18"/>
-                  </svg>
-                  <span>目录</span>
-                </div>
-                <nav class="toc-nav">
-                  <a 
-                    v-for="item in toc" 
-                    :key="item.id"
-                    :href="'#' + item.id"
-                    class="toc-link"
-                    :class="{ 
-                      active: activeHeading === item.id,
-                      'toc-h2': item.level === 2,
-                      'toc-h3': item.level === 3,
-                      'toc-h4': item.level === 4,
-                      'toc-h5': item.level === 5,
-                      'toc-h6': item.level === 6
-                    }"
-                    @click.prevent="scrollToHeading(item.id)"
-                  >
-                    {{ item.text }}
-                  </a>
-                </nav>
-              </div>
-            </aside>
           </div>
 
           <!-- 文章标签 -->
-          <div class="article-tags">
+          <div v-if="!isImmersiveMode && attachments.length > 0" class="article-attachments">
+            <div class="attachments-header">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+              </svg>
+              <span>附件下载 ({{ attachments.length }})</span>
+            </div>
+            <div class="attachments-list">
+              <a
+                v-for="(file, index) in attachments"
+                :key="file.id || index"
+                :href="getDownloadUrl(file)"
+                class="attachment-item"
+                target="_blank"
+                :title="'下载 ' + file.name"
+              >
+                <div class="attachment-item-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
+                    <polyline points="13 2 13 9 20 9"/>
+                  </svg>
+                </div>
+                <div class="attachment-item-info">
+                  <span class="attachment-item-name">{{ file.name }}</span>
+                  <span class="attachment-item-size">{{ formatFileSize(file.size) }}</span>
+                </div>
+                <div class="attachment-item-download">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                </div>
+              </a>
+            </div>
+          </div>
+
+          <!-- 文章标签 -->
+          <div v-if="!isImmersiveMode" class="article-tags">
             <span class="tags-label">标签：</span>
             <a href="#" class="tag-item" :style="{ '--tag-color': article.tagColor || '#3b82f6' }">{{ article.tag }}</a>
           </div>
 
           <!-- 点赞分享 -->
-          <div class="article-actions">
+          <div v-if="!isImmersiveMode" class="article-actions">
             <button class="action-btn like-btn" :class="{ active: isLiked }" @click="toggleLike">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" :fill="isLiked ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
@@ -203,6 +252,7 @@
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { api } from '../api/article'
+import { API_BASE_URL } from '../config'
 import { marked } from 'marked'
 import hljs from 'highlight.js'
 import Navbar from './Navbar.vue'
@@ -262,8 +312,39 @@ const relatedArticles = ref([])
 const showBackTop = ref(false)
 const showShare = ref(false)
 const copySuccess = ref(false)
+const isImmersiveMode = ref(false)
 
 const article = ref({})
+
+// 附件列表
+const attachments = ref([])
+
+// 文件大小格式化
+const formatFileSize = (bytes) => {
+  if (!bytes || bytes === 0) return '未知大小'
+  const k = 1024
+  const sizes = ['B', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i]
+}
+
+// 获取附件下载地址
+const getDownloadUrl = (file) => {
+  if (!file.id) return '#'
+  return `${API_BASE_URL}/file/download/${file.id}`
+}
+
+// 解析附件JSON
+const parseAttachments = (filesData) => {
+  if (!filesData) return []
+  try {
+    const parsed = typeof filesData === 'string' ? JSON.parse(filesData) : filesData
+    return Array.isArray(parsed) ? parsed : []
+  } catch (e) {
+    console.warn('附件数据解析失败:', e)
+    return []
+  }
+}
 
 // 提取目录结构（支持所有级别标题 # 到 ######，忽略代码块内的标题）
 const toc = computed(() => {
@@ -336,6 +417,7 @@ const fetchArticle = async (id) => {
     if (res.success) {
       article.value = res.data
       likeCount.value = res.data.likes || 0
+      attachments.value = parseAttachments(res.data.files)
       // 调用浏览接口
       api.viewArticle(id)
       // 获取相关文章
@@ -374,6 +456,12 @@ const toggleLike = async () => {
   isLiked.value = true
   likeCount.value += 1
   await api.likeArticle(article.value.id)
+}
+
+const toggleImmersiveMode = () => {
+  isImmersiveMode.value = !isImmersiveMode.value
+  // 切换后滚动到顶部
+  window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
 // 分享相关
@@ -593,15 +681,29 @@ onUnmounted(() => {
   font-size: 0.875rem;
   font-weight: 600;
   color: white;
-  margin-bottom: 20px;
+}
+
+.article-info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 0;
 }
 
 .article-title {
   font-size: 2.5rem;
   font-weight: 700;
   line-height: 1.3;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
   letter-spacing: -0.02em;
+}
+
+.article-desc {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  margin-bottom: 24px;
 }
 
 .article-meta {
@@ -659,7 +761,7 @@ onUnmounted(() => {
 /* 文章内容 */
 .article-body {
   display: grid;
-  grid-template-columns: 240px 1fr 200px;
+  grid-template-columns: 200px 1fr 240px;
   gap: 32px;
   margin-bottom: 48px;
 }
@@ -791,15 +893,6 @@ onUnmounted(() => {
   margin-bottom: 20px;
 }
 
-.article-content .lead {
-  font-size: 1.125rem;
-  color: var(--text-primary);
-  padding: 24px;
-  background: var(--bg-card);
-  border-radius: 12px;
-  border-left: 4px solid var(--accent-primary);
-  margin-bottom: 32px;
-}
 
 .article-content ul {
   padding-left: 24px;
@@ -862,16 +955,6 @@ onUnmounted(() => {
   font-size: 1.05rem;
 }
 
-.article-content :deep(.lead) {
-  font-size: 1.15rem;
-  color: var(--text-primary);
-  padding: 24px;
-  background: var(--bg-card);
-  border-radius: 12px;
-  border-left: 4px solid var(--accent-primary);
-  margin-bottom: 32px;
-  line-height: 1.8;
-}
 
 .article-content :deep(ul),
 .article-content :deep(ol) {
@@ -940,6 +1023,7 @@ onUnmounted(() => {
 
 .article-content :deep(table) {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
   margin: 28px 0;
   border-radius: 10px;
@@ -952,6 +1036,10 @@ onUnmounted(() => {
   padding: 14px 18px;
   border: 1px solid var(--border-color);
   text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 0;
 }
 
 .article-content :deep(th) {
@@ -1223,6 +1311,145 @@ onUnmounted(() => {
 }
 
 /* 文章标签 */
+.article-attachments {
+  padding: 24px 0;
+  border-top: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 24px;
+}
+
+.attachments-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.attachments-header svg {
+  color: var(--accent-primary);
+}
+
+.attachments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.attachment-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.attachment-item:hover {
+  border-color: var(--accent-primary);
+  background: var(--accent-glow);
+}
+
+.attachment-item-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--accent-primary);
+  flex-shrink: 0;
+}
+
+.attachment-item-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.attachment-item-name {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.attachment-item-size {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.attachment-item-download {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.attachment-item:hover .attachment-item-download {
+  color: var(--accent-primary);
+  background: rgba(59, 130, 246, 0.1);
+}
+
+/* 沉浸模式 - 附件 */
+.immersive-mode .article-attachments {
+  border-top-color: var(--im-border);
+  border-bottom-color: var(--im-border);
+}
+
+.immersive-mode .attachments-header {
+  color: var(--im-text);
+}
+
+.immersive-mode .attachments-header svg {
+  color: var(--im-accent);
+}
+
+.immersive-mode .attachment-item {
+  background: var(--im-card-bg);
+  border-color: var(--im-border);
+}
+
+.immersive-mode .attachment-item:hover {
+  border-color: var(--im-accent);
+  background: rgba(180, 160, 140, 0.1);
+}
+
+.immersive-mode .attachment-item-icon {
+  background: rgba(139, 115, 85, 0.12);
+  color: var(--im-accent);
+}
+
+.immersive-mode .attachment-item-name {
+  color: var(--im-text);
+}
+
+.immersive-mode .attachment-item-size {
+  color: var(--im-text-light);
+}
+
+.immersive-mode .attachment-item:hover .attachment-item-download {
+  color: var(--im-accent);
+  background: rgba(139, 115, 85, 0.12);
+}
+
+/* 文章标签 */
 .article-tags {
   display: flex;
   align-items: center;
@@ -1443,7 +1670,7 @@ onUnmounted(() => {
 /* 响应式 */
 @media (max-width: 1100px) {
   .article-body {
-    grid-template-columns: 1fr 200px;
+    grid-template-columns: 200px 1fr;
   }
   
   .article-sidebar {
@@ -1518,4 +1745,393 @@ onUnmounted(() => {
     height: 40px;
   }
 }
+
+/* ========== 沉浸式阅读模式 ========== */
+.immersive-mode {
+  --im-bg: #f5f0e6;
+  --im-text: #3d3226;
+  --im-text-light: #6b5d4f;
+  --im-accent: #8b7355;
+  --im-border: #d4c8b4;
+  --im-card-bg: #faf7f0;
+}
+
+.immersive-mode {
+  background: var(--im-bg) !important;
+  min-height: 100vh;
+}
+
+/* 沉浸模式 - 隐藏背景效果 */
+.immersive-mode .bg-grid,
+.immersive-mode .bg-glow {
+  display: none !important;
+}
+
+/* 沉浸模式 - 文章主体布局 */
+.immersive-mode .article-main {
+  padding-top: 32px;
+  padding-bottom: 80px;
+}
+
+.immersive-mode .article-container {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 48px 40px;
+  background: var(--im-card-bg);
+  border-radius: 4px;
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.04),
+    0 8px 24px rgba(0, 0, 0, 0.06);
+  position: relative;
+}
+
+/* 书页纹理遮罩 */
+.immersive-mode .article-container::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 4px;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 28px,
+      rgba(180, 160, 130, 0.04) 28px,
+      rgba(180, 160, 130, 0.04) 29px
+    );
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* 沉浸模式 - 文章标题 */
+.immersive-mode .article-header {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  margin-bottom: 40px;
+  padding-bottom: 32px;
+  border-bottom: 2px solid var(--im-border);
+}
+
+.immersive-mode .article-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--im-text);
+  line-height: 1.5;
+  letter-spacing: 0.04em;
+  font-family: 'Noto Serif SC', 'Source Han Serif SC', 'STSong', 'SimSun', 'Georgia', 'Times New Roman', serif;
+}
+
+.immersive-mode .article-desc {
+  font-size: 0.95rem;
+  color: var(--im-text-light);
+  line-height: 1.7;
+  margin-bottom: 0;
+}
+
+/* 沉浸模式 - 正文 */
+.immersive-mode .article-body {
+  display: block;
+  position: relative;
+  z-index: 1;
+}
+
+.immersive-mode .article-content {
+  max-width: 100%;
+  font-family: 'Noto Serif SC', 'Source Han Serif SC', 'STSong', 'Georgia', 'Times New Roman', serif;
+}
+
+/* 沉浸模式 - 段落 */
+.immersive-mode .article-content :deep(p) {
+  font-size: 1.1rem;
+  line-height: 2;
+  color: var(--im-text);
+  margin-bottom: 28px;
+  text-indent: 2em;
+  letter-spacing: 0.02em;
+}
+
+
+/* 沉浸模式 - 标题 */
+.immersive-mode .article-content :deep(h1),
+.immersive-mode .article-content :deep(h2),
+.immersive-mode .article-content :deep(h3),
+.immersive-mode .article-content :deep(h4),
+.immersive-mode .article-content :deep(h5),
+.immersive-mode .article-content :deep(h6) {
+  font-family: 'Noto Serif SC', 'Source Han Serif SC', 'STSong', 'Georgia', 'Times New Roman', serif;
+  color: var(--im-text);
+  margin-top: 48px;
+  margin-bottom: 24px;
+  font-weight: 700;
+}
+
+.immersive-mode .article-content :deep(h1) {
+  font-size: 1.8rem;
+  text-align: center;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--im-border);
+}
+
+.immersive-mode .article-content :deep(h2) {
+  font-size: 1.45rem;
+  padding-left: 0;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--im-border);
+}
+
+.immersive-mode .article-content :deep(h2)::before {
+  display: none;
+}
+
+.immersive-mode .article-content :deep(h3) {
+  font-size: 1.25rem;
+}
+
+.immersive-mode .article-content :deep(h4) {
+  font-size: 1.1rem;
+  color: var(--im-text-light);
+}
+
+/* 沉浸模式 - 引用块 */
+.immersive-mode .article-content :deep(blockquote) {
+  padding: 20px 28px;
+  margin: 32px 0;
+  background: rgba(180, 160, 140, 0.1);
+  border-left: 3px solid var(--im-accent);
+  border-radius: 0 4px 4px 0;
+  color: var(--im-text-light);
+  font-style: italic;
+  quotes: "\201C""\201D""\2018""\2019";
+}
+
+.immersive-mode .article-content :deep(blockquote p) {
+  text-indent: 0;
+  margin-bottom: 0;
+}
+
+/* 沉浸模式 - 列表 */
+.immersive-mode .article-content :deep(ul),
+.immersive-mode .article-content :deep(ol) {
+  padding-left: 28px;
+  margin-bottom: 28px;
+  color: var(--im-text);
+}
+
+.immersive-mode .article-content :deep(li) {
+  margin-bottom: 12px;
+  line-height: 1.9;
+}
+
+.immersive-mode .article-content :deep(ul li)::marker {
+  color: var(--im-accent);
+}
+
+.immersive-mode .article-content :deep(ol li)::marker {
+  color: var(--im-accent);
+  font-weight: 600;
+}
+
+/* 沉浸模式 - 代码块 */
+.immersive-mode .article-content :deep(.code-block) {
+  background: #faf8f4;
+  border: 1px solid var(--im-border);
+  border-radius: 6px;
+  margin: 32px 0;
+}
+
+.immersive-mode .article-content :deep(.code-header) {
+  background: linear-gradient(180deg, #f5f1e9 0%, #efe9dc 100%);
+  border-bottom: 1px solid var(--im-border);
+}
+
+.immersive-mode .article-content :deep(.code-lang) {
+  background: linear-gradient(135deg, #8b7355, #6b5d4f);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.immersive-mode .article-content :deep(.copy-btn) {
+  background: #faf7f0;
+  border-color: var(--im-border);
+  color: var(--im-text-light);
+}
+
+.immersive-mode .article-content :deep(.copy-btn:hover) {
+  background: #f5f0e6;
+}
+
+.immersive-mode .article-content :deep(.code-block code) {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 0.875rem;
+  color: #4a3f34;
+}
+
+.immersive-mode .article-content :deep(pre) {
+  scrollbar-color: #c4b8a8 #faf8f4;
+}
+
+/* 沉浸模式 - 行内代码 */
+.immersive-mode .article-content :deep(code:not(pre code)) {
+  padding: 2px 8px;
+  background: rgba(180, 160, 140, 0.15);
+  border: 1px solid var(--im-border);
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', 'Consolas', monospace;
+  font-size: 0.88em;
+  color: #8b6914;
+}
+
+/* 沉浸模式 - 链接 */
+.immersive-mode .article-content :deep(a) {
+  color: var(--im-accent);
+  border-bottom: 1px dashed var(--im-accent);
+}
+
+.immersive-mode .article-content :deep(a:hover) {
+  border-bottom-style: solid;
+}
+
+/* 沉浸模式 - 图片 */
+.immersive-mode .article-content :deep(img) {
+  max-width: 100%;
+  border-radius: 4px;
+  margin: 32px auto;
+  display: block;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* 沉浸模式 - 表格 */
+.immersive-mode .article-content :deep(table) {
+  border: 1px solid var(--im-border);
+}
+
+.immersive-mode .article-content :deep(th) {
+  background: rgba(180, 160, 140, 0.12);
+  color: var(--im-text);
+  font-weight: 600;
+}
+
+.immersive-mode .article-content :deep(th),
+.immersive-mode .article-content :deep(td) {
+  border-color: var(--im-border);
+  padding: 12px 16px;
+  color: var(--im-text);
+}
+
+.immersive-mode .article-content :deep(tr:hover td) {
+  background: rgba(180, 160, 140, 0.06);
+}
+
+/* 沉浸模式 - 分割线 */
+.immersive-mode .article-content :deep(hr) {
+  height: 1px;
+  background: var(--im-border);
+  margin: 40px 0;
+  border: none;
+}
+
+/* 沉浸模式 - 切换按钮 */
+.immersive-toggle {
+  position: fixed;
+  top: 100px;
+  right: 60px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  background: var(--bg-card, #fff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 22px;
+  color: var(--text-secondary, #64748b);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  z-index: 100;
+  transition: all 0.3s;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.immersive-toggle:hover {
+  border-color: var(--accent-primary, #4f46e5);
+  color: var(--accent-primary, #4f46e5);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.immersive-toggle.active {
+  background: #8b7355;
+  border-color: #8b7355;
+  color: #faf7f0;
+  box-shadow: 0 4px 16px rgba(139, 115, 85, 0.3);
+}
+
+.immersive-toggle.active:hover {
+  background: #7a6448;
+  opacity: 1;
+}
+
+.immersive-label {
+  white-space: nowrap;
+}
+
+/* 沉浸模式 - 回到顶部按钮适配 */
+.immersive-mode .back-to-top {
+  border-color: var(--im-border);
+  background: var(--im-card-bg);
+  color: var(--im-text-light);
+}
+
+.immersive-mode .back-to-top:hover {
+  color: var(--im-accent);
+  border-color: var(--im-accent);
+}
+
+/* 沉浸模式 - 响应式 */
+@media (max-width: 768px) {
+  .immersive-mode .article-main {
+    padding-top: 16px;
+    padding-bottom: 40px;
+  }
+
+  .immersive-mode .article-container {
+    padding: 32px 20px;
+    margin: 0 12px;
+    border-radius: 2px;
+  }
+
+  .immersive-mode .article-title {
+    font-size: 1.5rem;
+  }
+
+  .immersive-mode .article-content :deep(p) {
+    font-size: 1.05rem;
+    text-indent: 2em;
+  }
+
+  .immersive-mode .article-content :deep(h2) {
+    font-size: 1.25rem;
+  }
+
+  .immersive-mode .article-content :deep(h3) {
+    font-size: 1.1rem;
+  }
+
+  .immersive-toggle {
+    top: 12px;
+    right: 12px;
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+
+  .immersive-toggle .immersive-label {
+    display: none;
+  }
+
+  .immersive-toggle svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+
 </style>
