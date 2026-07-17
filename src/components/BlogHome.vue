@@ -17,14 +17,19 @@
         </div>
 
         <h1 class="hero-title">
-          深入深出 <span class="gradient-text">无限</span>进步<br>
+          <span class="hero-sub" aria-label="深出浅入 · 不断学习">
+            <span class="char" style="--i:0">深</span><span class="char" style="--i:1">出</span><span class="char" style="--i:2">浅</span><span class="char" style="--i:3">入</span>
+            <span class="char char-sep" style="--i:4">·</span>
+            <span class="char" style="--i:5">不</span><span class="char" style="--i:6">断</span><span class="char" style="--i:7">学</span><span class="char" style="--i:8">习</span>
+          </span>
+          <span class="hero-main" aria-label="无限进步">无限进步</span>
         </h1>
         <!-- <p class="hero-desc">
           分享前沿技术、编程技巧与实战经验。<br>
           用代码改变世界，用文字传递价值。
         </p> -->
         <div class="hero-actions">
-          <button class="btn btn-primary">
+          <button class="btn btn-primary" @click="goToArticles">
             <span>开始阅读</span>
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <line x1="5" y1="12" x2="19" y2="12"/>
@@ -36,6 +41,12 @@
               <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
             </svg>
             <span>GitHub</span>
+          </a>
+          <a href="https://blog.csdn.net/mekings13?type=blog" target="_blank" class="btn btn-secondary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 4.5a9.5 9.5 0 0 1 0 15A7.5 7.5 0 0 1 6 16"/>
+            </svg>
+            <span>CSDN</span>
           </a>
         </div>
         <div class="hero-stats">
@@ -62,77 +73,6 @@
       </div>
     </section>
 
-    <!-- 开放 API 模块 -->
-    <section class="api-section">
-      <div class="container">
-        <div class="section-header">
-          <h2 class="section-title">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>
-            </svg>
-            开放 API
-          </h2>
-          <a href="#" class="section-more-inline" @click.prevent="goToApis">
-            查看更多
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="5" y1="12" x2="19" y2="12"/>
-              <polyline points="12 5 19 12 12 19"/>
-            </svg>
-          </a>
-        </div>
-        <div class="api-grid">
-          <div 
-            v-for="api in openApis" 
-            :key="api.id" 
-            class="api-card"
-            @click="goToApiDetail(api)"
-          >
-            <div class="api-card-header">
-              <span class="api-name">{{ api.name }}</span>
-              <span class="api-method" :style="{ background: methodColors[api.method] }">
-                {{ api.method }}
-              </span>
-            </div>
-            <p class="api-desc">{{ api.description }}</p>
-            <div class="api-tags">
-              <span v-for="t in api.tags" :key="t.value" class="api-tag" :style="{ background: t.color + '20', color: t.color }">
-                {{ t.text }}
-              </span>
-              <span v-if="!api.isFree" class="api-tag paid-tag">
-                付费
-              </span>
-            </div>
-            <div class="api-stats">
-              <span class="api-stat" data-tip="累计 API 调用次数">
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
-                </svg>
-                {{ api.stats.calls }}
-              </span>
-              <span class="api-stat" data-tip="请求成功比例">
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="20 6 9 17 4 12"/>
-                </svg>
-                {{ api.stats.successRate }}%
-              </span>
-              <span class="api-stat" data-tip="平均响应时间">
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="12" r="10"/>
-                  <polyline points="12 6 12 12 16 14"/>
-                </svg>
-                {{ api.responseTime }}ms
-              </span>
-              <span class="api-stat" data-tip="用户点赞数">
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                </svg>
-                {{ api.stats.likes }}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
 
     <!-- 最新文章 -->
     <section v-if="articles.length > 0" class="articles">
@@ -184,6 +124,79 @@
         </div>
       </div>
     </section>
+
+    <!-- 开放 API 模块 -->
+    <section class="api-section">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>
+            </svg>
+            开放 API
+          </h2>
+          <a href="#" class="section-more-inline" @click.prevent="goToApis">
+            查看更多
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12"/>
+              <polyline points="12 5 19 12 12 19"/>
+            </svg>
+          </a>
+        </div>
+        <div class="api-grid">
+          <div 
+            v-for="api in openApis" 
+            :key="api.id" 
+            class="api-card"
+            @click="goToApiDetail(api)"
+          >
+            <div class="api-card-row">
+              <div class="api-tags">
+                <span v-for="t in api.tags" :key="t.value" class="api-tag" :style="{ background: t.color + '20', color: t.color }">
+                  {{ t.text }}
+                </span>
+                <span v-if="!api.isFree" class="api-tag paid-tag">
+                  付费
+                </span>
+              </div>
+              <span class="api-desc">{{ api.description }}</span>
+              <span class="api-name">{{ api.name }}</span>
+              <div class="api-stats">
+                <span class="api-stat" data-tip="累计 API 调用次数">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                  </svg>
+                  {{ api.stats.calls }}
+                </span>
+                <span class="api-stat" data-tip="请求成功比例">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                  {{ api.stats.successRate }}%
+                </span>
+                <span class="api-stat" data-tip="平均响应时间">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14"/>
+                  </svg>
+                  {{ api.responseTime }}ms
+                </span>
+                <span class="api-stat" data-tip="用户点赞数">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                  </svg>
+                  {{ api.stats.likes }}
+                </span>
+              </div>
+              <span class="api-method" :style="{ background: methodColors[api.method] }">
+                {{ api.method }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
 
     <!-- 技术标签星图 -->
     <section class="tags">
@@ -303,13 +316,48 @@ const fetchTags = async () => {
   try {
     const res = await api.getAllTagStatics()
     if (res.success && res.data.length > 0) {
-      tags.value = res.data.map((tag) => ({
-        ...tag,
-        _x: 30 + Math.random() * 40,
-        _y: 15 + Math.random() * 70,
-        _size: 48 + Math.random() * 24,
-        _delay: Math.random() * 4
-      }))
+      // 随机散布：完全随机位置，模拟星图效果
+      const margin = 8
+      const rangeX = 100 - margin * 2
+      const rangeY = 100 - margin * 2
+
+      // 生成随机位置，并做简单碰撞检测防止严重重叠
+      const usedPositions = []
+
+      const hasOverlap = (x, y, size) => {
+        const minDist = size * 1.2
+        for (const pos of usedPositions) {
+          const dx = (x - pos.x) * 100
+          const dy = (y - pos.y) * 100
+          if (Math.sqrt(dx * dx + dy * dy) < minDist + pos.size * 0.8) {
+            return true
+          }
+        }
+        return false
+      }
+
+      tags.value = res.data.map((tag) => {
+        const size = 44 + Math.random() * 32
+        let x, y
+        let tries = 0
+        const maxTries = 30
+
+        do {
+          x = margin + Math.random() * rangeX
+          y = margin + Math.random() * rangeY
+          tries++
+        } while (tries < maxTries && hasOverlap(x, y, size))
+
+        usedPositions.push({ x, y, size })
+
+        return {
+          ...tag,
+          _x: x,
+          _y: y,
+          _size: size,
+          _delay: Math.random() * 4
+        }
+      })
     } else if (res.success) {
       tags.value = []
     }
@@ -549,12 +597,28 @@ const getTagGradient = (tag) => {
   top: -200px;
   right: -200px;
   background: var(--accent-primary);
+  animation: glowDrift1 12s ease-in-out infinite;
 }
 
 .bg-glow-2 {
   bottom: -200px;
   left: -200px;
   background: var(--accent-secondary);
+  animation: glowDrift2 14s ease-in-out infinite;
+}
+
+@keyframes glowDrift1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(-40px, 30px) scale(1.05); }
+  50% { transform: translate(-20px, -20px) scale(0.95); }
+  75% { transform: translate(30px, 10px) scale(1.03); }
+}
+
+@keyframes glowDrift2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(40px, -30px) scale(0.95); }
+  50% { transform: translate(20px, 20px) scale(1.05); }
+  75% { transform: translate(-30px, -10px) scale(1.02); }
 }
 
 /* Hero 区域 */
@@ -578,6 +642,21 @@ const getTagGradient = (tag) => {
   font-size: 0.875rem;
   color: var(--text-secondary);
   margin-bottom: 24px;
+  animation: badgeSlideIn 0.8s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  animation-delay: 0.2s;
+}
+
+@keyframes badgeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-16px);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
 }
 
 .badge-dot {
@@ -585,20 +664,109 @@ const getTagGradient = (tag) => {
   height: 8px;
   background: #10b981;
   border-radius: 50%;
-  animation: pulse 2s ease-in-out infinite;
+  animation: dotPulse 2s ease-in-out infinite;
 }
 
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+@keyframes dotPulse {
+  0%, 100% { 
+    opacity: 1; 
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+  }
+  50% { 
+    opacity: 0.6; 
+    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+  }
 }
+
+/* ===== 文字动画 ===== */
 
 .hero-title {
-  font-size: clamp(2.5rem, 6vw, 4rem);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-size: clamp(2rem, 5vw, 3.6rem);
   font-weight: 700;
   line-height: 1.2;
-  margin-bottom: 24px;
-  letter-spacing: -0.02em;
+  margin-bottom: 32px;
+  letter-spacing: 0.04em;
+  animation: titleFloat 6s ease-in-out infinite;
+}
+
+@keyframes titleFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+/* 副标题：逐字淡入 */
+.hero-sub {
+  font-size: 0.5em;
+  font-weight: 500;
+  color: var(--text-secondary);
+  letter-spacing: 0.12em;
+  opacity: 0.75;
+  display: inline-block;
+}
+
+.hero-sub .char {
+  display: inline-block;
+  opacity: 0;
+  filter: blur(6px);
+  animation: charReveal 0.6s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+  animation-delay: calc(0.3s + var(--i) * 0.06s);
+}
+
+.hero-sub .char-sep {
+  margin: 0 0.15em;
+  color: var(--accent-primary);
+  font-weight: 400;
+}
+
+/* 主标题：逐字输入 + 流光 */
+.hero-main {
+  font-size: 1.15em;
+  letter-spacing: 0.08em;
+  position: relative;
+  display: inline-block;
+  background: linear-gradient(
+    135deg,
+    var(--gradient-start) 0%,
+    var(--gradient-end) 40%,
+    #a78bfa 60%,
+    var(--gradient-start) 100%
+  );
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmerFlow 6s ease-in-out infinite;
+}
+
+
+@keyframes charReveal {
+  to {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+@keyframes shimmerFlow {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* 打字光标 */
+.hero-cursor {
+  display: inline-block;
+  margin-left: 4px;
+  font-weight: 300;
+  color: var(--accent-primary);
+  animation: cursorBlink 1s step-end infinite;
+  vertical-align: baseline;
+}
+
+@keyframes cursorBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
 }
 
 .hero-desc {
@@ -613,6 +781,28 @@ const getTagGradient = (tag) => {
   display: flex;
   gap: 16px;
   margin-bottom: 64px;
+}
+
+.hero-actions > * {
+  opacity: 0;
+  animation: btnSlideUp 0.7s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+}
+
+.hero-actions > *:nth-child(1) { animation-delay: 1.1s; }
+.hero-actions > *:nth-child(2) { animation-delay: 1.2s; }
+.hero-actions > *:nth-child(3) { animation-delay: 1.3s; }
+
+@keyframes btnSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
 }
 
 .btn {
@@ -632,6 +822,24 @@ const getTagGradient = (tag) => {
   background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
   color: white;
   box-shadow: 0 8px 32px rgba(59, 130, 246, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--gradient-start), #a78bfa, var(--gradient-end));
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  z-index: -1;
+}
+
+.btn-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 40px rgba(59, 130, 246, 0.5), 0 0 60px rgba(99, 102, 241, 0.15);
 }
 
 .btn-primary:hover {
@@ -654,6 +862,30 @@ const getTagGradient = (tag) => {
   display: flex;
   align-items: center;
   gap: 32px;
+}
+
+.hero-stats > * {
+  opacity: 0;
+  animation: statFadeIn 0.6s ease forwards;
+}
+
+.hero-stats > *:nth-child(1) { animation-delay: 1.35s; }
+.hero-stats > *:nth-child(2) { animation-delay: 1.4s; }
+.hero-stats > *:nth-child(3) { animation-delay: 1.5s; }
+.hero-stats > *:nth-child(4) { animation-delay: 1.55s; }
+.hero-stats > *:nth-child(5) { animation-delay: 1.65s; }
+.hero-stats > *:nth-child(6) { animation-delay: 1.7s; }
+.hero-stats > *:nth-child(7) { animation-delay: 1.8s; }
+
+@keyframes statFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .stat-item {
@@ -703,98 +935,77 @@ const getTagGradient = (tag) => {
   color: var(--accent-primary);
 }
 
-.section-more-inline {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  color: var(--text-secondary);
-  font-size: 13px;
-  text-decoration: none;
-  transition: all 0.3s ease;
-}
-
-.section-more-inline:hover {
-  border-color: var(--accent-primary);
-  color: var(--accent-primary);
-}
-
-.section-more-inline svg {
-  transition: transform 0.3s ease;
-}
-
-.section-more-inline:hover svg {
-  transform: translateX(3px);
-}
-
 .api-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
+  grid-template-columns: 1fr;
+  gap: 12px;
 }
 
 .api-card {
   display: flex;
-  flex-direction: column;
-  padding: 20px;
+  padding: 12px 20px;
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
-  border-radius: 12px;
-  text-decoration: none;
-  transition: all 0.3s ease;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.25s ease;
 }
 
 .api-card:hover {
   border-color: var(--accent-primary);
   transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
-.api-card-header {
+.api-card-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-}
-
-.api-name {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text-primary);
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
 }
 
 .api-method {
-  padding: 4px 8px;
+  padding: 3px 8px;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   color: white;
   border-radius: 4px;
+  flex-shrink: 0;
+  line-height: 1.4;
+}
+
+.api-name {
+  font-size: 13px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0;
+  flex: 1;
+  min-width: 0;
 }
 
 .api-desc {
-  font-size: 13px;
-  color: var(--text-secondary);
-  line-height: 1.6;
-  margin: 0 0 12px;
-  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .api-tags {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: auto;
-  padding: 12px 0;
+  gap: 5px;
+  flex-shrink: 0;
 }
 
 .api-tag {
-  padding: 4px 10px;
-  font-size: 12px;
+  padding: 2px 8px;
+  font-size: 11px;
   font-weight: 500;
-  border-radius: 12px;
+  border-radius: 10px;
+  white-space: nowrap;
 }
 
 .paid-tag {
@@ -803,25 +1014,26 @@ const getTagGradient = (tag) => {
 }
 
 .api-stats {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-  padding-top: 12px;
-  border-top: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
 }
 
 .api-stat {
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 11px;
+  gap: 3px;
+  font-size: 12px;
   color: var(--text-secondary);
   cursor: help;
   position: relative;
+  white-space: nowrap;
 }
 
 .api-stat svg {
   color: var(--text-tertiary);
+  flex-shrink: 0;
 }
 
 .api-stat:hover {
@@ -854,26 +1066,6 @@ const getTagGradient = (tag) => {
   border: 5px solid transparent;
   border-top-color: var(--border-color);
   z-index: 10;
-}
-
-.api-tag {
-  padding: 4px 10px;
-  font-size: 12px;
-  font-weight: 500;
-  border-radius: 12px;
-}
-
-.api-docs {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  color: var(--text-secondary);
-  transition: color 0.3s;
-}
-
-.api-card:hover .api-docs {
-  color: var(--accent-primary);
 }
 
 /* 最新文章 */
@@ -964,7 +1156,7 @@ const getTagGradient = (tag) => {
 
 .articles-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 24px;
 }
 
@@ -1121,7 +1313,7 @@ const getTagGradient = (tag) => {
   position: relative;
   width: 100%;
   height: 380px;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .star-canvas {
@@ -1354,23 +1546,30 @@ const getTagGradient = (tag) => {
   .articles-grid {
     grid-template-columns: repeat(3, 1fr);
   }
-  .api-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
 }
 
 @media (max-width: 992px) {
   .articles-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  .api-grid {
-    grid-template-columns: repeat(2, 1fr);
+  .api-desc {
+    display: none;
   }
 }
 
 @media (max-width: 768px) {
   .hero-title {
-    font-size: 2rem;
+    font-size: 1.6rem;
+    gap: 6px;
+    margin-bottom: 24px;
+  }
+
+  .hero-sub {
+    font-size: 0.55em;
+  }
+
+  .hero-main {
+    font-size: 1.2em;
   }
 
   .hero-actions {
@@ -1397,6 +1596,23 @@ const getTagGradient = (tag) => {
 
   .api-grid {
     grid-template-columns: 1fr;
+  }
+
+  .api-card-row {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .api-name {
+    max-width: none;
+  }
+
+  .api-desc {
+    display: none;
+  }
+
+  .api-tags {
+    order: 1;
   }
   
   .api-section {

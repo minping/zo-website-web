@@ -216,7 +216,7 @@
           <div class="form-actions">
             <button type="button" class="btn btn-secondary" @click="goBack">取消</button>
             <button type="submit" class="btn btn-primary" :disabled="saving">
-              {{ saving ? '保存中...' : (isEditing ? '保存修改' : '创建 API') }}
+              {{ saving ? '保存中...' : '保存' }}
             </button>
           </div>
         </div>
@@ -667,6 +667,7 @@ onUnmounted(() => {
 .form-main {
   display: flex;
   flex-direction: column;
+  min-width: 0;
   gap: 20px;
 }
 
@@ -681,6 +682,8 @@ onUnmounted(() => {
   border: 1px solid var(--admin-border-color);
   border-radius: 12px;
   padding: 24px;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .form-card h3 {
@@ -793,6 +796,9 @@ onUnmounted(() => {
 .code-textarea {
   font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace !important;
   font-size: 13px !important;
+  overflow-wrap: break-word;
+  word-break: break-all;
+  white-space: pre-wrap;
 }
 
 .checkbox-label {
@@ -1323,6 +1329,8 @@ onUnmounted(() => {
   background: var(--admin-bg-primary);
   border-radius: 8px;
   flex-wrap: wrap;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .debug-info-badge {
@@ -1362,7 +1370,8 @@ onUnmounted(() => {
   text-overflow: ellipsis;
   white-space: nowrap;
   flex: 1;
-  min-width: 120px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 @media (max-width: 992px) {

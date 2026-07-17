@@ -72,7 +72,8 @@ export const api = {
         statusValue: res.data.status_value,
         statusText: res.data.status_text,
         status: res.data.status_value === 1 ? 'published' : 'draft',
-        sortOrder: res.data.sort_order
+        sortOrder: res.data.sort_order,
+        files: res.data.files || ''
       }
     }
     return res
@@ -173,6 +174,13 @@ export const api = {
     const formData = new FormData()
     formData.append('file', file)
     return await uploadRequest(API_PATHS.uploadImage, formData)
+  },
+
+  // 上传附件
+  async uploadAttachment(file) {
+    const formData = new FormData()
+    formData.append('file', file)
+    return await uploadRequest(API_PATHS.uploadAttachment, formData)
   },
 
   // ========== 文章标签 ==========
@@ -440,7 +448,8 @@ export const api = {
       coverGradient: articleData.gradient,
       statusValue: articleData.status === 'published' ? 1 : 0,
       statusText: articleData.status === 'published' ? '发布' : '草稿',
-      recommendReadTime: articleData.readTime
+      recommendReadTime: articleData.readTime,
+      files: articleData.files || ''
     }
     return await request(API_PATHS.insertArticle, {
       method: 'POST',
@@ -462,7 +471,8 @@ export const api = {
       coverGradient: articleData.gradient,
       statusValue: articleData.status === 'published' ? 1 : 0,
       statusText: articleData.status === 'published' ? '发布' : '草稿',
-      recommendReadTime: articleData.readTime
+      recommendReadTime: articleData.readTime,
+      files: articleData.files || ''
     }
     return await request(API_PATHS.insertArticle, {
       method: 'POST',

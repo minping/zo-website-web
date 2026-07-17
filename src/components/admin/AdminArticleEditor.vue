@@ -43,6 +43,59 @@
               <MilkdownEditor v-model="formData.content" />
             </div>
           </div>
+
+          <div class="form-group">
+            <label>附件管理</label>
+            <div class="attachment-section">
+              <div class="attachment-upload-area">
+                <input 
+                  ref="attachmentInput"
+                  type="file" 
+                  class="attachment-file-input"
+                  @change="handleAttachmentChange"
+                  :disabled="attachmentUploading"
+                />
+                <div class="attachment-upload-placeholder" @click="$refs.attachmentInput.click()">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="17 8 12 3 7 8"/>
+                    <line x1="12" y1="3" x2="12" y2="15"/>
+                  </svg>
+                  <span class="upload-text">{{ attachmentUploading ? '上传中...' : '点击选择文件' }}</span>
+                  <span class="upload-hint">支持 PDF、Word、压缩包等</span>
+                </div>
+              </div>
+
+              <div v-if="attachments.length > 0" class="attachment-list">
+                <div 
+                  v-for="(file, index) in attachments" 
+                  :key="index"
+                  class="attachment-item"
+                >
+                  <div class="attachment-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
+                      <polyline points="13 2 13 9 20 9"/>
+                    </svg>
+                  </div>
+                  <div class="attachment-info">
+                    <span class="attachment-name" :title="file.name">{{ file.name }}</span>
+                    <span class="attachment-size">{{ formatFileSize(file.size) }}</span>
+                  </div>
+                  <button class="attachment-delete" @click="removeAttachment(index)" title="删除附件">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18"/>
+                      <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <div v-else class="attachment-empty">
+                <span>暂未上传附件</span>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="form-sidebar">
@@ -194,6 +247,57 @@ const gradientStart = ref('#667eea')
 const gradientEnd = ref('#764ba2')
 const gradientAngle = ref(135)
 
+// 附件管理
+const attachmentInput = ref(null)
+const attachments = ref([])
+const attachmentUploading = ref(false)
+
+// 格式化文件大小
+const formatFileSize = (bytes) => {
+  if (bytes === 0) return '0 B'
+  const k = 1024
+  const sizes = ['B', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i]
+}
+
+// 处理附件选择上传
+const handleAttachmentChange = async (event) => {
+  const file = event.target.files[0]
+  if (!file) return
+
+  attachmentUploading.value = true
+  try {
+    const res = await api.uploadAttachment(file)
+    if (res.success) {
+      const cols = res.data?.columns || {}
+      attachments.value.push({
+        id: cols.zo_file_id || '',
+        name: cols.original_name || file.name,
+        size: cols.file_size || file.size,
+        path: cols.file_path || ''
+      })
+      showToast(`附件 "${file.name}" 上传成功`)
+    } else {
+      showToast(res.message || '附件上传失败', 'error')
+    }
+  } catch (err) {
+    console.error('附件上传失败:', err)
+    showToast('附件上传失败，请重试', 'error')
+  } finally {
+    attachmentUploading.value = false
+    // 清空 input 以允许重复上传同名文件
+    if (attachmentInput.value) {
+      attachmentInput.value.value = ''
+    }
+  }
+}
+
+// 删除附件
+const removeAttachment = (index) => {
+  attachments.value.splice(index, 1)
+}
+
 // 渐变色预设
 const gradientPresets = [
   { name: '紫罗兰', gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
@@ -302,6 +406,20 @@ const fetchArticle = async (id) => {
         readTime: article.readTime,
         status: article.status
       }
+
+      // 回显附件
+      if (article.files) {
+        try {
+          attachments.value = typeof article.files === 'string'
+            ? JSON.parse(article.files)
+            : article.files
+        } catch (e) {
+          console.warn('附件数据解析失败:', e)
+          attachments.value = []
+        }
+      } else {
+        attachments.value = []
+      }
       // 保存待回显的文章数据，等标签加载完成后匹配
       pendingArticle = { tagValue: article.tagValue }
       // 如果标签已加载，立即匹配
@@ -329,7 +447,8 @@ const saveArticle = async () => {
       ...formData.value,
       tagValue: selectedTag?.id || '',
       tagText: selectedTag?.name || '',
-      id: isEditing.value ? formData.value.id : undefined
+      id: isEditing.value ? formData.value.id : undefined,
+      files: JSON.stringify(attachments.value)
     }
     
     const res = isEditing.value 
@@ -718,6 +837,146 @@ onMounted(() => {
   transform: translateX(-50%) translateY(20px);
 }
 
+/* ========== 附件管理 ========== */
+.attachment-section {
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.attachment-upload-area {
+  margin-bottom: 14px;
+}
+
+.attachment-file-input {
+  display: none;
+}
+
+.attachment-upload-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 20px 16px;
+  border: 2px dashed rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s;
+  color: var(--text-secondary);
+}
+
+.attachment-upload-placeholder:hover {
+  border-color: var(--accent-primary);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--accent-primary);
+}
+
+.attachment-upload-placeholder svg {
+  opacity: 0.7;
+  transition: opacity 0.3s;
+}
+
+.attachment-upload-placeholder:hover svg {
+  opacity: 1;
+}
+
+.upload-text {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.upload-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.attachment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 200px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
+}
+
+.attachment-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.attachment-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.attachment-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  color: var(--accent-primary);
+  opacity: 0.8;
+}
+
+.attachment-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.attachment-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.attachment-size {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.attachment-delete {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.attachment-delete:hover {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.attachment-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 0;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+/* 响应式 */
 @media (max-width: 992px) {
   .editor-form {
     grid-template-columns: 1fr;
