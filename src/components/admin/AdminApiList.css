@@ -1,0 +1,454 @@
+/* ============================================
+   AdminApiList - API 列表管理
+   ============================================ */
+
+.api-list {
+  max-width: 1200px;
+}
+
+.api-list .content-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.api-list .content-header h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--admin-text-primary);
+  margin-bottom: 4px;
+}
+
+.api-list .content-header p {
+  color: var(--admin-text-secondary);
+  font-size: 14px;
+}
+
+.api-list .header-actions {
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* 筛选栏 */
+.api-list .filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.api-list .search-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: var(--admin-bg-card);
+  border: 1px solid var(--admin-border-color);
+  border-radius: 8px;
+  flex: 1;
+  max-width: 300px;
+}
+
+.api-list .search-box svg {
+  color: var(--admin-text-secondary);
+}
+
+.api-list .search-box input {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--admin-text-primary);
+  font-size: 14px;
+  outline: none;
+}
+
+.api-list .search-box input::placeholder {
+  color: var(--admin-text-secondary);
+}
+
+.filter-tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.filter-tag {
+  padding: 8px 16px;
+  background: var(--admin-bg-card);
+  border: 1px solid var(--admin-border-color);
+  border-radius: 6px;
+  color: var(--admin-text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.filter-tag:hover,
+.filter-tag.active {
+  background: var(--admin-accent-primary);
+  border-color: var(--admin-accent-primary);
+  color: white;
+}
+
+.filter-tag .tag-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+  display: inline-block;
+}
+
+/* API 网格 */
+.api-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.api-card {
+  background: var(--admin-bg-card);
+  border: 1px solid var(--admin-border-color);
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.3s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  cursor: pointer;
+}
+
+.api-card:hover {
+  border-color: var(--admin-accent-primary);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.api-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.api-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.api-title h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--admin-text-primary);
+}
+
+.api-method {
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: white;
+  border-radius: 4px;
+}
+
+.api-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.action-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid var(--admin-border-color);
+  background: transparent;
+  color: var(--admin-text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+}
+
+.action-btn:hover {
+  background: var(--admin-hover-bg);
+}
+
+.action-btn.edit:hover {
+  border-color: var(--admin-accent-primary);
+  color: var(--admin-accent-primary);
+}
+
+.action-btn.delete:hover {
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+.api-desc {
+  font-size: 13px;
+  color: var(--admin-text-secondary);
+  line-height: 1.6;
+  margin-bottom: 12px;
+}
+
+.api-tags {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.api-tag {
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 12px;
+}
+
+.paid-tag {
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+}
+
+.status-tag.status-on {
+  background: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+}
+
+.status-tag.status-off {
+  background: rgba(161, 161, 170, 0.1);
+  color: #64748b;
+}
+
+.api-stats {
+  display: flex;
+  gap: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--admin-border-color);
+}
+
+.api-stats span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--admin-text-secondary);
+}
+
+.stat-response {
+  color: #22c55e !important;
+  font-weight: 500;
+}
+
+/* 弹窗 */
+.api-list .modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.api-list .modal {
+  background: var(--admin-bg-card);
+  border: 1px solid var(--admin-border-color);
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+}
+
+.api-list .modal h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--admin-text-primary);
+  margin-bottom: 12px;
+}
+
+.api-list .modal p {
+  color: var(--admin-text-secondary);
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.api-list .modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+/* 标签管理弹窗 */
+.tag-modal {
+  background: var(--admin-bg-card);
+  border: 1px solid var(--admin-border-color);
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 480px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+
+.modal-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--admin-text-primary);
+  margin: 0 0 16px 0;
+}
+
+.modal-close-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--admin-text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  z-index: 10;
+}
+
+.modal-close-btn:hover {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+}
+
+.tag-form {
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--admin-border-color);
+}
+
+.tag-input-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.tag-input-row input[type="text"] {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid var(--admin-border-color);
+  border-radius: 6px;
+  font-size: 14px;
+  background: var(--admin-bg-primary);
+  color: var(--admin-text-primary);
+}
+
+.tag-input-row input[type="text"]:focus {
+  outline: none;
+  border-color: var(--admin-accent-primary);
+}
+
+.color-picker {
+  position: relative;
+}
+
+.color-picker input[type="color"] {
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--admin-border-color);
+  border-radius: 6px;
+  padding: 2px;
+  cursor: pointer;
+  background: var(--admin-bg-primary);
+}
+
+.tag-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tag-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: var(--admin-bg-primary);
+  border: 1px solid var(--admin-border-color);
+  border-radius: 8px;
+}
+
+.tag-name {
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 16px;
+}
+
+.tag-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.tag-actions .action-btn {
+  width: 28px;
+  height: 28px;
+}
+
+.empty-tags {
+  text-align: center;
+  color: var(--admin-text-secondary);
+  font-size: 14px;
+  padding: 24px 0;
+}
+
+/* Toast （覆盖 common 的 z-index） */
+.api-list .toast {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 14px 28px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  z-index: 2000;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.api-list .toast.success {
+  background: #22c55e;
+  color: white;
+}
+
+.api-list .toast.error {
+  background: #ef4444;
+  color: white;
+}
+
+@media (max-width: 768px) {
+  .api-list .content-header {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .api-list .filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .api-list .search-box {
+    max-width: none;
+  }
+  
+  .api-grid {
+    grid-template-columns: 1fr;
+  }
+}

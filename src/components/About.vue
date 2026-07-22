@@ -29,34 +29,20 @@
         <div class="about-card">
           <div class="about-avatar">
             <div class="avatar-ring">
-              <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=zode" alt="Zode" />
+              <img :src="aboutInfo.avatar" :alt="aboutInfo.name" />
             </div>
             <span class="status-dot"></span>
           </div>
           <div class="about-info">
-            <h1 class="about-name">Zode</h1>
-            <p class="about-title">全栈开发工程师 / 技术博主</p>
-            <p class="about-bio">
-              热爱技术，专注于 Web 开发领域。喜欢探索新技术，分享编程心得。
-              相信代码改变世界，用技术创造价值。
-            </p>
-            <div class="about-tags">
-              <span class="tag" v-for="skill in skills" :key="skill">{{ skill }}</span>
-            </div>
+            <h1 class="about-name">{{ aboutInfo.name }}</h1>
+            <p class="about-title">{{ aboutInfo.title }}</p>
+            <p class="about-bio">{{ aboutInfo.bio }}</p>
             <div class="about-links">
-              <a href="https://github.com/minping" target="_blank" class="social-link">
+              <a v-if="aboutInfo.github" :href="aboutInfo.github" target="_blank" class="social-link">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
                 </svg>
                 GitHub
-              </a>
-              <a href="#" class="social-link">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/>
-                  <rect x="2" y="9" width="4" height="12"/>
-                  <circle cx="4" cy="4" r="2"/>
-                </svg>
-                微博
               </a>
               <button class="social-link" @click="showWechatQR = true">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -66,7 +52,7 @@
                 </svg>
                 微信
               </button>
-              <a href="mailto:1974463992@qq.com" class="social-link">
+              <a v-if="aboutInfo.email" :href="'mailto:' + aboutInfo.email" class="social-link">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
                   <polyline points="22,6 12,13 2,6"/>
@@ -83,6 +69,54 @@
     <section v-if="!isResumeMode" class="stats-section">
       <div class="container">
         <div class="stats-grid">
+           <div class="stat-card">
+            <div class="stat-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="16 18 22 12 16 6"/>
+                <polyline points="8 6 2 12 8 18"/>
+              </svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-value">{{ stats.selfProjects }}</span>
+              <span class="stat-label">自研项目</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+              </svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-value">{{ stats.csdn }}</span>
+              <span class="stat-label">CSDN</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-value">{{ stats.blogDays }}</span>
+              <span class="stat-label">博客运营天数</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-value">{{ stats.blogViews }}</span>
+              <span class="stat-label">博客浏览量</span>
+            </div>
+          </div>
           <div class="stat-card clickable" @click="goToArticles">
             <div class="stat-icon">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -93,8 +127,10 @@
                 <polyline points="10 9 9 9 8 9"/>
               </svg>
             </div>
-            <span class="stat-value">{{ stats.articles }}</span>
-            <span class="stat-label">原创文章</span>
+            <div class="stat-info">
+              <span class="stat-value">{{ stats.articles }}</span>
+              <span class="stat-label">原创文章</span>
+            </div>
           </div>
           <div class="stat-card">
             <div class="stat-icon">
@@ -102,31 +138,35 @@
                 <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>
               </svg>
             </div>
-            <span class="stat-value">{{ stats.apis }}</span>
-            <span class="stat-label">开放 API</span>
+            <div class="stat-info">
+              <span class="stat-value">{{ stats.apis }}</span>
+              <span class="stat-label">开放API</span>
+            </div>
           </div>
           <div class="stat-card">
             <div class="stat-icon">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                <circle cx="9" cy="7" r="4"/>
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
               </svg>
             </div>
-            <span class="stat-value">{{ stats.visitors }}</span>
-            <span class="stat-label">访问用户</span>
+            <div class="stat-info">
+              <span class="stat-value">{{ stats.industryYears }}</span>
+              <span class="stat-label">从事行业时间</span>
+            </div>
           </div>
           <div class="stat-card">
             <div class="stat-icon">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"/>
-                <polyline points="12 6 12 12 16 14"/>
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
               </svg>
             </div>
-            <span class="stat-value">{{ stats.days }}</span>
-            <span class="stat-label">运营天数</span>
+            <div class="stat-info">
+              <span class="stat-value">{{ stats.workProjects }}</span>
+              <span class="stat-label">从事项目</span>
+            </div>
           </div>
+         
         </div>
       </div>
     </section>
@@ -143,7 +183,7 @@
           技术栈
         </h2>
         <div class="skills-grid">
-          <div class="skill-category" v-for="category in skillCategories" :key="category.name">
+          <div class="skill-category" v-for="category in aboutSkillCategories" :key="category.name">
             <h3 class="skill-category-name">{{ category.name }}</h3>
             <div class="skill-items">
               <span class="skill-item" v-for="skill in category.skills" :key="skill">
@@ -166,7 +206,7 @@
           历程
         </h2>
         <div class="timeline">
-          <div class="timeline-item" v-for="(item, index) in timeline" :key="index">
+          <div class="timeline-item" v-for="(item, index) in aboutTimeline" :key="index">
             <div class="timeline-marker"></div>
             <div class="timeline-content">
               <span class="timeline-year">{{ item.year }}</span>
@@ -189,16 +229,33 @@
         <div class="projects-list">
           <div class="project-item" v-for="(project, index) in projects" :key="index">
             <div class="project-timeline">
-              <span class="project-period">{{ project.startDate }} ~ {{ project.endDate || '至今' }}</span>
+              <span class="project-period">{{ project.startDate }} ~ {{ project.endDate }}</span>
+            </div>
+            <div class="project-image-col">
+              <img v-if="project.image" :src="project.image" :alt="project.name" class="project-thumb" />
+              <div v-else class="project-thumb-placeholder" :style="{ background: getGradient(index) }">
+                <span class="project-thumb-initial">{{ project.name[0] }}</span>
+              </div>
             </div>
             <div class="project-detail">
               <h3 class="project-name">{{ project.name }}</h3>
               <span class="project-role">{{ project.role }}</span>
+              <div class="project-meta" v-if="project.acceptance || project.userBase">
+                <span v-if="project.acceptance" class="project-meta-item">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  验收情况：{{ project.acceptance }}
+                </span>
+                <span v-if="project.userBase" class="project-meta-item">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                  用户基数：{{ project.userBase }}
+                </span>
+              </div>
               <p class="project-desc">{{ project.description }}</p>
               <div class="project-tags" v-if="project.tags && project.tags.length">
                 <span class="project-tag" v-for="tag in project.tags" :key="tag">{{ tag }}</span>
               </div>
             </div>
+
           </div>
         </div>
       </div>
@@ -216,7 +273,10 @@
         </h2>
         <div class="self-projects-grid">
           <div class="self-project-card" v-for="(project, index) in selfProjects" :key="index">
-            <div class="self-project-icon" v-if="project.icon">{{ project.icon }}</div>
+            <div class="self-project-icon" v-if="project.icon">
+              <img v-if="isImageUrl(project.icon)" :src="project.icon" :alt="project.name" class="self-project-icon-img" />
+              <span v-else>{{ project.icon }}</span>
+            </div>
             <div class="self-project-icon fallback" v-else>
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="16 18 22 12 16 6"/>
@@ -260,7 +320,7 @@
           联系我
         </h2>
         <div class="contact-cards">
-          <a href="mailto:1974463992@qq.com" class="contact-card">
+          <a v-if="aboutInfo.email" :href="'mailto:' + aboutInfo.email" class="contact-card">
             <div class="contact-icon">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
@@ -268,7 +328,7 @@
               </svg>
             </div>
             <span class="contact-label">邮箱</span>
-            <span class="contact-value">1974463992@qq.com</span>
+            <span class="contact-value">{{ aboutInfo.email }}</span>
           </a>
           <div class="contact-card clickable" @click="showWechatQR = true">
             <div class="contact-icon">
@@ -277,16 +337,16 @@
               </svg>
             </div>
             <span class="contact-label">微信</span>
-            <span class="contact-value">Mek </span>
+            <span class="contact-value">扫码添加</span>
           </div>
-          <a href="https://github.com/minping" target="_blank" class="contact-card">
+          <a v-if="aboutInfo.github" :href="aboutInfo.github" target="_blank" class="contact-card">
             <div class="contact-icon">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
               </svg>
             </div>
             <span class="contact-label">GitHub</span>
-            <span class="contact-value">@minping</span>
+            <span class="contact-value">{{ aboutInfo.github.replace('https://github.com/', '@') }}</span>
           </a>
         </div>
       </div>
@@ -320,106 +380,144 @@
 import Navbar from './Navbar.vue'
 import Footer from './Footer.vue'
 import { useRouter } from 'vue-router'
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { api } from '../api/article'
 
 const router = useRouter()
 const showWechatQR = ref(false)
 const isResumeMode = ref(false)
+const loading = ref(false)
 
-const skills = ['Vue.js', 'React', 'Node.js', 'Python', 'Go', 'Docker']
+// 博主基础信息
+const aboutInfo = ref({
+  name: '',
+  title: '',
+  bio: '',
+  avatar: '',
+  github: '',
+  email: ''
+})
 
-const stats = {
+const aboutSkillCategories = ref([])
+const aboutTimeline = ref([])
+
+const stats = ref({
   articles: 48,
   apis: 8,
-  visitors: '10K+',
-  days: 365
-}
-
-const skillCategories = [
-  {
-    name: '前端',
-    skills: ['Vue.js', 'React', 'TypeScript', 'Tailwind CSS', 'Vite']
-  },
-  {
-    name: '后端',
-    skills: ['Node.js', 'Python', 'Go', 'PostgreSQL', 'Redis']
-  },
-  {
-    name: 'DevOps',
-    skills: ['Docker', 'Kubernetes', 'CI/CD', 'Linux', 'Nginx']
-  },
-  {
-    name: '工具',
-    skills: ['Git', 'GitHub Actions', 'VS Code', 'Figma', 'Postman']
-  }
-]
-
-const timeline = [
-  { year: '2024', event: '开始写博客，分享技术文章' },
-  { year: '2023', event: '创建开放 API 平台' },
-  { year: '2022', event: '从传统行业转型到互联网' },
-  { year: '2020', event: '学习编程，开始开发 Web 应用' }
-]
-
-const handleNavigate = (menu) => {
-  console.log('Navigate to:', menu)
-}
+  industryYears: '3年',
+  workProjects: 12,
+  selfProjects: 3,
+  csdn: '1.2K+',
+  blogDays: 365,
+  blogViews: '10K+'
+})
 
 const goToArticles = () => {
   router.push('/articles')
 }
 
-const projects = [
-  {
-    name: 'Zo 博客系统',
-    role: '全栈开发',
-    startDate: '2024-03',
-    endDate: '',
-    description: '基于 Vue 3 + Spring Boot 构建的个人技术博客平台，支持文章管理、API 开放、标签星图等功能。',
-    tags: ['Vue 3', 'Spring Boot', 'PostgreSQL', 'MyBatis Plus']
-  },
-  {
-    name: '企业内部管理系统',
-    role: '后端开发',
-    startDate: '2023-06',
-    endDate: '2024-02',
-    description: '参与企业级后台管理系统开发，负责权限管理模块、数据报表模块的设计与实现。',
-    tags: ['Spring Cloud', 'Redis', 'MySQL', 'RabbitMQ']
-  },
-  {
-    name: '电商数据分析平台',
-    role: '前端开发',
-    startDate: '2022-09',
-    endDate: '2023-05',
-    description: '负责数据可视化大屏的前端开发，使用 ECharts 实现实时数据展示与交互。',
-    tags: ['React', 'ECharts', 'TypeScript', 'Ant Design']
-  }
+const projects = ref([])
+
+const gradients = [
+  'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+  'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+  'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+  'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+  'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+  'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)',
 ]
 
-const selfProjects = [
-  {
-    name: 'Zo 开放 API',
-    icon: '🔌',
-    description: '面向开发者提供免费开放 API 接口，涵盖各类实用数据服务。',
-    tags: ['Vue 3', 'Spring Boot', 'RESTful'],
-    demoUrl: '#',
-    githubUrl: 'https://github.com/minping'
-  },
-  {
-    name: '星图可视化',
-    icon: '✨',
-    description: '技术标签知识星图，3D 可视化展示技术栈关联关系。',
-    tags: ['D3.js', 'Canvas', 'Vue Composition API'],
-    githubUrl: 'https://github.com/minping'
-  },
-  {
-    name: 'Markdown 编辑器',
-    icon: '📝',
-    description: '基于 Milkdown 的所见即所得 Markdown 编辑器，支持实时预览。',
-    tags: ['Milkdown', 'ProseMirror', 'Vue 3'],
-    githubUrl: 'https://github.com/minping'
+const getGradient = (index) => gradients[index % gradients.length]
+
+const selfProjects = ref([])
+
+const toArray = (val) => {
+  if (!val) return []
+  if (Array.isArray(val)) return val
+  if (typeof val === 'string') return val.split(',').map(s => s.trim()).filter(Boolean)
+  return []
+}
+
+const isImageUrl = (val) => {
+  if (!val || typeof val !== 'string') return false
+  return /^https?:\/\//.test(val) || /\.(png|jpg|jpeg|gif|svg|webp)(\?.*)?$/i.test(val)
+}
+
+const loadAboutMe = async () => {
+  loading.value = true
+  try {
+    const res = await api.getAboutMe()
+    if (res.success && res.data) {
+      const d = res.data
+      // 基础信息
+      if (d.info) {
+        aboutInfo.value = {
+          name: d.info.name || '',
+          title: d.info.post || '',
+          bio: d.info.self || '',
+          avatar: d.info.avatar || '',
+          github: d.info.github || '',
+          email: d.info.email || ''
+        }
+        // 技术栈
+        aboutSkillCategories.value = [
+          { name: '前端', skills: toArray(d.info.frontend) },
+          { name: '后端', skills: toArray(d.info.backend) },
+          { name: 'DevOps', skills: toArray(d.info.devops) },
+          { name: '工具', skills: toArray(d.info.tools) }
+        ].filter(cat => cat.skills.length > 0)
+      }
+      // 历程
+      if (d.processList && d.processList.length > 0) {
+        aboutTimeline.value = d.processList.map(item => ({
+          year: item.time || '',
+          event: item.event || ''
+        }))
+      }
+      // 项目经历
+      if (d.projectList && d.projectList.length > 0) {
+        projects.value = d.projectList.map(item => ({
+          id: item.id,
+          name: item.name,
+          role: item.role,
+          description: item.description,
+          tags: toArray(item.tech || item.tags),
+          image: item.image || '',
+          startDate: item.start_time || '',
+          endDate: item.end_time || '',
+          acceptance: item.finish_status || '',
+          userBase: item.user_num || '',
+        }))
+      }
+      // 自研项目
+      if (d.productList && d.productList.length > 0) {
+        selfProjects.value = d.productList.map(item => ({
+          id: item.id,
+          name: item.name,
+          icon: item.img || '',
+          description: item.description,
+          demoUrl: item.play_url || '',
+          githubUrl: item.github_url || '',
+          tags: toArray(item.tags)
+        }))
+        stats.value.selfProjects = d.productList.length
+      }
+    }
+  } catch (err) {
+    console.error('加载关于信息失败:', err)
+  } finally {
+    loading.value = false
   }
-]
+}
+
+onMounted(() => {
+  loadAboutMe()
+})
+
+const handleNavigate = (menu) => {
+  console.log('Navigate to:', menu)
+}
+
 </script>
 
 <style scoped>
@@ -581,7 +679,7 @@ const selfProjects = [
 
 /* 数据统计 */
 .stats-section {
-  padding: 0 0 80px;
+  padding: 0 0 60px;
   position: relative;
   z-index: 1;
 }
@@ -589,25 +687,26 @@ const selfProjects = [
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
+  gap: 12px;
 }
 
 .stat-card {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  padding: 28px;
+  padding: 14px 16px;
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
-  border-radius: 16px;
-  text-align: center;
+  border-radius: 10px;
+  text-align: left;
+  gap: 12px;
   transition: all 0.3s;
 }
 
 .stat-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-2px);
   border-color: var(--accent-primary);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
 }
 
 .stat-card.clickable {
@@ -615,27 +714,39 @@ const selfProjects = [
 }
 
 .stat-icon {
-  width: 48px;
-  height: 48px;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--accent-glow);
-  border-radius: 12px;
+  border-radius: 8px;
   color: var(--accent-primary);
-  margin-bottom: 16px;
+}
+
+.stat-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
 .stat-value {
-  font-size: 2rem;
+  font-size: 1.25rem;
   font-weight: 700;
   color: var(--text-primary);
-  margin-bottom: 4px;
+  line-height: 1.2;
 }
 
 .stat-label {
-  font-size: 14px;
+  font-size: 12px;
   color: var(--text-secondary);
+  line-height: 1.3;
 }
 
 /* 技术栈 */
@@ -771,6 +882,7 @@ const selfProjects = [
   z-index: 1;
 }
 
+
 .projects-list {
   display: flex;
   flex-direction: column;
@@ -779,7 +891,8 @@ const selfProjects = [
 
 .project-item {
   display: flex;
-  gap: 28px;
+  align-items: flex-start;
+  gap: 24px;
   padding: 20px 0 24px;
   border-left: 2px solid var(--border-color);
   padding-left: 28px;
@@ -799,22 +912,29 @@ const selfProjects = [
   height: 10px;
   background: var(--accent-primary);
   border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.project-item:hover::before {
+  box-shadow: 0 0 0 4px var(--accent-glow);
 }
 
 .project-timeline {
   flex-shrink: 0;
-  width: 120px;
+  width: 110px;
   padding-top: 2px;
 }
 
 .project-period {
-  font-size: 13px;
+  font-size: 0.8rem;
   color: var(--accent-primary);
   font-weight: 500;
+  white-space: nowrap;
 }
 
 .project-detail {
   flex: 1;
+  min-width: 0;
 }
 
 .project-name {
@@ -825,14 +945,33 @@ const selfProjects = [
 }
 
 .project-role {
-  font-size: 13px;
+  font-size: 0.8rem;
   color: var(--accent-primary);
   display: block;
   margin-bottom: 8px;
 }
 
+.project-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.project-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.project-meta-item svg {
+  flex-shrink: 0;
+}
+
 .project-desc {
-  font-size: 14px;
+  font-size: 0.88rem;
   color: var(--text-secondary);
   line-height: 1.7;
   margin: 0 0 12px 0;
@@ -849,7 +988,44 @@ const selfProjects = [
   background: var(--accent-glow);
   color: var(--accent-primary);
   border-radius: 100px;
-  font-size: 12px;
+  font-size: 0.78rem;
+  transition: all 0.2s;
+}
+
+.project-tag:hover {
+  background: var(--accent-primary);
+  color: #fff;
+}
+
+/* 项目图片 */
+.project-image-col {
+  flex-shrink: 0;
+  width: 180px;
+  height: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.project-thumb {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.project-thumb-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.project-thumb-initial {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.5);
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
 /* 自研项目 */
@@ -892,6 +1068,14 @@ const selfProjects = [
   color: var(--accent-primary);
   font-size: 22px;
   margin-bottom: 14px;
+  overflow: hidden;
+}
+
+.self-project-icon-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 10px;
 }
 
 .self-project-name {
@@ -1139,10 +1323,6 @@ const selfProjects = [
     height: 120px;
   }
   
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-  
   .contact-cards {
     grid-template-columns: 1fr;
   }
@@ -1155,13 +1335,23 @@ const selfProjects = [
     justify-content: center;
   }
   
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
   .project-item {
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
   }
   
   .project-timeline {
     width: auto;
+  }
+  
+  .project-image-col {
+    width: 100%;
+    height: 140px;
+    align-self: stretch;
   }
   
   .self-projects-grid {
@@ -1444,15 +1634,14 @@ const selfProjects = [
   border-left: none;
   padding-left: 0;
   display: block;
-  position: relative;
-}
-
-.resume-mode .project-item:last-child {
-  padding-bottom: 0;
 }
 
 .resume-mode .project-item::before {
   display: none;
+}
+
+.resume-mode .project-item:last-child {
+  padding-bottom: 0;
 }
 
 .resume-mode .project-timeline {
@@ -1519,6 +1708,15 @@ const selfProjects = [
   content: '#';
   color: var(--resume-accent);
   margin-right: 1px;
+}
+
+.resume-mode .project-tag:hover {
+  background: none;
+  color: var(--resume-text-secondary);
+}
+
+.resume-mode .project-image-col {
+  display: none;
 }
 
 /* 简历模式 - 自研项目 */

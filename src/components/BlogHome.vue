@@ -152,7 +152,7 @@
           >
             <div class="api-card-row">
               <div class="api-tags">
-                <span v-for="t in api.tags" :key="t.value" class="api-tag" :style="{ background: t.color + '20', color: t.color }">
+                <span v-for="t in api.tags" :key="t.value" class="api-tag" :style="{ background: t.color + '55', color: '#fff' }">
                   {{ t.text }}
                 </span>
                 <span v-if="!api.isFree" class="api-tag paid-tag">
@@ -1006,6 +1006,7 @@ const getTagGradient = (tag) => {
   font-weight: 500;
   border-radius: 10px;
   white-space: nowrap;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .paid-tag {
