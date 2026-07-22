@@ -505,7 +505,163 @@ export const api = {
       }
     }
     return res
-  }
+  },
+
+  // ========== 个人信息 ==========
+
+  // 获取个人信息
+  async getMyInfo() {
+    return await request(API_PATHS.queryInfo)
+  },
+
+  // 保存个人信息
+  async saveInfo(data) {
+    return await request(API_PATHS.saveInfo, {
+      method: 'POST',
+      body: JSON.stringify(data)
+    })
+  },
+
+  // 关于页面 - 获取博主信息
+  async getAboutMe() {
+    return await request(API_PATHS.aboutMe)
+  },
+
+  // ========== 项目经历 ==========
+
+  // 保存项目经历（新增/编辑）
+  async saveProject(data) {
+    return await request(API_PATHS.saveProjectInfo, {
+      method: 'POST',
+      body: JSON.stringify(data)
+    })
+  },
+
+  // 获取项目列表
+  async getProjectList() {
+    const res = await request(API_PATHS.queryProjectList)
+    if (res.data && Array.isArray(res.data)) {
+      res.data = res.data.map(item => ({
+        id: item.id,
+        name: item.name,
+        role: item.role,
+        description: item.description,
+        tech: item.tech || '',
+        tags: item.tech ? item.tech.split(',').filter(t => t.trim()) : [],
+        image: item.image || '',
+        startDate: item.start_time || '',
+        endDate: item.end_time || '',
+        isCurrent: item.end_time === '至今',
+        acceptance: item.finish_status || '',
+        userBase: item.user_num || ''
+      }))
+    } else if (res.data && res.data.rows && Array.isArray(res.data.rows)) {
+      // 兼容分页返回格式
+      res.data = res.data.rows.map(item => ({
+        id: item.id,
+        name: item.name,
+        role: item.role,
+        description: item.description,
+        tech: item.tech || '',
+        tags: item.tech ? item.tech.split(',').filter(t => t.trim()) : [],
+        image: item.image || '',
+        startDate: item.start_time || '',
+        endDate: item.end_time || '',
+        isCurrent: item.end_time === '至今',
+        acceptance: item.finish_status || '',
+        userBase: item.user_num || ''
+      }))
+    }
+    return res
+  },
+
+  // 获取项目详情
+  async getProjectDetail(id) {
+    const res = await request(API_PATHS.queryProjectInfo(id))
+    if (res.data) {
+      const item = res.data
+      res.data = {
+        id: item.id,
+        name: item.name,
+        role: item.role,
+        description: item.description,
+        tech: item.tech || '',
+        tags: item.tech ? item.tech.split(',').filter(t => t.trim()) : [],
+        image: item.image || '',
+        startDate: item.start_time || '',
+        endDate: item.end_time || '',
+        isCurrent: item.end_time === '至今',
+        acceptance: item.finish_status || '',
+        userBase: item.user_num || ''
+      }
+    }
+    return res
+  },
+
+  // ========== 产品信息（自研项目） ==========
+
+  // 保存产品信息（新增/编辑）
+  async saveProduct(data) {
+    return await request(API_PATHS.saveProductInfo, {
+      method: 'POST',
+      body: JSON.stringify(data)
+    })
+  },
+
+  // 获取产品列表
+  async getProductList() {
+    const res = await request(API_PATHS.queryProductList)
+    const parseTags = (tags) => {
+      if (typeof tags === 'string') return tags.split(',').map(t => t.trim()).filter(Boolean)
+      return tags || []
+    }
+    if (res.data && Array.isArray(res.data)) {
+      res.data = res.data.map(item => ({
+        id: item.id,
+        name: item.name,
+        icon: item.img || '',
+        description: item.description,
+        demoUrl: item.playUrl || '',
+        githubUrl: item.githubUrl || '',
+        tags: parseTags(item.tags)
+      }))
+    } else if (res.data && res.data.rows && Array.isArray(res.data.rows)) {
+      // 兼容分页返回格式
+      res.data = res.data.rows.map(item => ({
+        id: item.id,
+        name: item.name,
+        icon: item.img || '',
+        description: item.description,
+        demoUrl: item.playUrl || '',
+        githubUrl: item.githubUrl || '',
+        tags: parseTags(item.tags)
+      }))
+    }
+    return res
+  },
+
+  // 获取产品详情
+  async getProductDetail(id) {
+    const res = await request(API_PATHS.queryProductInfo(id))
+    if (res.data) {
+      const item = res.data
+      const parseTags = (tags) => {
+        if (typeof tags === 'string') return tags.split(',').map(t => t.trim()).filter(Boolean)
+        return tags || []
+      }
+      res.data = {
+        id: item.id,
+        name: item.name,
+        icon: item.img || '',
+        description: item.description,
+        demoUrl: item.playUrl || '',
+        githubUrl: item.githubUrl || '',
+        tags: parseTags(item.tags)
+      }
+    }
+    return res
+  },
+
 }
 
 export default api

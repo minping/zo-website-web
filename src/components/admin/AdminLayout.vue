@@ -114,7 +114,7 @@ const getActiveNav = () => {
 const activeNav = ref(getActiveNav())
 
 // 展开状态
-const expandedMenus = ref(['articles', 'profile'])
+const expandedMenus = ref(['articles', 'apimanage', 'profile'])
 
 const isExpanded = (item) => {
   return expandedMenus.value.includes(item.id)
@@ -205,7 +205,16 @@ const navItems = [
       { id: 'published', label: '已发布', icon: PublishedIcon, path: '/admin/published' }
     ]
   },
-  { id: 'apis', label: 'API 管理', icon: ApisIcon, path: '/admin/apis' },
+
+  {
+    id: 'apimanage',
+    label: 'API 管理',
+    icon: ApisIcon,
+    path: '/admin/apis',
+    children: [
+      { id: 'apis', label: 'API 管理', icon: ApisIcon, path: '/admin/apis' },
+    ] 
+  },
   {
     id: 'profile',
     label: '信息管理',
@@ -246,11 +255,16 @@ const goHome = () => {
 // 监听路由变化
 watch(() => route.path, () => {
   activeNav.value = getActiveNav()
-  // 自动展开文章管理菜单
+  // 自动展开对应父级菜单
   const path = route.path
   if (path.includes('/admin/articles') || path.includes('/admin/drafts') || path.includes('/admin/published') || path.includes('/admin/editor') || path.includes('/admin/tags')) {
     if (!expandedMenus.value.includes('articles')) {
       expandedMenus.value.push('articles')
+    }
+  }
+  if (path.includes('/admin/apis')) {
+    if (!expandedMenus.value.includes('apimanage')) {
+      expandedMenus.value.push('apimanage')
     }
   }
 }, { immediate: true })
@@ -264,197 +278,5 @@ const handleLogout = () => {
 }
 </script>
 
-<style scoped>
-/* 暗色主题变量 */
-.admin-layout {
-  --admin-bg-primary: #0f0f23;
-  --admin-bg-secondary: #1a1a2e;
-  --admin-bg-card: #1a1a2e;
-  --admin-border-color: #2d2d44;
-  --admin-text-primary: #e4e4e7;
-  --admin-text-secondary: #a1a1aa;
-  --admin-accent-primary: #6366f1;
-  --admin-accent-secondary: #8b5cf6;
-  --admin-hover-bg: rgba(99, 102, 241, 0.15);
-  --admin-active-bg: #6366f1;
-  --admin-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  
-  display: flex;
-  min-height: 100vh;
-  background: var(--admin-bg-primary);
-}
-
-/* 侧边栏 */
-.sidebar {
-  width: 260px;
-  background: var(--admin-bg-secondary);
-  border-right: 1px solid var(--admin-border-color);
-  display: flex;
-  flex-direction: column;
-  position: fixed;
-  top: 0;
-  left: 0;
-  height: 100vh;
-  z-index: 100;
-  box-shadow: var(--admin-shadow);
-}
-
-.sidebar-header {
-  padding: 24px;
-  border-bottom: 1px solid var(--admin-border-color);
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-}
-
-.logo-icon {
-  font-size: 20px;
-  font-weight: bold;
-  color: var(--admin-accent-primary);
-}
-
-.logo-text {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--admin-text-primary);
-}
-
-.admin-badge {
-  padding: 4px 8px;
-  background: var(--admin-accent-primary);
-  color: white;
-  font-size: 10px;
-  font-weight: 600;
-  border-radius: 4px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.sidebar-nav {
-  flex: 1;
-  padding: 16px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.nav-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  color: var(--admin-text-secondary);
-  text-decoration: none;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  transition: all 0.3s;
-}
-
-.nav-item:hover {
-  background: var(--admin-hover-bg);
-  color: var(--admin-text-primary);
-}
-
-.nav-item.active {
-  background: var(--admin-active-bg);
-  color: white;
-}
-
-.nav-item.has-children {
-  justify-content: space-between;
-}
-
-.arrow-icon {
-  transition: transform 0.3s;
-}
-
-.arrow-icon.expanded {
-  transform: rotate(90deg);
-}
-
-.sub-nav {
-  margin-left: 20px;
-  margin-top: 4px;
-}
-
-.sub-nav-item {
-  padding: 10px 16px;
-  font-size: 13px;
-}
-
-.sidebar-footer {
-  padding: 16px;
-  border-top: 1px solid var(--admin-border-color);
-}
-
-.back-home {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  padding: 12px;
-  background: transparent;
-  border: 1px solid var(--admin-border-color);
-  border-radius: 8px;
-  color: var(--admin-text-secondary);
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.back-home:hover {
-  background: var(--admin-hover-bg);
-  color: var(--admin-text-primary);
-}
-
-.logout-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  padding: 12px;
-  background: rgba(239, 68, 68, 0.08);
-  border: 1px solid rgba(239, 68, 68, 0.2);
-  border-radius: 8px;
-  color: #ef4444;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.3s;
-  margin-bottom: 8px;
-}
-
-.logout-btn:hover {
-  background: rgba(239, 68, 68, 0.15);
-  border-color: rgba(239, 68, 68, 0.4);
-}
-
-/* 主内容区 */
-.main-content {
-  flex: 1;
-  margin-left: 260px;
-  padding: 32px 40px;
-  min-height: 100vh;
-  background: var(--admin-bg-primary);
-}
-
-@media (max-width: 768px) {
-  .sidebar {
-    transform: translateX(-100%);
-  }
-  
-  .main-content {
-    margin-left: 0;
-    padding: 20px;
-  }
-}
-</style>
+<style scoped src="./AdminLayout.css"></style>
+<style src="./common.css"></style>

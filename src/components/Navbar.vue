@@ -26,7 +26,8 @@
             <rect x="3" y="14" width="7" height="7"/>
           </svg>
         </a>
-        <button class="theme-toggle" @click="toggleTheme" :title="theme === 'dark' ? '切换到亮色主题' : '切换到深色主题'">
+        <button class="theme-toggle" @click="toggleTheme" :title="themeTitle">
+          <!-- 深色 → 太阳 -->
           <svg v-if="theme === 'dark'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="5"/>
             <line x1="12" y1="1" x2="12" y2="3"/>
@@ -38,8 +39,31 @@
             <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
             <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
           </svg>
-          <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <!-- 亮色 → 月亮 -->
+          <svg v-else-if="theme === 'light'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+          <!-- 复古 → 沙漏 -->
+          <svg v-else-if="theme === 'retro'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 2h12v6l-4 4 4 4v6H6v-6l4-4-4-4V2z"/>
+            <path d="M6 2h12"/>
+            <path d="M6 22h12"/>
+            <line x1="10" y1="12" x2="14" y2="12"/>
+          </svg>
+          <!-- 赛博朋克 → 芯片 -->
+          <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="4" y="4" width="16" height="16" rx="2" ry="2"/>
+            <line x1="9" y1="2" x2="9" y2="4"/>
+            <line x1="15" y1="2" x2="15" y2="4"/>
+            <line x1="9" y1="20" x2="9" y2="22"/>
+            <line x1="15" y1="20" x2="15" y2="22"/>
+            <line x1="20" y1="9" x2="22" y2="9"/>
+            <line x1="20" y1="14" x2="22" y2="14"/>
+            <line x1="2" y1="9" x2="4" y2="9"/>
+            <line x1="2" y1="14" x2="4" y2="14"/>
+            <rect x="9" y="9" width="6" height="6"/>
+            <line x1="12" y1="9" x2="12" y2="15"/>
+            <line x1="9" y1="12" x2="15" y2="12"/>
           </svg>
         </button>
       </div>
@@ -48,6 +72,7 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTheme } from '../composables/useTheme'
 
@@ -62,6 +87,13 @@ const emit = defineEmits(['navigate'])
 
 const router = useRouter()
 const { theme, toggleTheme } = useTheme()
+
+const themeTitle = computed(() => {
+  if (theme.value === 'dark') return '切换到亮色主题'
+  if (theme.value === 'light') return '切换到复古主题'
+  if (theme.value === 'retro') return '切换到赛博朋克主题'
+  return '切换到深色主题'
+})
 
 const navLinks = [
   { name: '首页', path: '/', label: '首页' },

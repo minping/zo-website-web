@@ -1,0 +1,102 @@
+/* ============================================
+   AdminDashboard - 仪表盘
+   ============================================ */
+
+.dashboard {
+  max-width: 1200px;
+}
+
+/* 模块区域 */
+.module-section {
+  margin-bottom: 32px;
+}
+
+.module-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.module-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--admin-text-primary);
+}
+
+.module-title h2 {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.module-title svg {
+  color: var(--admin-accent-primary);
+}
+
+/* 统计卡片网格 */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.stat-card {
+  background: var(--admin-bg-card);
+  border: 1px solid var(--admin-border-color);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.stat-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.stat-icon.articles { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+.stat-icon.published { background: rgba(34, 197, 94, 0.1); color: #22c55e; }
+.stat-icon.drafts { background: rgba(251, 191, 36, 0.1); color: #fbbf24; }
+.stat-icon.views { background: rgba(168, 85, 247, 0.1); color: #a855f7; }
+.stat-icon.likes { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+.stat-icon.apis { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+.stat-icon.free { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+.stat-icon.calls { background: rgba(249, 115, 22, 0.1); color: #f97316; }
+.stat-icon.success { background: rgba(34, 197, 94, 0.1); color: #22c55e; }
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--admin-text-primary);
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--admin-text-secondary);
+}
+
+@media (max-width: 1200px) {
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+  .stats-grid { grid-template-columns: 1fr; }
+  .module-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+}

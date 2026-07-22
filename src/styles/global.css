@@ -39,6 +39,40 @@
   --navbar-bg: rgba(248, 250, 252, 0.9);
 }
 
+/* 复古主题 */
+[data-theme="retro"] {
+  --bg-primary: #fdf6e3;
+  --bg-secondary: #f5ecd0;
+  --bg-card: #fff9f0;
+  --accent-primary: #c06014;
+  --accent-secondary: #d4733b;
+  --accent-glow: rgba(192, 96, 20, 0.12);
+  --text-primary: #3d2b1f;
+  --text-secondary: #6b5344;
+  --text-muted: #8c7763;
+  --border-color: rgba(139, 119, 90, 0.25);
+  --gradient-start: #c06014;
+  --gradient-end: #d4733b;
+  --navbar-bg: rgba(253, 246, 227, 0.94);
+}
+
+/* 赛博朋克主题 */
+[data-theme="cyberpunk"] {
+  --bg-primary: #0a0a0f;
+  --bg-secondary: #111118;
+  --bg-card: #181825;
+  --accent-primary: #ff007f;
+  --accent-secondary: #00f0ff;
+  --accent-glow: rgba(255, 0, 127, 0.15);
+  --text-primary: #e0e0ff;
+  --text-secondary: #8888cc;
+  --text-muted: #555588;
+  --border-color: rgba(0, 240, 255, 0.15);
+  --gradient-start: #ff007f;
+  --gradient-end: #00f0ff;
+  --navbar-bg: rgba(10, 10, 15, 0.92);
+}
+
 html {
   scroll-behavior: smooth;
 }

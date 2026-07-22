@@ -1,0 +1,486 @@
+/* ============================================
+   AdminTagManagement - 标签星图管理
+   ============================================ */
+
+.tag-management {
+  max-width: 1400px;
+}
+
+.tag-management .content-header {
+  margin-bottom: 24px;
+}
+
+.tag-management .header-left h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--admin-text-primary);
+  margin-bottom: 4px;
+}
+
+.tag-management .header-left p {
+  color: var(--admin-text-secondary);
+  font-size: 14px;
+}
+
+/* 加载状态 */
+.tag-management .loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 120px 0;
+  color: var(--admin-text-secondary);
+  gap: 16px;
+}
+
+.tag-management .loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(99, 102, 241, 0.1);
+  border-top-color: var(--admin-accent-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* 星图容器 */
+.star-map-container {
+  background: var(--admin-bg-card);
+  border: 1px solid var(--admin-border-color);
+  border-radius: 16px;
+  padding: 40px;
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+
+.star-map {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  max-width: 600px;
+  max-height: 600px;
+  margin: 0 auto;
+  background: radial-gradient(ellipse at center, rgba(99, 102, 241, 0.05) 0%, transparent 70%);
+}
+
+/* 连线 SVG */
+.connections-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* 中心节点 */
+.center-node {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  z-index: 10;
+  transition: transform 0.3s;
+}
+
+.center-node:hover {
+  transform: translate(-50%, -50%) scale(1.1);
+}
+
+.center-pulse {
+  position: absolute;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(99, 102, 241, 0.15);
+  animation: pulse-ring 2s ease-out infinite;
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.8); opacity: 1; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+
+.center-core {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 0 24px rgba(99, 102, 241, 0.4);
+  z-index: 1;
+}
+
+.center-label {
+  font-size: 13px;
+  color: var(--admin-text-secondary);
+  font-weight: 500;
+}
+
+/* 标签星球 */
+.tag-planet {
+  position: absolute;
+  cursor: pointer;
+  z-index: 5;
+  transition: transform 0.3s, filter 0.3s;
+}
+
+.tag-planet:hover {
+  z-index: 15;
+  transform: translate(-50%, -50%) scale(1.15) !important;
+}
+
+.tag-planet.selected {
+  z-index: 20;
+  transform: translate(-50%, -50%) scale(1.2) !important;
+}
+
+.planet-orbit {
+  position: absolute;
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation: orbit-rotate 12s linear infinite;
+}
+
+@keyframes orbit-rotate {
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+.planet-body {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.1), inset 0 2px 4px rgba(0, 0, 0, 0.06);
+  transition: box-shadow 0.3s;
+}
+
+.tag-planet.selected .planet-body {
+  box-shadow: 0 0 30px currentColor;
+}
+
+.planet-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: white;
+  text-align: center;
+  line-height: 1.2;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+/* 行星操作按钮 */
+.planet-actions {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  display: flex;
+  gap: 4px;
+  z-index: 25;
+}
+
+.action-mini {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--admin-bg-card);
+  border: 1px solid var(--admin-border-color);
+  color: var(--admin-text-secondary);
+}
+
+.action-mini.edit:hover {
+  background: var(--admin-accent-primary);
+  color: white;
+  border-color: var(--admin-accent-primary);
+}
+
+.action-mini.delete:hover {
+  background: #ef4444;
+  color: white;
+  border-color: #ef4444;
+}
+
+/* 空状态 */
+.star-map .empty-state {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: var(--admin-text-secondary);
+  padding: 0;
+}
+
+.star-map .empty-state svg {
+  opacity: 0.4;
+}
+
+/* 底部标签列表 */
+.tag-list-bar {
+  background: var(--admin-bg-card);
+  border: 1px solid var(--admin-border-color);
+  border-radius: 12px;
+  padding: 20px 24px;
+}
+
+.list-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--admin-text-primary);
+  margin-bottom: 12px;
+}
+
+.tag-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.tag-chip {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+}
+
+.tag-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.no-tag-text {
+  color: var(--admin-text-secondary);
+  font-size: 14px;
+}
+
+/* 弹窗 */
+.tag-management .modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.tag-management .modal {
+  background: var(--admin-bg-card);
+  border: 1px solid var(--admin-border-color);
+  border-radius: 16px;
+  padding: 32px;
+  max-width: 420px;
+  width: 90%;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+.tag-management .modal h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--admin-text-primary);
+  margin-bottom: 12px;
+}
+
+.tag-management .modal p {
+  color: var(--admin-text-secondary);
+  margin-bottom: 24px;
+  line-height: 1.6;
+}
+
+.tag-management .modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.form-modal {
+  background: var(--admin-bg-card);
+  border: 1px solid var(--admin-border-color);
+  border-radius: 16px;
+  padding: 28px;
+  max-width: 480px;
+  width: 90%;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+
+.tag-management .modal-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--admin-text-primary);
+  margin: 0 0 24px 0;
+}
+
+.tag-management .modal-close-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--admin-text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  z-index: 10;
+}
+
+.tag-management .modal-close-btn:hover {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+}
+
+.tag-management .modal-close-btn svg {
+  flex-shrink: 0;
+}
+
+.form-modal .form-group {
+  margin-bottom: 20px;
+}
+
+.form-modal .form-group label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--admin-text-primary);
+  margin-bottom: 8px;
+}
+
+.form-modal .form-group input[type="text"] {
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--admin-bg-primary);
+  border: 1px solid var(--admin-border-color);
+  border-radius: 8px;
+  color: var(--admin-text-primary);
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.form-modal .form-group input:focus {
+  outline: none;
+  border-color: var(--admin-accent-primary);
+}
+
+.color-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.color-picker-input {
+  width: 40px;
+  height: 40px;
+  padding: 2px;
+  background: var(--admin-bg-primary);
+  border: 1px solid var(--admin-border-color);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.color-picker-input::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.color-picker-input::-webkit-color-swatch {
+  border: none;
+  border-radius: 6px;
+}
+
+.preset-color {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+.preset-color:hover {
+  transform: scale(1.15);
+}
+
+.preset-color.active {
+  border-color: white;
+  box-shadow: 0 0 8px currentColor;
+  transform: scale(1.1);
+}
+
+.form-preview {
+  margin-bottom: 24px;
+  padding: 16px;
+  background: var(--admin-bg-primary);
+  border-radius: 8px;
+  text-align: center;
+}
+
+.preview-tag {
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid transparent;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 8px;
+  border-top: 1px solid var(--admin-border-color);
+}
+
+/* Toast */
+.tag-management .toast {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 14px 28px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  z-index: 2000;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.tag-management .toast.success {
+  background: #22c55e;
+  color: white;
+}
+
+.tag-management .toast.error {
+  background: #ef4444;
+  color: white;
+}
