@@ -1,12 +1,13 @@
 // API 配置文件
 // 后端接口地址
-// export const API_BASE_URL = 'https://www.mpgapay.cn/website'
-export const API_BASE_URL = 'http://localhost:8014/website'
+export const API_BASE_URL = 'https://www.mpgapay.cn/website'
+// export const API_BASE_URL = 'http://localhost:8014/website'
 
 // API 接口路径配置
 export const API_PATHS = {
   // 文章相关
   articles: '/index/article/queryIndexArticle',
+  allArticles: '/index/article/queryAllArticle',
   articleDetail: (id) => `/index/article/queryArticleDetail?id=${id}`,
   queryRecommendArticle: (id) => `/index/article/queryRecommendArticle?id=${id}`,
   articleLike: (id) => `/index/article/likeArticle?id=${id}`,
@@ -17,6 +18,7 @@ export const API_PATHS = {
   publicApiTags: '/index/api/queryApiTagList',
   // 文章标签
   articleTags: '/admin/article/queryAllTags',
+  allTags: '/index/article/queryAllTags',
   // 标签统计
   allTagStatics: '/index/article/queryAllTagStatics',
   statics: '/index/queryStatics',
@@ -77,6 +79,10 @@ export const API_PATHS = {
   // 文章标签
   insertArticleTag: (id, name, color) => `/admin/article/insertTag?id=${id || ''}&tagName=${encodeURIComponent(name)}&tagColor=${encodeURIComponent(color)}`,
   deleteArticleTag: (tagId) => `/admin/article/deleteTag?id=${tagId}`,
+
+  // 系统设置
+  getSetting: '/setting/getSetting',
+  switchTheme: (theme) => `/setting/switchTheme?theme=${encodeURIComponent(theme)}`,
 }
 
 // 完整 API URL

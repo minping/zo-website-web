@@ -14,6 +14,7 @@ import AdminApiEditor from '../components/admin/AdminApiEditor.vue'
 import AdminTagManagement from '../components/admin/AdminTagManagement.vue'
 import AdminLogin from '../components/admin/AdminLogin.vue'
 import AdminMyInfo from '../components/admin/AdminMyInfo.vue'
+import AdminProjectForm from '../components/admin/AdminProjectForm.vue'
 import AdminProjects from '../components/admin/AdminProjects.vue'
 import AdminSelfProjects from '../components/admin/AdminSelfProjects.vue'
 
@@ -109,6 +110,12 @@ const routes = [
     path: '/admin/projects',
     name: 'AdminProjects',
     component: AdminProjects,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/admin/projects/form',
+    name: 'AdminProjectForm',
+    component: AdminProjectForm,
     meta: { requiresAuth: true }
   },
   {

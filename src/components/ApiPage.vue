@@ -25,7 +25,7 @@
             placeholder="搜索 API 名称、描述或标签..."
             class="search-input"
           />
-          <button v-if="searchQuery" class="clear-btn" @click="searchQuery = ''">
+          <button v-show="searchQuery" class="clear-btn" @click="searchQuery = ''">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <line x1="18" y1="6" x2="6" y2="18"/>
               <line x1="6" y1="6" x2="18" y2="18"/>
@@ -275,34 +275,40 @@ onMounted(async () => {
 }
 
 .search-box {
-  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   max-width: 600px;
   margin: 0 auto 24px;
+  padding: 0 16px;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  border-radius: 16px;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.search-box:hover {
+  border-color: var(--border-color);
+}
+
+.search-box:focus-within {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 4px var(--accent-glow);
 }
 
 .search-icon {
-  position: absolute;
-  left: 20px;
-  top: 50%;
-  transform: translateY(-50%);
+  flex-shrink: 0;
   color: var(--text-tertiary);
 }
 
 .search-input {
-  width: 100%;
-  padding: 16px 50px 16px 52px;
+  flex: 1;
+  padding: 16px 0;
   font-size: 16px;
-  background: var(--bg-secondary);
-  border: 2px solid var(--border-color);
-  border-radius: 16px;
+  background: transparent;
+  border: none;
   color: var(--text-primary);
   outline: none;
-  transition: all 0.3s;
-}
-
-.search-input:focus {
-  border-color: var(--accent-primary);
-  box-shadow: 0 0 0 4px var(--accent-glow);
 }
 
 .search-input::placeholder {
@@ -310,10 +316,7 @@ onMounted(async () => {
 }
 
 .clear-btn {
-  position: absolute;
-  right: 16px;
-  top: 50%;
-  transform: translateY(-50%);
+  flex-shrink: 0;
   width: 28px;
   height: 28px;
   display: flex;

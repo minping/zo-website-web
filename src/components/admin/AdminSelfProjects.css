@@ -260,8 +260,8 @@
   border: 1px solid var(--admin-border);
   border-radius: 16px;
   padding: 0;
-  width: 600px;
-  max-width: 92vw;
+  width: 720px;
+  max-width: 95vw;
   max-height: 85vh;
   overflow-y: auto;
   animation: slideUp 0.25s ease;

@@ -143,55 +143,64 @@
             </svg>
           </a>
         </div>
-        <div class="api-grid">
-          <div 
-            v-for="api in openApis" 
-            :key="api.id" 
-            class="api-card"
-            @click="goToApiDetail(api)"
-          >
-            <div class="api-card-row">
-              <div class="api-tags">
-                <span v-for="t in api.tags" :key="t.value" class="api-tag" :style="{ background: t.color + '55', color: '#fff' }">
-                  {{ t.text }}
+        <!-- DevTools Network 面板风格 -->
+        <div class="devtools-panel">
+          <div class="devtools-toolbar">
+            <div class="dt-dots">
+              <span class="dt-dot dt-dot-red"></span>
+              <span class="dt-dot dt-dot-yellow"></span>
+              <span class="dt-dot dt-dot-green"></span>
+            </div>
+            <span class="dt-title">Network</span>
+            <div class="dt-filters">
+              <span class="dt-filter">XHR</span>
+            </div>
+          </div>
+          <div class="devtools-table">
+            <div class="dt-header">
+              <span class="dt-col-name">Name</span>
+              <span class="dt-col-status">Status</span>
+              <span class="dt-col-type">Type</span>
+              <span class="dt-col-time">Time</span>
+              <span class="dt-col-waterfall">Waterfall</span>
+            </div>
+            <div 
+              v-for="(api, idx) in openApis" 
+              :key="api.id" 
+              class="dt-row"
+              :class="{ 'dt-row-odd': idx % 2 === 1 }"
+              :style="{ '--row-delay': idx * 0.06 + 's', '--bar-color': methodColors[api.method] || '#6366f1' }"
+              @click="goToApiDetail(api)"
+            >
+              <span class="dt-col-name">
+                <span class="dt-method" :style="{ background: methodColors[api.method] || '#6366f1' }">{{ api.method }}</span>
+                <span class="dt-path">{{ api.name }}</span>
+                <span class="dt-desc">{{ api.description }}</span>
+              </span>
+              <span class="dt-col-status">
+                <span class="dt-status-dot" :class="{ 'dt-status-err': !api.isFree }"></span>
+                <span class="dt-status-code">{{ api.isFree ? '200' : '403' }}</span>
+              </span>
+              <span class="dt-col-type">
+                <span class="dt-tag-chip" v-for="t in api.tags.slice(0, 2)" :key="t.value" :style="{ background: t.color + '28', color: t.color }">{{ t.text }}</span>
+                <span v-if="!api.isFree" class="dt-tag-chip dt-tag-paid">付费</span>
+              </span>
+              <span class="dt-col-time">
+                <span class="dt-time-val" :style="{ color: api.responseTime < 100 ? '#10b981' : api.responseTime < 300 ? '#f59e0b' : '#ef4444' }">{{ api.responseTime }} ms</span>
+              </span>
+              <span class="dt-col-waterfall">
+                <span class="dt-bar-track">
+                  <span class="dt-bar" :style="{ width: Math.min((api.responseTime / 500) * 100, 100) + '%', background: methodColors[api.method] || '#6366f1' }"></span>
                 </span>
-                <span v-if="!api.isFree" class="api-tag paid-tag">
-                  付费
-                </span>
-              </div>
-              <span class="api-desc">{{ api.description }}</span>
-              <span class="api-name">{{ api.name }}</span>
-              <div class="api-stats">
-                <span class="api-stat" data-tip="累计 API 调用次数">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
-                  </svg>
+                <span class="dt-bar-stats">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
                   {{ api.stats.calls }}
                 </span>
-                <span class="api-stat" data-tip="请求成功比例">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="20 6 9 17 4 12"/>
-                  </svg>
-                  {{ api.stats.successRate }}%
-                </span>
-                <span class="api-stat" data-tip="平均响应时间">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"/>
-                    <polyline points="12 6 12 12 16 14"/>
-                  </svg>
-                  {{ api.responseTime }}ms
-                </span>
-                <span class="api-stat" data-tip="用户点赞数">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                  </svg>
-                  {{ api.stats.likes }}
-                </span>
-              </div>
-              <span class="api-method" :style="{ background: methodColors[api.method] }">
-                {{ api.method }}
               </span>
             </div>
+          </div>
+          <div class="devtools-footer">
+            <span class="dt-footer-text">{{ openApis.length }} requests</span>
           </div>
         </div>
       </div>
@@ -785,12 +794,7 @@ const getTagGradient = (tag) => {
 
 .hero-actions > * {
   opacity: 0;
-  animation: btnSlideUp 0.7s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
 }
-
-.hero-actions > *:nth-child(1) { animation-delay: 1.1s; }
-.hero-actions > *:nth-child(2) { animation-delay: 1.2s; }
-.hero-actions > *:nth-child(3) { animation-delay: 1.3s; }
 
 @keyframes btnSlideUp {
   from {
@@ -819,32 +823,36 @@ const getTagGradient = (tag) => {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+  background: linear-gradient(135deg, var(--gradient-start, #6366f1), var(--gradient-end, #8b5cf6));
   color: white;
-  box-shadow: 0 8px 32px rgba(59, 130, 246, 0.3);
-  position: relative;
-  overflow: hidden;
-}
-
-.btn-primary::after {
-  content: '';
-  position: absolute;
-  inset: -2px;
-  border-radius: 14px;
-  background: linear-gradient(135deg, var(--gradient-start), #a78bfa, var(--gradient-end));
-  opacity: 0;
-  transition: opacity 0.4s ease;
-  z-index: -1;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .btn-primary:hover {
   transform: translateY(-3px);
-  box-shadow: 0 12px 40px rgba(59, 130, 246, 0.5), 0 0 60px rgba(99, 102, 241, 0.15);
+  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.35);
 }
 
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 40px rgba(59, 130, 246, 0.4);
+/* 三按钮依次滑入 */
+.hero-actions .btn:nth-child(1) {
+  animation:
+    btnSlideUp 0.7s cubic-bezier(0.22, 0.61, 0.36, 1) 1.1s forwards,
+    gradientFlow 4s ease-in-out infinite;
+  background-size: 300% 300%;
+}
+
+/* 渐变流动 */
+@keyframes gradientFlow {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.hero-actions .btn:nth-child(2) {
+  animation: btnSlideUp 0.7s cubic-bezier(0.22, 0.61, 0.36, 1) 1.2s forwards;
+}
+
+.hero-actions .btn:nth-child(3) {
+  animation: btnSlideUp 0.7s cubic-bezier(0.22, 0.61, 0.36, 1) 1.3s forwards;
 }
 
 .btn-secondary {
@@ -854,6 +862,7 @@ const getTagGradient = (tag) => {
 }
 
 .btn-secondary:hover {
+  transform: translateY(-3px);
   border-color: var(--accent-primary);
   background: var(--accent-glow);
 }
@@ -914,7 +923,8 @@ const getTagGradient = (tag) => {
   background: var(--border-color);
 }
 
-/* 开放 API 模块 */
+
+/* 开放 API - DevTools Network 面板 */
 .api-section {
   position: relative;
   padding: 100px 0;
@@ -935,138 +945,273 @@ const getTagGradient = (tag) => {
   color: var(--accent-primary);
 }
 
-.api-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 12px;
+/* DevTools 面板容器 */
+.devtools-panel {
+  background: #1e1e2e;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.25);
+  font-family: 'JetBrains Mono', 'Consolas', 'Menlo', monospace;
 }
 
-.api-card {
+/* 顶部工具栏 */
+.devtools-toolbar {
   display: flex;
-  padding: 12px 20px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: 10px;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 16px;
+  background: #16162a;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  user-select: none;
+}
+
+.dt-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.dt-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.dt-dot-red { background: #ff5f56; }
+.dt-dot-yellow { background: #ffbd2e; }
+.dt-dot-green { background: #27c93f; }
+
+.dt-title {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.5px;
+}
+
+.dt-filters {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.dt-filter {
+  padding: 3px 10px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.35);
+  border-radius: 4px;
+  cursor: default;
+  transition: all 0.2s ease;
+}
+
+.dt-filter.active {
+  background: rgba(99, 102, 241, 0.3);
+  color: #a5b4fc;
+}
+
+/* 表头 */
+.dt-header {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  user-select: none;
+}
+
+/* 表格行 */
+.dt-row {
+  display: flex;
+  align-items: center;
+  padding: 11px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
   cursor: pointer;
-  transition: all 0.25s ease;
+  transition: background 0.15s ease;
+  animation: dtRowSlide 0.35s ease both;
+  animation-delay: var(--row-delay, 0s);
 }
 
-.api-card:hover {
-  border-color: var(--accent-primary);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+@keyframes dtRowSlide {
+  from { opacity: 0; transform: translateX(-8px); }
+  to { opacity: 1; transform: translateX(0); }
 }
 
-.api-card-row {
+.dt-row-odd {
+  background: rgba(255, 255, 255, 0.015);
+}
+
+.dt-row:hover {
+  background: rgba(99, 102, 241, 0.08);
+}
+
+.dt-row:last-child {
+  border-bottom: none;
+}
+
+/* 各列 */
+.dt-col-name {
+  flex: 2;
   display: flex;
   align-items: center;
   gap: 10px;
-  width: 100%;
   min-width: 0;
 }
 
-.api-method {
-  padding: 3px 8px;
-  font-size: 11px;
-  font-weight: 700;
-  color: white;
-  border-radius: 4px;
-  flex-shrink: 0;
-  line-height: 1.4;
+.dt-col-status {
+  flex: 0 0 70px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
-.api-name {
-  font-size: 13px;
-  color: var(--text-secondary);
+.dt-col-type {
+  flex: 0 0 120px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.dt-col-time {
+  flex: 0 0 80px;
+  text-align: right;
+}
+
+.dt-col-waterfall {
+  flex: 0 0 140px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* Method 标签 */
+.dt-method {
+  display: inline-block;
+  padding: 2px 7px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  border-radius: 3px;
+  flex-shrink: 0;
+  min-width: 40px;
+  text-align: center;
+}
+
+/* 路径 */
+.dt-path {
+  font-size: 12px;
+  color: #c9d1d9;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin: 0;
-  flex: 1;
+}
+
+.dt-row:hover .dt-path {
+  color: #e6edf3;
+}
+
+/* 描述 */
+.dt-desc {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.35);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 1;
   min-width: 0;
 }
 
-.api-desc {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-primary);
-  white-space: nowrap;
+.dt-row:hover .dt-desc {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+/* 状态指示 */
+.dt-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.4);
   flex-shrink: 0;
 }
 
-.api-tags {
-  display: flex;
-  gap: 5px;
-  flex-shrink: 0;
+.dt-status-err {
+  background: #f59e0b;
+  box-shadow: 0 0 6px rgba(245, 158, 11, 0.4);
 }
 
-.api-tag {
-  padding: 2px 8px;
+.dt-status-code {
   font-size: 11px;
-  font-weight: 500;
-  border-radius: 10px;
-  white-space: nowrap;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  color: rgba(255, 255, 255, 0.5);
 }
 
-.paid-tag {
-  background: rgba(245, 158, 11, 0.1);
+/* 类型标签 */
+.dt-tag-chip {
+  padding: 1px 7px;
+  font-size: 10px;
+  font-weight: 500;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+.dt-tag-paid {
+  background: rgba(245, 158, 11, 0.15);
   color: #f59e0b;
 }
 
-.api-stats {
-  display: flex;
-  align-items: center;
-  gap: 14px;
+/* 响应时间 */
+.dt-time-val {
+  font-size: 11px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Waterfall 柱状图 */
+.dt-bar-track {
+  width: 60px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 3px;
+  overflow: hidden;
   flex-shrink: 0;
 }
 
-.api-stat {
+.dt-bar {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.6s cubic-bezier(0.22, 0.61, 0.36, 1);
+  min-width: 4px;
+  opacity: 0.85;
+}
+
+.dt-bar-stats {
   display: flex;
   align-items: center;
   gap: 3px;
-  font-size: 12px;
-  color: var(--text-secondary);
-  cursor: help;
-  position: relative;
-  white-space: nowrap;
-}
-
-.api-stat svg {
-  color: var(--text-tertiary);
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.3);
   flex-shrink: 0;
 }
 
-.api-stat:hover {
-  color: var(--accent-primary);
+/* 底部状态栏 */
+.devtools-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #16162a;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.api-stat:hover::after {
-  content: attr(data-tip);
-  position: absolute;
-  bottom: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 6px 10px;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
+.dt-footer-text {
   font-size: 11px;
-  color: var(--text-primary);
-  white-space: nowrap;
-  z-index: 10;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  color: rgba(255, 255, 255, 0.3);
 }
 
-.api-stat:hover::before {
-  content: '';
-  position: absolute;
-  bottom: calc(100% + 2px);
-  left: 50%;
-  transform: translateX(-50%);
-  border: 5px solid transparent;
-  border-top-color: var(--border-color);
-  z-index: 10;
+.dt-footer-divider {
+  color: rgba(255, 255, 255, 0.1);
+  font-size: 11px;
 }
 
 /* 最新文章 */
@@ -1179,30 +1324,33 @@ const getTagGradient = (tag) => {
 }
 
 .article-image {
-  height: 180px;
+  height: 120px;
   position: relative;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
 }
 
 .article-tag-large {
-  font-size: 2rem;
-  font-weight: 700;
+  position: absolute;
+  top: 10px;
+  left: 14px;
+  font-size: 0.75rem;
+  font-weight: 600;
   color: white;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  letter-spacing: 2px;
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(4px);
+  padding: 3px 10px;
+  border-radius: 6px;
+  letter-spacing: 1px;
   text-transform: uppercase;
-  margin-bottom: 8px;
 }
 
 .article-cover-title {
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.9);
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: white;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
   max-width: 100%;
   white-space: nowrap;
   overflow: hidden;
@@ -1553,7 +1701,7 @@ const getTagGradient = (tag) => {
   .articles-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  .api-desc {
+  .dt-col-type {
     display: none;
   }
 }
@@ -1595,25 +1743,48 @@ const getTagGradient = (tag) => {
     grid-template-columns: 1fr;
   }
 
-  .api-grid {
-    grid-template-columns: 1fr;
+  .devtools-panel {
+    border-radius: 8px;
   }
 
-  .api-card-row {
+  .dt-header {
+    font-size: 10px;
+    padding: 8px 10px;
+  }
+
+  .dt-row {
+    padding: 10px 10px;
     flex-wrap: wrap;
-    gap: 6px;
+    gap: 4px;
   }
 
-  .api-name {
-    max-width: none;
+  .dt-col-name {
+    flex: 1 1 100%;
+    order: 1;
   }
 
-  .api-desc {
+  .dt-col-status {
+    flex: 0 0 auto;
+    order: 2;
+  }
+
+  .dt-col-time {
+    flex: 0 0 auto;
+    order: 3;
+  }
+
+  .dt-col-waterfall {
+    flex: 1 1 100%;
+    order: 4;
+    justify-content: flex-start;
+  }
+
+  .dt-col-type {
     display: none;
   }
 
-  .api-tags {
-    order: 1;
+  .dt-filters {
+    display: none;
   }
   
   .api-section {
