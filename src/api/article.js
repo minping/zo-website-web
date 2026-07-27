@@ -24,6 +24,40 @@ const uploadRequest = async (path, formData) => {
 
 // API 接口
 export const api = {
+  // 获取所有文章（含草稿及非公开文章，index 端检索用）
+  // 接口返回 { key: [articles...] } 结构，key 为标签名
+  async getAllArticles() {
+    const res = await request(API_PATHS.allArticles)
+    // 接口可能返回 { data: { tag1: [...], tag2: [...] } } 或直接返回 { tag1: [...], ... }
+    const raw = res.data || res
+    const list = []
+    if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+      Object.entries(raw).forEach(([tagName, articles]) => {
+        if (Array.isArray(articles)) {
+          articles.forEach(item => {
+            list.push({
+              id: item.zo_website_article_id,
+              title: item.title,
+              content: item.content,
+              tagValue: item.tag_value || tagName,
+              tag: item.tag_text || tagName,
+              author: item.author_name,
+              date: item.publish_time,
+              readTime: item.recommend_read_time,
+              gradient: item.cover_gradient,
+              desc: item.summary,
+              status: item.status_value === 1 ? 'published' : 'draft',
+              likes: item.like_count,
+              views: item.view_count
+            })
+          })
+        }
+      })
+    }
+    res.data = list
+    return res
+  },
+
   // 获取文章列表（首页）
   async getArticles() {
     const res = await request(API_PATHS.articles)
@@ -191,6 +225,18 @@ export const api = {
     if (res.data) {
       res.data = res.data.map(tag => ({
         id: tag.tag_id || tag.id,
+        name: tag.tag_name || tag.name,
+        color: tag.tag_color || tag.color || '#42b883'
+      }))
+    }
+    return res
+  },
+
+  // 获取所有文章标签（index 端，供检索用）
+  async getIndexArticleTags() {
+    const res = await request(API_PATHS.allTags)
+    if (res.data) {
+      res.data = res.data.map(tag => ({
         name: tag.tag_name || tag.name,
         color: tag.tag_color || tag.color || '#42b883'
       }))
@@ -638,6 +684,24 @@ export const api = {
       }))
     }
     return res
+  },
+
+  // ========== 系统设置 ==========
+
+  // 获取系统设置（目前仅用于主题颜色）
+  async getSetting() {
+    const res = await request(API_PATHS.getSetting)
+    if (res.data) {
+      res.data = {
+        theme: res.data.theme || 'dark'
+      }
+    }
+    return res
+  },
+
+  // 切换主题
+  async switchTheme(theme) {
+    return await request(API_PATHS.switchTheme(theme), { method: 'POST' })
   },
 
   // 获取产品详情

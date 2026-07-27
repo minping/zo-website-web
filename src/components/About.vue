@@ -183,10 +183,33 @@
           技术栈
         </h2>
         <div class="skills-grid">
-          <div class="skill-category" v-for="category in aboutSkillCategories" :key="category.name">
-            <h3 class="skill-category-name">{{ category.name }}</h3>
+          <div class="skill-category" v-for="category in aboutSkillCategories" :key="category.name"
+               :style="{ '--cat-accent': category.accent, '--cat-bg': category.bg }">
+            <div class="skill-category-header">
+              <span class="skill-category-icon">
+                <!-- 前端图标 -->
+                <svg v-if="category.icon === 'frontend'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/>
+                </svg>
+                <!-- 后端图标 -->
+                <svg v-else-if="category.icon === 'backend'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/>
+                </svg>
+                <!-- DevOps图标 -->
+                <svg v-else-if="category.icon === 'devops'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+                </svg>
+                <!-- 工具图标 -->
+                <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="3"/><path d="M12 1v2"/><path d="M12 21v2"/><path d="M4.22 4.22l1.42 1.42"/><path d="M18.36 18.36l1.42 1.42"/><path d="M2 12h2"/><path d="M20 12h2"/>
+                </svg>
+              </span>
+              <h3 class="skill-category-name">{{ category.name }}</h3>
+              <span class="skill-category-count">{{ category.skills.length }}</span>
+            </div>
             <div class="skill-items">
               <span class="skill-item" v-for="skill in category.skills" :key="skill">
+                <span class="skill-dot"></span>
                 {{ skill }}
               </span>
             </div>
@@ -241,16 +264,22 @@
               <h3 class="project-name">{{ project.name }}</h3>
               <span class="project-role">{{ project.role }}</span>
               <div class="project-meta" v-if="project.acceptance || project.userBase">
-                <span v-if="project.acceptance" class="project-meta-item">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                  验收情况：{{ project.acceptance }}
+                <span v-if="project.acceptance" class="project-meta-item acceptance">
+                  <span class="meta-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+                  </span>
+                  <span class="meta-label">验收情况</span>
+                  <span class="meta-value" :class="{ accepted: project.acceptance.includes('已验收') }">{{ project.acceptance }}</span>
                 </span>
-                <span v-if="project.userBase" class="project-meta-item">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                  用户基数：{{ project.userBase }}
+                <span v-if="project.userBase" class="project-meta-item users">
+                  <span class="meta-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 16c0-2.2-1.8-4-4-4s-4 1.8-4 4"/><circle cx="12" cy="9" r="3"/></svg>
+                  </span>
+                  <span class="meta-label">用户基数</span>
+                  <span class="meta-value">{{ project.userBase }}</span>
                 </span>
               </div>
-              <p class="project-desc">{{ project.description }}</p>
+              <p class="project-desc" v-html="formatDescription(project.description)"></p>
               <div class="project-tags" v-if="project.tags && project.tags.length">
                 <span class="project-tag" v-for="tag in project.tags" :key="tag">{{ tag }}</span>
               </div>
@@ -284,7 +313,7 @@
               </svg>
             </div>
             <h3 class="self-project-name">{{ project.name }}</h3>
-            <p class="self-project-desc">{{ project.description }}</p>
+            <p class="self-project-desc" v-html="formatDescription(project.description)"></p>
             <div class="self-project-tags" v-if="project.tags && project.tags.length">
               <span class="self-project-tag" v-for="tag in project.tags" :key="tag">{{ tag }}</span>
             </div>
@@ -388,6 +417,18 @@ const showWechatQR = ref(false)
 const isResumeMode = ref(false)
 const loading = ref(false)
 
+// 格式化描述文本：转换换行 + 高亮 **标记**
+const formatDescription = (text) => {
+  if (!text) return ''
+  const escaped = text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+  const withBreaks = escaped.replace(/\n/g, '<br>')
+  const withHighlights = withBreaks.replace(/\*\*(.+?)\*\*/g, '<strong class="highlight">$1</strong>')
+  return withHighlights
+}
+
 // 博主基础信息
 const aboutInfo = ref({
   name: '',
@@ -459,13 +500,24 @@ const loadAboutMe = async () => {
           github: d.info.github || '',
           email: d.info.email || ''
         }
-        // 技术栈
+        // 技术栈 - 分类配置
+        const categoryConfig = {
+          '前端': { icon: 'frontend', accent: '#3b82f6', bg: 'rgba(59,130,246,0.06)' },
+          '后端': { icon: 'backend', accent: '#10b981', bg: 'rgba(16,185,129,0.06)' },
+          'DevOps': { icon: 'devops', accent: '#f59e0b', bg: 'rgba(245,158,11,0.06)' },
+          '工具': { icon: 'tools', accent: '#8b5cf6', bg: 'rgba(139,92,246,0.06)' }
+        }
         aboutSkillCategories.value = [
           { name: '前端', skills: toArray(d.info.frontend) },
           { name: '后端', skills: toArray(d.info.backend) },
           { name: 'DevOps', skills: toArray(d.info.devops) },
           { name: '工具', skills: toArray(d.info.tools) }
-        ].filter(cat => cat.skills.length > 0)
+        ].map(cat => ({
+          ...cat,
+          icon: categoryConfig[cat.name]?.icon || 'tools',
+          accent: categoryConfig[cat.name]?.accent || '#8b5cf6',
+          bg: categoryConfig[cat.name]?.bg || 'rgba(139,92,246,0.06)'
+        })).filter(cat => cat.skills.length > 0)
       }
       // 历程
       if (d.processList && d.processList.length > 0) {
@@ -773,21 +825,88 @@ const handleNavigate = (menu) => {
 .skills-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 24px;
+  gap: 20px;
 }
 
 .skill-category {
   padding: 24px;
-  background: var(--bg-secondary);
+  background: var(--cat-bg, var(--bg-secondary));
   border: 1px solid var(--border-color);
   border-radius: 16px;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.skill-category::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--cat-accent);
+  border-radius: 16px 16px 0 0;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+.skill-category:hover {
+  border-color: var(--cat-accent, var(--accent-primary));
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+}
+
+.skill-category:hover::before {
+  opacity: 1;
+}
+
+.skill-category-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.skill-category-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--cat-accent);
+  color: #fff;
+  flex-shrink: 0;
+  transition: transform 0.3s ease;
+}
+
+.skill-category:hover .skill-category-icon {
+  transform: scale(1.05);
 }
 
 .skill-category-name {
   font-size: 1rem;
   font-weight: 600;
   color: var(--text-primary);
-  margin: 0 0 16px;
+  margin: 0;
+  flex: 1;
+}
+
+.skill-category-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 7px;
+  border-radius: 12px;
+  background: var(--cat-accent);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  line-height: 1;
 }
 
 .skill-items {
@@ -797,18 +916,40 @@ const handleNavigate = (menu) => {
 }
 
 .skill-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   padding: 6px 14px;
   background: var(--bg-tertiary);
-  border-radius: 6px;
+  border: 1px solid transparent;
+  border-radius: 20px;
   font-size: 13px;
   color: var(--text-secondary);
-  transition: all 0.3s;
+  transition: all 0.3s ease;
   cursor: default;
+  white-space: nowrap;
 }
 
 .skill-item:hover {
-  background: var(--accent-glow);
-  color: var(--accent-primary);
+  background: var(--cat-bg, var(--accent-glow));
+  border-color: var(--cat-accent, var(--accent-primary));
+  color: var(--cat-accent, var(--accent-primary));
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.skill-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--cat-accent);
+  flex-shrink: 0;
+  opacity: 0.7;
+  transition: opacity 0.3s ease;
+}
+
+.skill-item:hover .skill-dot {
+  opacity: 1;
 }
 
 /* 时间线 */
@@ -955,19 +1096,51 @@ const handleNavigate = (menu) => {
   display: flex;
   flex-wrap: wrap;
   gap: 16px;
-  margin-bottom: 8px;
+  margin-bottom: 14px;
 }
 
 .project-meta-item {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  font-size: 0.8rem;
+  gap: 5px;
+  font-size: 0.88rem;
   color: var(--text-secondary);
 }
 
-.project-meta-item svg {
+.project-meta-item .meta-icon {
+  display: flex;
   flex-shrink: 0;
+}
+
+.project-meta-item.acceptance .meta-icon,
+.project-meta-item.users .meta-icon {
+  color: var(--text-tertiary);
+}
+
+.project-meta-item.users .meta-value {
+  font-weight: 700;
+  color: var(--accent-color, #6366f1);
+  background: rgba(99, 102, 241, 0.1);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+.project-meta-item .meta-label {
+  color: var(--text-tertiary);
+  margin-right: 2px;
+}
+
+.project-meta-item .meta-value {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.project-meta-item.acceptance .meta-value {
+  color: #3b82f6;
+}
+
+.project-meta-item.acceptance .meta-value.accepted {
+  color: #059669;
 }
 
 .project-desc {
@@ -975,6 +1148,15 @@ const handleNavigate = (menu) => {
   color: var(--text-secondary);
   line-height: 1.7;
   margin: 0 0 12px 0;
+}
+
+.project-desc :deep(.highlight),
+.self-project-desc :deep(.highlight) {
+  font-weight: 700;
+  color: var(--accent-color, #6366f1);
+  background: rgba(99, 102, 241, 0.1);
+  padding: 1px 4px;
+  border-radius: 3px;
 }
 
 .project-tags {
@@ -1110,6 +1292,7 @@ const handleNavigate = (menu) => {
 
 .self-project-links {
   display: flex;
+  justify-content: space-between;
   gap: 10px;
   padding-top: 12px;
   border-top: 1px solid var(--border-color);

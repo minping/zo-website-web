@@ -19,10 +19,39 @@
     <!-- 文章模块列表 -->
     <section class="article-sections">
       <div class="container">
+
+        <!-- 检索栏 -->
+        <div class="filter-bar">
+          <div class="search-box">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input 
+              v-model="searchQuery" 
+              type="text" 
+              placeholder="搜索文章标题..."
+            />
+          </div>
+          <select v-model="selectedTag" class="tag-select">
+            <option value="">全部标签</option>
+            <option v-for="tag in availableTags" :key="tag" :value="tag">{{ tag }}</option>
+          </select>
+        </div>
+
         <!-- 加载状态 -->
         <div v-if="loading" class="loading-state">
           <div class="loading-spinner"></div>
           <span>加载中...</span>
+        </div>
+
+        <!-- 检索空结果 -->
+        <div v-else-if="filteredGroups.length === 0 && (searchQuery || selectedTag)" class="empty-state">
+          <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <p>未找到匹配的文章</p>
         </div>
 
         <!-- 空状态 -->
@@ -39,7 +68,7 @@
 
         <!-- 文章分组列表 -->
         <div v-else class="article-groups">
-          <div v-for="group in articleGroups" :key="group.tag" class="article-group">
+          <div v-for="group in filteredGroups" :key="group.tag" class="article-group">
             <div class="group-header">
               <div class="group-title-wrapper">
                 <span class="group-tag-dot" :style="{ background: group.tagColor }"></span>
@@ -99,7 +128,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { api } from '../api/article'
 import Navbar from './Navbar.vue'
@@ -108,8 +137,34 @@ import Footer from './Footer.vue'
 const router = useRouter()
 
 const loading = ref(true)
+const allArticles = ref([])
 const articleGroups = ref([])
 const pageSize = 4
+
+// 检索
+const searchQuery = ref('')
+const selectedTag = ref('')
+
+// 所有可用标签（从接口获取）
+const availableTags = ref([])
+
+// 过滤后的分组
+const filteredGroups = computed(() => {
+  let filtered = allArticles.value
+
+  // 按标题搜索
+  if (searchQuery.value.trim()) {
+    const keyword = searchQuery.value.trim().toLowerCase()
+    filtered = filtered.filter(a => a.title && a.title.toLowerCase().includes(keyword))
+  }
+
+  // 按标签筛选
+  if (selectedTag.value) {
+    filtered = filtered.filter(a => a.tag === selectedTag.value)
+  }
+
+  return groupArticlesByTag(filtered)
+})
 
 const getGroupTotalPages = (group) => {
   return Math.ceil(group.articles.length / pageSize)
@@ -158,9 +213,15 @@ const groupArticlesByTag = (articles) => {
 const fetchArticles = async () => {
   try {
     loading.value = true
-    const res = await api.getArticles()
-    if (res.success) {
-      articleGroups.value = groupArticlesByTag(res.data)
+    const res = await api.getAllArticles()
+    // 兼容 res.success 和 res.data 两种判断方式
+    const data = res.success ? res.data : (res.data ? res.data : [])
+    if (res.success || res.data) {
+      console.log('ArticleList 获取文章数据:', data)
+      allArticles.value = data
+      articleGroups.value = groupArticlesByTag(data)
+    } else {
+      console.warn('ArticleList 接口未返回有效数据:', res)
     }
   } catch (error) {
     console.error('获取文章列表失败:', error)
@@ -169,8 +230,21 @@ const fetchArticles = async () => {
   }
 }
 
+// 获取所有标签
+const fetchTags = async () => {
+  try {
+    const res = await api.getIndexArticleTags()
+    if (res.success) {
+      availableTags.value = (res.data || []).map(t => t.name)
+    }
+  } catch (error) {
+    console.error('获取标签列表失败:', error)
+  }
+}
+
 onMounted(() => {
   fetchArticles()
+  fetchTags()
 })
 </script>
 
@@ -236,6 +310,65 @@ onMounted(() => {
 .page-desc {
   font-size: 18px;
   color: var(--text-secondary);
+}
+
+/* 检索栏 */
+.filter-bar {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 40px;
+  padding: 0 2px;
+}
+
+.search-box {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 12px 18px;
+  transition: border-color 0.3s;
+}
+
+.search-box:focus-within {
+  border-color: var(--accent-primary);
+}
+
+.search-box svg {
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.search-box input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 15px;
+  color: var(--text-primary);
+}
+
+.search-box input::placeholder {
+  color: var(--text-secondary);
+}
+
+.tag-select {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 12px 18px;
+  font-size: 15px;
+  color: var(--text-primary);
+  outline: none;
+  cursor: pointer;
+  min-width: 140px;
+  transition: border-color 0.3s;
+}
+
+.tag-select:focus {
+  border-color: var(--accent-primary);
 }
 
 /* 文章区域 */

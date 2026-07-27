@@ -127,6 +127,11 @@
   background: var(--admin-hover-bg);
 }
 
+.action-btn.preview:hover {
+  color: #3b82f6;
+  border-color: #3b82f6;
+}
+
 .action-btn.edit:hover {
   color: var(--admin-accent-primary);
   border-color: var(--admin-accent-primary);

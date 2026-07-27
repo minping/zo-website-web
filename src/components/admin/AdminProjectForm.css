@@ -1,0 +1,569 @@
+/* ============================================
+   AdminProjectForm - 项目经历表单页面
+   ============================================ */
+
+.project-form-page {
+  max-width: 800px;
+  padding-bottom: 80px;
+}
+
+.project-form-page .content-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.project-form-page .header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.project-form-page .back-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  background: var(--admin-bg-card);
+  color: var(--admin-text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.project-form-page .back-btn:hover {
+  background: var(--admin-hover-bg);
+  color: var(--admin-text-primary);
+  border-color: var(--admin-accent-primary);
+}
+
+.project-form-page .content-header h1 {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--admin-text-primary);
+  margin: 0 0 2px 0;
+}
+
+.project-form-page .content-header p {
+  color: var(--admin-text-secondary);
+  font-size: 13px;
+  margin: 0;
+}
+
+/* Form container */
+.project-form-page .form-container {
+  background: var(--admin-bg-card);
+  border: 1px solid var(--admin-border);
+  border-radius: 16px;
+  padding: 28px 32px;
+}
+
+/* Form divider */
+.project-form-page .form-divider {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+  margin-top: 4px;
+}
+
+.project-form-page .form-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--admin-border);
+  margin-left: 12px;
+}
+
+.project-form-page .divider-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--admin-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Form groups */
+.project-form-page .form-group {
+  margin-bottom: 16px;
+}
+
+.project-form-page .form-group label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--admin-text-secondary);
+  margin-bottom: 8px;
+  letter-spacing: 0.3px;
+}
+
+.project-form-page .label-icon {
+  flex-shrink: 0;
+  color: var(--admin-accent-primary);
+}
+
+.project-form-page .textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* Description editor */
+.project-form-page .desc-editor {
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+  overflow: hidden;
+  transition: border-color 0.25s ease;
+}
+
+.project-form-page .desc-editor:focus-within {
+  border-color: var(--admin-accent-primary);
+  box-shadow: 0 0 0 3px var(--admin-accent-glow);
+}
+
+.project-form-page .desc-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  background: var(--admin-bg-secondary);
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.desc-tool-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--admin-text-secondary);
+  font-size: 13px;
+  font-family: serif;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.desc-tool-btn:hover {
+  background: var(--admin-bg-card);
+  color: var(--admin-accent-primary);
+  border-color: var(--admin-border);
+}
+
+.desc-toolbar-divider {
+  width: 1px;
+  height: 18px;
+  background: var(--admin-border);
+  margin: 0 2px;
+}
+
+.desc-preview-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--admin-text-muted);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-left: auto;
+}
+
+.desc-preview-toggle:hover {
+  background: var(--admin-bg-card);
+  color: var(--admin-text-primary);
+}
+
+.desc-preview-toggle.active {
+  background: var(--admin-accent-glow);
+  color: var(--admin-accent-primary);
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+.desc-textarea {
+  border: none !important;
+  border-radius: 0 !important;
+}
+
+.desc-textarea:focus {
+  box-shadow: none !important;
+}
+
+.project-form-page .desc-preview-content {
+  padding: 12px 14px;
+  min-height: 160px;
+  font-size: 14px;
+  color: var(--admin-text-primary);
+  line-height: 1.75;
+  background: var(--admin-bg-input);
+}
+
+.desc-preview-content .highlight {
+  font-weight: 700;
+  color: var(--admin-accent-primary);
+  background: var(--admin-accent-glow);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+.desc-placeholder {
+  color: var(--admin-text-muted);
+  font-style: italic;
+}
+
+.project-form-page .form-hint {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--admin-text-muted);
+  line-height: 1.5;
+}
+
+.project-form-page .form-hint code {
+  padding: 1px 6px;
+  background: var(--admin-bg-secondary);
+  border: 1px solid var(--admin-border);
+  border-radius: 4px;
+  font-size: 11px;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  color: var(--admin-accent-primary);
+}
+
+.project-form-page .input {
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--admin-bg-input);
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+  color: var(--admin-text-primary);
+  font-size: 14px;
+  outline: none;
+  transition: all 0.25s ease;
+  box-sizing: border-box;
+  font-family: inherit;
+  line-height: 1.5;
+}
+
+.project-form-page .input::placeholder {
+  color: var(--admin-text-muted);
+  opacity: 0.7;
+}
+
+.project-form-page .input:hover {
+  border-color: var(--admin-accent-primary);
+}
+
+.project-form-page .input:focus {
+  border-color: var(--admin-accent-primary);
+  box-shadow: 0 0 0 3px var(--admin-accent-glow);
+}
+
+.project-form-page .input:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.project-form-page .form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* Month input */
+.project-form-page .input-month {
+  color-scheme: light;
+}
+
+.project-form-page .input-month::-webkit-calendar-picker-indicator {
+  filter: none;
+  cursor: pointer;
+}
+
+.project-form-page .date-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.project-form-page .date-row .input {
+  flex: 1;
+}
+
+.project-form-page .current-label {
+  display: flex !important;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  font-size: 13px !important;
+  color: var(--admin-text-secondary) !important;
+  margin-bottom: 0 !important;
+  cursor: pointer;
+  user-select: none;
+}
+
+.project-form-page .current-label input[type="checkbox"] {
+  accent-color: var(--admin-accent-primary);
+  cursor: pointer;
+}
+
+/* Tag input */
+.project-form-page .tag-input {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  padding: 6px 10px;
+  background: var(--admin-bg-input);
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+  min-height: 42px;
+  cursor: text;
+  transition: all 0.25s ease;
+  box-sizing: border-box;
+}
+
+.project-form-page .tag-input:hover {
+  border-color: var(--admin-accent-primary);
+}
+
+.project-form-page .tag-input.focused {
+  border-color: var(--admin-accent-primary);
+  box-shadow: 0 0 0 3px var(--admin-accent-glow);
+}
+
+.project-form-page .tag-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  background: var(--admin-accent-glow);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--admin-accent-primary);
+  white-space: nowrap;
+  line-height: 1.5;
+}
+
+.project-form-page .tag-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(99, 102, 241, 0.25);
+  color: var(--admin-accent-primary);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.project-form-page .tag-remove:hover {
+  background: var(--admin-accent-primary);
+  color: #fff;
+}
+
+.project-form-page .tag-input-text {
+  flex: 1;
+  min-width: 120px;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--admin-text-primary);
+  font-size: 13px;
+  padding: 3px 4px;
+  font-family: inherit;
+  line-height: 1.5;
+}
+
+.project-form-page .tag-input-text::placeholder {
+  color: var(--admin-text-muted);
+  opacity: 0.6;
+  font-size: 12px;
+}
+
+/* Image upload */
+.project-form-page .upload-area {
+  position: relative;
+  border: 2px dashed var(--admin-border);
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.project-form-page .upload-area:hover {
+  border-color: var(--admin-accent-primary);
+  background: var(--admin-accent-glow);
+}
+
+.project-form-page .upload-area.is-uploading {
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.project-form-page .upload-area.has-preview {
+  border-style: solid;
+}
+
+.upload-preview-img {
+  width: 100%;
+  max-height: 240px;
+  object-fit: cover;
+  display: block;
+}
+
+.upload-preview-actions {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+}
+
+.btn-change {
+  padding: 5px 12px;
+  border: none;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.28);
+  color: #fff;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-change:hover {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.project-form-page .upload-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: var(--admin-text-muted);
+  font-size: 13px;
+  padding: 24px;
+}
+
+.project-form-page .file-input {
+  display: none;
+}
+
+/* Form actions - 固定在页面底部 */
+.project-form-page .form-actions {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 32px;
+  margin-top: 24px;
+  background: var(--admin-bg-primary);
+  border-top: 1px solid var(--admin-border);
+  z-index: 20;
+  border-radius: 0 0 16px 16px;
+}
+
+.project-form-page .btn-cancel {
+  padding: 10px 22px;
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  font-family: inherit;
+  background: transparent;
+  color: var(--admin-text-secondary);
+}
+
+.project-form-page .btn-cancel:hover {
+  background: var(--admin-hover-bg);
+  color: var(--admin-text-primary);
+}
+
+.project-form-page .btn-save {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 22px;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  font-family: inherit;
+  line-height: 1.4;
+  background: linear-gradient(135deg, var(--admin-accent-primary), var(--admin-accent-secondary));
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
+.project-form-page .btn-save:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4);
+}
+
+.project-form-page .btn-save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Toast */
+.project-form-page .toast {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 14px 28px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  z-index: 1001;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.project-form-page .toast.success {
+  background: #22c55e;
+  color: white;
+}
+
+.project-form-page .toast.error {
+  background: #ef4444;
+  color: white;
+}
+
+.project-form-page .toast-enter-active,
+.project-form-page .toast-leave-active {
+  transition: all 0.3s ease;
+}
+
+.project-form-page .toast-enter-from,
+.project-form-page .toast-leave-to {
+  opacity: 0;
+  transform: translateX(-50%) translateY(20px);
+}

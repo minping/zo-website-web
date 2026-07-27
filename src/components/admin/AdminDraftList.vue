@@ -71,6 +71,16 @@
           <div class="article-actions">
             <span class="status-badge draft">草稿</span>
             <button 
+              class="action-btn preview" 
+              @click="previewArticle(article)" 
+              title="预览"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+            <button 
               class="action-btn edit" 
               @click="editArticle(article)" 
               title="编辑"
@@ -271,6 +281,12 @@ const openEditor = () => {
 // 编辑文章
 const editArticle = (article) => {
   router.push(`/admin/editor?id=${article.id}`)
+}
+
+// 预览文章
+const previewArticle = (article) => {
+  const route = router.resolve({ name: 'ArticleDetail', params: { id: article.id } })
+  window.open(route.href, '_blank')
 }
 
 // 发布文章
