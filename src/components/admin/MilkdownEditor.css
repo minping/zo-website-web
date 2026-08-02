@@ -104,6 +104,13 @@
   word-break: break-word;
 }
 
+.split-preview img {
+  width: 100%;
+  display: block;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
 /* 预览模式 */
 .md-preview {
   min-height: 400px;
@@ -153,8 +160,10 @@
   margin-bottom: 8px; 
 }
 .md-preview img { 
-  max-width: 100%; 
+  width: 100%;
+  display: block;
   border-radius: 8px; 
+  margin-bottom: 16px;
 }
 .md-preview a { 
   color: var(--admin-accent-primary); 

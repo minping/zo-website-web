@@ -537,6 +537,11 @@ export const api = {
     return await request(API_PATHS.dealArticle(id, 'delete'))
   },
 
+  // 获取文章每日发布统计
+  async getArticleDayStatics() {
+    return await request(API_PATHS.queryArticleDayStatics)
+  },
+
   // 获取文章统计数据
   async getArticleStatics() {
     const res = await request(API_PATHS.queryArticleStatics)

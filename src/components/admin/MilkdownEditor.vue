@@ -29,13 +29,15 @@
       <button type="button" @click="insertMd('\n---\n', '')" title="分割线" :disabled="viewMode === 'preview'">—</button>
       <span class="toolbar-divider"></span>
       <button type="button" @click="insertMd('\n- [ ] ', '')" title="任务列表" :disabled="viewMode === 'preview'">☐</button>
+      <span class="toolbar-divider"></span>
+      <button type="button" @click="insertTable" title="表格" :disabled="viewMode === 'preview'">#</button>
     </div>
     <!-- 分屏模式：Markdown 源码 + 实时预览 -->
     <div v-if="viewMode === 'split'" class="split-pane">
       <textarea
         ref="textareaRef"
         :value="modelValue"
-        @input="$emit('update:modelValue', $event.target.value)"
+        @input="handleInput"
         @scroll="syncPreviewScroll"
         class="md-textarea split-textarea"
         placeholder="输入文章内容，支持 Markdown 格式..."
@@ -49,7 +51,7 @@
       v-else-if="viewMode === 'edit'"
       ref="textareaRef"
       :value="modelValue"
-      @input="$emit('update:modelValue', $event.target.value)"
+      @input="handleInput"
       class="md-textarea"
       placeholder="输入文章内容，支持 Markdown 格式..."
       @keydown="handleKeydown"
@@ -65,29 +67,28 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { marked } from 'marked'
+import { ref, computed, nextTick } from 'vue'
+import { marked, Renderer } from 'marked'
 import { api } from '../../api/article.js'
 
-// 配置 marked：GFM、换行、图片与链接自定义渲染
-marked.use({
-  gfm: true,
-  breaks: true,
-  renderer: {
-    image(token) {
-      const href = token.href || ''
-      const text = token.text || ''
-      const title = token.title || ''
-      return `<img src="${href}" alt="${text}" title="${title}" loading="lazy" />`
-    },
-    link(token) {
-      const href = token.href || ''
-      const text = token.text || ''
-      const title = token.title || ''
-      return `<a href="${href}" title="${title}" target="_blank" rel="noopener noreferrer">${text}</a>`
-    }
+// 配置 marked：继承默认 Renderer 避免丢失表格等默认渲染器
+class CustomRenderer extends Renderer {
+  image(token) {
+    const href = token.href || ''
+    const text = token.text || ''
+    const title = token.title || ''
+    return `<img class="md-editor-img" src="${href}" alt="${text}" title="${title}" loading="lazy" />`
   }
-})
+  link(token) {
+    const href = token.href || ''
+    const text = token.text || ''
+    const title = token.title || ''
+    return `<a href="${href}" title="${title}" target="_blank" rel="noopener noreferrer">${text}</a>`
+  }
+}
+
+marked.setOptions({ breaks: true })
+marked.use({ renderer: new CustomRenderer() })
 
 const props = defineProps({
   modelValue: {
@@ -96,11 +97,12 @@ const props = defineProps({
   }
 })
 
-defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue'])
 
 const textareaRef = ref(null)
 const previewRef = ref(null)
 const uploading = ref(false)
+const programmaticUpdate = ref(false)
 
 // 视图模式：split（分屏实时预览）| edit（纯编辑）| preview（纯预览）
 const viewMode = ref('split')
@@ -118,6 +120,26 @@ const renderedHtml = computed(() => {
   if (!props.modelValue) return '<p style="color: #666;">暂无内容</p>'
   return marked.parse(props.modelValue)
 })
+
+// 设置 textarea 值、光标位置并保持滚动位置
+const applyTextareaChange = (newText, cursorPos) => {
+  const textarea = textareaRef.value
+  if (!textarea) return
+  const scrollTop = textarea.scrollTop
+  programmaticUpdate.value = true
+  textarea.value = newText
+  textarea.dispatchEvent(new Event('input', { bubbles: true }))
+  emit('update:modelValue', newText)
+  nextTick(() => {
+    if (!textareaRef.value) return
+    textareaRef.value.focus()
+    if (cursorPos !== undefined) {
+      textareaRef.value.setSelectionRange(cursorPos, cursorPos)
+    }
+    // 恢复滚动必须在 focus/setSelectionRange 之后，否则会被聚焦自动滚动覆盖
+    textareaRef.value.scrollTop = scrollTop
+  })
+}
 
 // 分屏时同步源编辑区与预览区的滚动比例
 const syncPreviewScroll = () => {
@@ -144,14 +166,7 @@ const insertMd = (before, after) => {
   const newText = text.substring(0, start) + before + selectedText + after + text.substring(end)
   const newCursorPos = selectedText ? start + before.length + selectedText.length + after.length : start + before.length
 
-  textarea.value = newText
-  textarea.dispatchEvent(new Event('input', { bubbles: true }))
-  
-  // 设置光标位置
-  setTimeout(() => {
-    textarea.focus()
-    textarea.setSelectionRange(newCursorPos, newCursorPos)
-  }, 0)
+  applyTextareaChange(newText, newCursorPos)
 }
 
 // 插入代码块
@@ -167,14 +182,26 @@ const insertCodeBlock = () => {
   const codeBlock = `\n\`\`\`javascript\n${selectedText || '// your code here'}\n\`\`\`\n`
   const newText = text.substring(0, start) + codeBlock + text.substring(end)
 
-  textarea.value = newText
-  textarea.dispatchEvent(new Event('input', { bubbles: true }))
-  
-  setTimeout(() => {
-    textarea.focus()
-    const newPos = start + 15
-    textarea.setSelectionRange(newPos, newPos)
-  }, 0)
+  applyTextareaChange(newText, start + 15)
+}
+
+// 插入表格
+const insertTable = () => {
+  const textarea = textareaRef.value
+  if (!textarea) return
+
+  const template = `\n| 列1 | 列2 | 列3 |
+| --- | --- | --- |
+| 内容 | 内容 | 内容 |
+| 内容 | 内容 | 内容 |
+`
+
+  const start = textarea.selectionStart
+  const end = textarea.selectionEnd
+  const text = props.modelValue
+  const newText = text.substring(0, start) + template + text.substring(end)
+
+  applyTextareaChange(newText, start + 4)
 }
 
 // 快捷键处理
@@ -212,8 +239,7 @@ const handlePaste = async (e) => {
       const placeholder = `![上传中...]()`
       const newText = text.substring(0, start) + placeholder + text.substring(start)
 
-      textarea.value = newText
-      textarea.dispatchEvent(new Event('input', { bubbles: true }))
+      uploadTextareaValue(newText)
       uploading.value = true
 
       try {
@@ -224,25 +250,17 @@ const handlePaste = async (e) => {
           const mdImage = `![${alt}](${url})`
           // 替换占位符
           const replacedText = newText.replace(placeholder, mdImage)
-          textarea.value = replacedText
-          textarea.dispatchEvent(new Event('input', { bubbles: true }))
-          const cursorPos = start + mdImage.length
-          setTimeout(() => {
-            textarea.focus()
-            textarea.setSelectionRange(cursorPos, cursorPos)
-          }, 0)
+          uploadTextareaValue(replacedText, start + mdImage.length)
         } else {
           // 上传失败，移除占位符
           const clearedText = newText.replace(placeholder, '')
-          textarea.value = clearedText
-          textarea.dispatchEvent(new Event('input', { bubbles: true }))
+          uploadTextareaValue(clearedText)
           alert(res.message || '图片上传失败')
         }
       } catch (err) {
         // 上传异常，移除占位符
         const clearedText = newText.replace(placeholder, '')
-        textarea.value = clearedText
-        textarea.dispatchEvent(new Event('input', { bubbles: true }))
+        uploadTextareaValue(clearedText)
         console.error('图片上传异常:', err)
         alert('图片上传失败，请检查网络')
       } finally {
@@ -251,6 +269,35 @@ const handlePaste = async (e) => {
       break
     }
   }
+}
+
+// 粘贴图片时的专用封装，不改变光标和焦点
+const uploadTextareaValue = (newText, cursorPos) => {
+  const textarea = textareaRef.value
+  if (!textarea) return
+  const scrollTop = textarea.scrollTop
+  programmaticUpdate.value = true
+  textarea.value = newText
+  textarea.dispatchEvent(new Event('input', { bubbles: true }))
+  emit('update:modelValue', newText)
+  nextTick(() => {
+    if (!textareaRef.value) return
+    if (cursorPos !== undefined) {
+      textareaRef.value.focus()
+      textareaRef.value.setSelectionRange(cursorPos, cursorPos)
+    }
+    // 恢复滚动必须在 focus/setSelectionRange 之后
+    textareaRef.value.scrollTop = scrollTop
+  })
+}
+
+// 处理用户手动输入
+const handleInput = (e) => {
+  if (programmaticUpdate.value) {
+    programmaticUpdate.value = false
+    return
+  }
+  emit('update:modelValue', e.target.value)
 }
 </script>
 

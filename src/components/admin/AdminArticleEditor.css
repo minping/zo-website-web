@@ -133,8 +133,20 @@
 .color-picker { width: 44px; height: 40px; padding: 2px; cursor: pointer; }
 .color-text { flex: 1; }
 
-.form-actions { display: flex; gap: 12px; }
+.form-actions { display: flex; gap: 12px; align-items: center; }
 .form-actions .btn-primary { flex: 1; }
+
+.auto-save-indicator {
+  font-size: 12px;
+  color: var(--admin-text-muted);
+  white-space: nowrap;
+  animation: pulse-text 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-text {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
 
 /* 附件 */
 .attachment-section { border: 1px solid var(--admin-border-color); border-radius: 10px; padding: 16px; background: rgba(0, 0, 0, 0.02); }

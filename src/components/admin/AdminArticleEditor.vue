@@ -200,6 +200,7 @@
             <button type="submit" class="btn btn-primary" :disabled="saving">
               {{ saving ? '保存中...' : '保存文章' }}
             </button>
+            <span v-if="autoSavePending" class="auto-save-indicator">自动保存中...</span>
           </div>
         </div>
       </form>
@@ -215,7 +216,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { api } from '../../api/article'
 import AdminLayout from './AdminLayout.vue'
@@ -227,6 +228,61 @@ const route = useRoute()
 // 状态
 const saving = ref(false)
 const isEditing = ref(false)
+const autoSavePending = ref(false)
+
+// 自动保存
+let autoSaveTimer = null
+const AUTO_SAVE_DELAY = 10000
+
+// 检查必填项
+const hasRequiredFields = () => {
+  return formData.value.title.trim() &&
+    formData.value.desc.trim() &&
+    formData.value.content.trim() &&
+    formData.value.selectedTag &&
+    formData.value.author.trim()
+}
+
+// 自动保存
+const autoSave = async () => {
+  if (saving.value || !hasRequiredFields()) return
+  autoSavePending.value = true
+  try {
+    const selectedTag = formData.value.selectedTag
+    const articleData = {
+      ...formData.value,
+      tagValue: selectedTag?.id || '',
+      tagText: selectedTag?.name || '',
+      id: isEditing.value ? formData.value.id : undefined,
+      files: JSON.stringify(attachments.value)
+    }
+
+    const res = isEditing.value
+      ? await api.updateArticle(articleData)
+      : await api.createArticle(articleData)
+
+    if (res.success) {
+      // 新建文章首次自动保存后，切换到编辑模式
+      if (!isEditing.value) {
+        isEditing.value = true
+        if (res.data?.id) {
+          formData.value.id = res.data.id
+        }
+      }
+      showToast('已自动保存', 'success')
+    }
+  } catch (error) {
+    console.error('自动保存失败:', error)
+  } finally {
+    autoSavePending.value = false
+  }
+}
+
+// 重置自动保存计时器
+const resetAutoSaveTimer = () => {
+  if (autoSaveTimer) clearTimeout(autoSaveTimer)
+  autoSaveTimer = setTimeout(autoSave, AUTO_SAVE_DELAY)
+}
 
 // 表单数据
 const formData = ref({
@@ -369,6 +425,26 @@ const loadTags = async () => {
   }
 }
 
+// 监听表单变化，触发自动保存计时
+watch(
+  () => ({
+    title: formData.value.title,
+    desc: formData.value.desc,
+    content: formData.value.content,
+    selectedTag: formData.value.selectedTag,
+    author: formData.value.author,
+    gradient: formData.value.gradient,
+    readTime: formData.value.readTime,
+    status: formData.value.status
+  }),
+  () => {
+    if (hasRequiredFields()) {
+      resetAutoSaveTimer()
+    }
+  },
+  { deep: true }
+)
+
 // 显示提示
 const showToast = (message, type = 'success') => {
   toast.value = { show: true, message, type }
@@ -457,9 +533,6 @@ const saveArticle = async () => {
     
     if (res.success) {
       showToast(isEditing.value ? '文章更新成功' : '文章创建成功')
-      setTimeout(() => {
-        router.push('/admin/drafts')
-      }, 1000)
     } else {
       showToast(res.message || '操作失败', 'error')
     }
@@ -477,6 +550,10 @@ onMounted(() => {
   if (articleId) {
     fetchArticle(articleId)
   }
+})
+
+onBeforeUnmount(() => {
+  if (autoSaveTimer) clearTimeout(autoSaveTimer)
 })
 </script>
 
