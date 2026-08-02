@@ -35,8 +35,9 @@
           </div>
           <div class="about-info">
             <h1 class="about-name">{{ aboutInfo.name }}</h1>
-            <p class="about-title">{{ aboutInfo.title }}</p>
-            <p class="about-bio">{{ aboutInfo.bio }}</p>
+              <p class="about-title">{{ aboutInfo.title }}</p>
+              <p v-if="aboutInfo.workTime" class="about-work-time">工作年限：{{ aboutInfo.workTime }}</p>
+              <p class="about-bio">{{ aboutInfo.bio }}</p>
             <div class="about-links">
               <a v-if="aboutInfo.github" :href="aboutInfo.github" target="_blank" class="social-link">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -436,7 +437,8 @@ const aboutInfo = ref({
   bio: '',
   avatar: '',
   github: '',
-  email: ''
+  email: '',
+  workTime: ''
 })
 
 const aboutSkillCategories = ref([])
@@ -498,7 +500,8 @@ const loadAboutMe = async () => {
           bio: d.info.self || '',
           avatar: d.info.avatar || '',
           github: d.info.github || '',
-          email: d.info.email || ''
+          email: d.info.email || '',
+          workTime: d.info.work_time || ''
         }
         // 技术栈 - 分类配置
         const categoryConfig = {
@@ -528,7 +531,7 @@ const loadAboutMe = async () => {
       }
       // 项目经历
       if (d.projectList && d.projectList.length > 0) {
-        projects.value = d.projectList.map(item => ({
+        projects.value = [...d.projectList].reverse().map(item => ({
           id: item.id,
           name: item.name,
           role: item.role,
@@ -678,6 +681,12 @@ const handleNavigate = (menu) => {
 .about-title {
   font-size: 1rem;
   color: var(--accent-primary);
+  margin: 0 0 8px;
+}
+
+.about-work-time {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
   margin: 0 0 16px;
 }
 

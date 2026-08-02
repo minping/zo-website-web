@@ -32,6 +32,7 @@ export const API_PATHS = {
   queryArticleList: (searchValue, tag, status) => `/admin/article/queryArticle?searchValue=${encodeURIComponent(searchValue || '')}&tag=${encodeURIComponent(tag || '')}&status=${encodeURIComponent(status || '')}`,
   queryArticleDetail: (id) => `/admin/article/queryArticleDetail?id=${id}`,
   queryArticleStatics: '/admin/article/queryArticleStatics',
+  queryArticleDayStatics: '/admin/article/queryArticleDayStatics',
 
   // ========== Admin 端 API 管理（后台） ==========
   openApis: '/admin/api/queryApiList',

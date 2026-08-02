@@ -2,7 +2,7 @@
   <header class="navbar">
     <div class="container navbar-content">
       <div class="logo" @click="goHome">
-        <span class="logo-icon">&lt;/&gt;</span>
+        <span class="logo-icon">&lt;Zo&gt;</span>
         <span class="logo-text">Zode</span>
       </div>
       <nav class="nav-links">
@@ -164,7 +164,7 @@ const handleNavClick = (link) => {
 }
 
 .nav-link {
-  color: #e2e8f0;
+  color: var(--text-secondary);
   text-decoration: none;
   font-size: 15px;
   font-weight: 500;
@@ -172,7 +172,10 @@ const handleNavClick = (link) => {
   cursor: pointer;
 }
 
-.nav-link:hover,
+.nav-link:hover {
+  color: var(--text-primary);
+}
+
 .nav-link.active {
   color: var(--text-primary);
 }

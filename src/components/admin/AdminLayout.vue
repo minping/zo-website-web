@@ -200,9 +200,9 @@ const navItems = [
     icon: ArticlesIcon, 
     path: '/admin/published',
     children: [
-      { id: 'tags', label: '标签管理', icon: TagIcon, path: '/admin/tags' },
+      { id: 'published', label: '已发布', icon: PublishedIcon, path: '/admin/published' },
       { id: 'drafts', label: '草稿箱', icon: DraftsIcon, path: '/admin/drafts' },
-      { id: 'published', label: '已发布', icon: PublishedIcon, path: '/admin/published' }
+      { id: 'tags', label: '标签管理', icon: TagIcon, path: '/admin/tags' }
     ]
   },
 

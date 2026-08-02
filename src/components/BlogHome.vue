@@ -1351,11 +1351,13 @@ const getTagGradient = (tag) => {
   font-weight: 600;
   color: white;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-  max-width: 100%;
-  white-space: nowrap;
+  text-align: center;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
   padding: 0 16px;
+  margin-top: 24px;
 }
 
 .article-content {
@@ -1393,6 +1395,10 @@ const getTagGradient = (tag) => {
   font-weight: 600;
   margin-bottom: 12px;
   line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .article-desc {
