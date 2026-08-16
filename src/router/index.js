@@ -2,13 +2,17 @@ import { createRouter, createWebHistory } from 'vue-router'
 import BlogHome from '../components/BlogHome.vue'
 import ArticleList from '../components/ArticleList.vue'
 import ArticleDetail from '../components/ArticleDetail.vue'
+import ArticleImmersive from '../components/ArticleImmersive.vue'
 import About from '../components/About.vue'
+import NotesPage from '../components/NotesPage.vue'
+import NoteReader from '../components/NoteReader.vue'
 import ApiPage from '../components/ApiPage.vue'
 import ApiDetail from '../components/ApiDetail.vue'
 import AdminDashboard from '../components/admin/AdminDashboard.vue'
 import AdminDraftList from '../components/admin/AdminDraftList.vue'
 import AdminPublishedList from '../components/admin/AdminPublishedList.vue'
 import AdminArticleEditor from '../components/admin/AdminArticleEditor.vue'
+import ArticleFocusEditor from '../components/admin/ArticleFocusEditor.vue'
 import AdminApiList from '../components/admin/AdminApiList.vue'
 import AdminApiEditor from '../components/admin/AdminApiEditor.vue'
 import AdminTagManagement from '../components/admin/AdminTagManagement.vue'
@@ -17,6 +21,8 @@ import AdminMyInfo from '../components/admin/AdminMyInfo.vue'
 import AdminProjectForm from '../components/admin/AdminProjectForm.vue'
 import AdminProjects from '../components/admin/AdminProjects.vue'
 import AdminSelfProjects from '../components/admin/AdminSelfProjects.vue'
+import AdminNoteList from '../components/admin/AdminNoteList.vue'
+import AdminChapterPage from '../components/admin/AdminChapterPage.vue'
 
 const routes = [
   {
@@ -35,6 +41,11 @@ const routes = [
     component: ArticleDetail
   },
   {
+    path: '/article/:id/immersive',
+    name: 'ArticleImmersive',
+    component: ArticleImmersive
+  },
+  {
     path: '/api',
     name: 'ApiPage',
     component: ApiPage
@@ -48,6 +59,16 @@ const routes = [
     path: '/about',
     name: 'About',
     component: About
+  },
+  {
+    path: '/notes',
+    name: 'NotesPage',
+    component: NotesPage
+  },
+  {
+    path: '/notes/:id',
+    name: 'NoteReader',
+    component: NoteReader
   },
   {
     path: '/admin',
@@ -80,6 +101,12 @@ const routes = [
     path: '/admin/editor',
     name: 'AdminArticleEditor',
     component: AdminArticleEditor,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/admin/editor/focus',
+    name: 'ArticleFocusEditor',
+    component: ArticleFocusEditor,
     meta: { requiresAuth: true }
   },
   {
@@ -122,6 +149,18 @@ const routes = [
     path: '/admin/self-projects',
     name: 'AdminSelfProjects',
     component: AdminSelfProjects,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/admin/notes',
+    name: 'AdminNoteList',
+    component: AdminNoteList,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/admin/chapter',
+    name: 'AdminChapterPage',
+    component: AdminChapterPage,
     meta: { requiresAuth: true }
   },
   ]

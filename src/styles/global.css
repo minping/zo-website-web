@@ -56,6 +56,57 @@
   --navbar-bg: rgba(253, 246, 227, 0.94);
 }
 
+/* 森林清新主题 */
+[data-theme="forest"] {
+  --bg-primary: #f2f8f2;
+  --bg-secondary: #e8f2e8;
+  --bg-card: #ffffff;
+  --accent-primary: #4a9e5c;
+  --accent-secondary: #6db87d;
+  --accent-glow: rgba(74, 158, 92, 0.1);
+  --text-primary: #1e3322;
+  --text-secondary: #4a6650;
+  --text-muted: #7d9a82;
+  --border-color: rgba(74, 158, 92, 0.15);
+  --gradient-start: #4a9e5c;
+  --gradient-end: #6db87d;
+  --navbar-bg: rgba(242, 248, 242, 0.92);
+}
+
+/* 夏日天空蓝主题 */
+[data-theme="summer"] {
+  --bg-primary: #e8f4fd;
+  --bg-secondary: #dceef9;
+  --bg-card: #ffffff;
+  --accent-primary: #f09848;
+  --accent-secondary: #5ba4e6;
+  --accent-glow: rgba(240, 152, 72, 0.12);
+  --text-primary: #1e2d3d;
+  --text-secondary: #4a5a6e;
+  --text-muted: #7a8a9a;
+  --border-color: rgba(240, 152, 72, 0.12);
+  --gradient-start: #f09848;
+  --gradient-end: #5ba4e6;
+  --navbar-bg: rgba(232, 244, 253, 0.92);
+}
+
+/* 中国风云墨主题 */
+[data-theme="ink"] {
+  --bg-primary: #f7f3ee;
+  --bg-secondary: #efe9e0;
+  --bg-card: #fdfaf5;
+  --accent-primary: #c2463a;
+  --accent-secondary: #5a4e4a;
+  --accent-glow: rgba(194, 70, 58, 0.08);
+  --text-primary: #2c2416;
+  --text-secondary: #6b5e4f;
+  --text-muted: #9a8e7f;
+  --border-color: rgba(0, 0, 0, 0.08);
+  --gradient-start: #c2463a;
+  --gradient-end: #5a4e4a;
+  --navbar-bg: rgba(247, 243, 238, 0.94);
+}
+
 /* 赛博朋克主题 */
 [data-theme="cyberpunk"] {
   --bg-primary: #0a0a0f;
@@ -107,9 +158,9 @@ body {
 
 /* 通用容器 */
 .container {
-  max-width: 1200px;
+  max-width: 1440px;
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 20px;
 }
 
 /* 科技感链接 */

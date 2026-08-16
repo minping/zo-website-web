@@ -159,10 +159,8 @@
           <div class="devtools-table">
             <div class="dt-header">
               <span class="dt-col-name">Name</span>
-              <span class="dt-col-status">Status</span>
-              <span class="dt-col-type">Type</span>
               <span class="dt-col-time">Time</span>
-              <span class="dt-col-waterfall">Waterfall</span>
+              <span class="dt-col-type">Type</span>
             </div>
             <div 
               v-for="(api, idx) in openApis" 
@@ -174,28 +172,15 @@
             >
               <span class="dt-col-name">
                 <span class="dt-method" :style="{ background: methodColors[api.method] || '#6366f1' }">{{ api.method }}</span>
-                <span class="dt-path">{{ api.name }}</span>
-                <span class="dt-desc">{{ api.description }}</span>
-              </span>
-              <span class="dt-col-status">
-                <span class="dt-status-dot" :class="{ 'dt-status-err': !api.isFree }"></span>
-                <span class="dt-status-code">{{ api.isFree ? '200' : '403' }}</span>
-              </span>
-              <span class="dt-col-type">
-                <span class="dt-tag-chip" v-for="t in api.tags.slice(0, 2)" :key="t.value" :style="{ background: t.color + '28', color: t.color }">{{ t.text }}</span>
-                <span v-if="!api.isFree" class="dt-tag-chip dt-tag-paid">付费</span>
+                <span class="dt-desc">{{ api.name }}</span>
+                <span class="dt-path">{{ api.description }}</span>
               </span>
               <span class="dt-col-time">
                 <span class="dt-time-val" :style="{ color: api.responseTime < 100 ? '#10b981' : api.responseTime < 300 ? '#f59e0b' : '#ef4444' }">{{ api.responseTime }} ms</span>
               </span>
-              <span class="dt-col-waterfall">
-                <span class="dt-bar-track">
-                  <span class="dt-bar" :style="{ width: Math.min((api.responseTime / 500) * 100, 100) + '%', background: methodColors[api.method] || '#6366f1' }"></span>
-                </span>
-                <span class="dt-bar-stats">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-                  {{ api.stats.calls }}
-                </span>
+              <span class="dt-col-type">
+                <span class="dt-tag-chip" v-for="t in api.tags.slice(0, 2)" :key="t.value" :style="{ background: t.color + '28', color: t.color }">{{ t.text }}</span>
+                <span v-if="!api.isFree" class="dt-tag-chip dt-tag-paid">付费</span>
               </span>
             </div>
           </div>
@@ -1058,15 +1043,8 @@ const getTagGradient = (tag) => {
   min-width: 0;
 }
 
-.dt-col-status {
-  flex: 0 0 70px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
 .dt-col-type {
-  flex: 0 0 120px;
+  flex: 0 0 160px;
   display: flex;
   align-items: center;
   gap: 5px;
@@ -1074,15 +1052,6 @@ const getTagGradient = (tag) => {
 
 .dt-col-time {
   flex: 0 0 80px;
-  text-align: right;
-}
-
-.dt-col-waterfall {
-  flex: 0 0 140px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  justify-content: flex-end;
 }
 
 /* Method 标签 */
@@ -1100,19 +1069,6 @@ const getTagGradient = (tag) => {
 
 /* 路径 */
 .dt-path {
-  font-size: 12px;
-  color: #c9d1d9;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.dt-row:hover .dt-path {
-  color: #e6edf3;
-}
-
-/* 描述 */
-.dt-desc {
   font-size: 10px;
   color: rgba(255, 255, 255, 0.35);
   white-space: nowrap;
@@ -1122,28 +1078,21 @@ const getTagGradient = (tag) => {
   min-width: 0;
 }
 
-.dt-row:hover .dt-desc {
+.dt-row:hover .dt-path {
   color: rgba(255, 255, 255, 0.55);
 }
 
-/* 状态指示 */
-.dt-status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #10b981;
-  box-shadow: 0 0 6px rgba(16, 185, 129, 0.4);
-  flex-shrink: 0;
+/* 描述（作为标题显示） */
+.dt-desc {
+  font-size: 12px;
+  color: #c9d1d9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.dt-status-err {
-  background: #f59e0b;
-  box-shadow: 0 0 6px rgba(245, 158, 11, 0.4);
-}
-
-.dt-status-code {
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.5);
+.dt-row:hover .dt-desc {
+  color: #e6edf3;
 }
 
 /* 类型标签 */
@@ -1165,33 +1114,6 @@ const getTagGradient = (tag) => {
   font-size: 11px;
   font-weight: 500;
   font-variant-numeric: tabular-nums;
-}
-
-/* Waterfall 柱状图 */
-.dt-bar-track {
-  width: 60px;
-  height: 6px;
-  background: rgba(255, 255, 255, 0.06);
-  border-radius: 3px;
-  overflow: hidden;
-  flex-shrink: 0;
-}
-
-.dt-bar {
-  height: 100%;
-  border-radius: 3px;
-  transition: width 0.6s cubic-bezier(0.22, 0.61, 0.36, 1);
-  min-width: 4px;
-  opacity: 0.85;
-}
-
-.dt-bar-stats {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  font-size: 10px;
-  color: rgba(255, 255, 255, 0.3);
-  flex-shrink: 0;
 }
 
 /* 底部状态栏 */
@@ -1769,20 +1691,9 @@ const getTagGradient = (tag) => {
     order: 1;
   }
 
-  .dt-col-status {
-    flex: 0 0 auto;
-    order: 2;
-  }
-
   .dt-col-time {
     flex: 0 0 auto;
     order: 3;
-  }
-
-  .dt-col-waterfall {
-    flex: 1 1 100%;
-    order: 4;
-    justify-content: flex-start;
   }
 
   .dt-col-type {

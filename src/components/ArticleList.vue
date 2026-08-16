@@ -20,8 +20,8 @@
     <section class="article-sections">
       <div class="container">
 
-        <!-- 检索栏 -->
-        <div class="filter-bar">
+        <!-- 检索栏（始终显示，加载中除外） -->
+        <div v-if="!loading" class="filter-bar">
           <div class="search-box">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="11" cy="11" r="8"/>
@@ -33,6 +33,7 @@
               placeholder="搜索文章标题..."
             />
           </div>
+          <span class="filter-divider"></span>
           <select v-model="selectedTag" class="tag-select">
             <option value="">全部标签</option>
             <option v-for="tag in availableTags" :key="tag" :value="tag">{{ tag }}</option>
@@ -66,56 +67,60 @@
           <p>暂无文章</p>
         </div>
 
-        <!-- 文章分组列表 -->
-        <div v-else class="article-groups">
-          <div v-for="group in filteredGroups" :key="group.tag" class="article-group">
-            <div class="group-header">
-              <div class="group-title-wrapper">
-                <span class="group-tag-dot" :style="{ background: group.tagColor }"></span>
-                <h2 class="group-title">{{ group.tag }}</h2>
-                <span class="group-count">({{ group.articles.length }})</span>
-              </div>
-              <div class="group-pagination" v-if="getGroupTotalPages(group) > 1">
-                <button 
-                  class="page-btn" 
-                  :disabled="group.currentPage <= 1"
-                  @click="prevPage(group)"
+        <!-- 文章内容区（有结果时显示） -->
+        <div v-else class="article-layout">
+          <!-- 左侧缩略预览 -->
+          <aside class="article-sidebar">
+            <div class="sidebar-inner">
+              <h3 class="sidebar-title">文章导航</h3>
+              <nav class="sidebar-nav">
+                <a
+                  v-for="group in filteredGroups"
+                  :key="group.tag"
+                  class="sidebar-tag-item"
+                  :class="{ active: activeTag === group.tag }"
+                  :href="'#group-' + group.tag"
+                  @click.prevent="scrollToGroup(group.tag)"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="15 18 9 12 15 6"/>
-                  </svg>
-                </button>
-                <span class="page-info">{{ group.currentPage }} / {{ getGroupTotalPages(group) }}</span>
-                <button 
-                  class="page-btn" 
-                  :disabled="group.currentPage >= getGroupTotalPages(group)"
-                  @click="nextPage(group)"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="9 18 15 12 9 6"/>
-                  </svg>
-                </button>
-              </div>
-            </div>
-            <div class="group-articles">
-              <article 
-                v-for="article in getGroupArticles(group)" 
-                :key="article.id" 
-                class="article-card-compact"
-                @click="goToArticle(article)"
-              >
-                <div class="article-image-compact" :style="{ background: article.gradient }">
-                  <span class="article-tag-compact">{{ article.tag }}</span>
-                </div>
-                <div class="article-content-compact">
-                  <div class="article-meta-compact">
-                    <span class="article-date-compact">{{ article.date }}</span>
-                    <span class="article-read-compact">{{ article.readTime }} 分钟</span>
+                  <span class="sidebar-tag-dot" :style="{ background: group.tagColor }"></span>
+                  <div class="sidebar-tag-info">
+                    <span class="sidebar-tag-name">{{ group.tag }}</span>
+                    <span class="sidebar-tag-count">{{ group.articles.length }} 篇</span>
                   </div>
-                  <h3 class="article-title-compact">{{ article.title }}</h3>
-                  <p class="article-desc-compact">{{ article.desc }}</p>
+                </a>
+              </nav>
+            </div>
+          </aside>
+
+          <!-- 右侧主内容 -->
+          <div class="article-main">
+            <!-- 文章分组列表 -->
+            <div class="article-groups">
+              <div v-for="group in filteredGroups" :key="group.tag" :id="'group-' + group.tag" class="article-group">
+                <div class="group-header">
+                  <div class="group-title-wrapper">
+                    <span class="group-tag-dot" :style="{ background: group.tagColor }"></span>
+                    <h2 class="group-title">{{ group.tag }}</h2>
+                  </div>
                 </div>
-              </article>
+                <div class="group-articles">
+                  <article 
+                    v-for="article in group.articles" 
+                    :key="article.id" 
+                    class="article-list-item"
+                    @click="goToArticle(article)"
+                  >
+                    <div class="article-list-main">
+                      <h3 class="article-list-title">{{ article.title }}</h3>
+                      <div class="article-list-meta">
+                        <span class="article-list-date">发布于: {{ article.date }}</span>
+                        <span class="article-list-read">推荐阅读时长: {{ article.readTime }} 分钟</span>
+                      </div>
+                    </div>
+                    <span class="article-list-arrow">›</span>
+                  </article>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -128,7 +133,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { api } from '../api/article'
 import Navbar from './Navbar.vue'
@@ -139,7 +144,6 @@ const router = useRouter()
 const loading = ref(true)
 const allArticles = ref([])
 const articleGroups = ref([])
-const pageSize = 4
 
 // 检索
 const searchQuery = ref('')
@@ -147,6 +151,56 @@ const selectedTag = ref('')
 
 // 所有可用标签（从接口获取）
 const availableTags = ref([])
+
+// 侧边栏当前激活的标签
+const activeTag = ref('')
+
+// 滚动到指定标签分组
+const scrollToGroup = (tag) => {
+  activeTag.value = tag
+  const el = document.getElementById('group-' + tag)
+  if (el) {
+    const navbarHeight = 80
+    const top = el.getBoundingClientRect().top + window.pageYOffset - navbarHeight - 20
+    window.scrollTo({ top, behavior: 'smooth' })
+  }
+}
+
+// 滚动监听，自动高亮当前可见分组
+let scrollTimer = null
+const handleScroll = () => {
+  if (scrollTimer) return
+  scrollTimer = requestAnimationFrame(() => {
+    const groups = filteredGroups.value
+    if (groups.length === 0) {
+      scrollTimer = null
+      return
+    }
+    const navbarHeight = 90
+    let currentTag = groups[0].tag
+    for (const group of groups) {
+      const el = document.getElementById('group-' + group.tag)
+      if (el) {
+        const rect = el.getBoundingClientRect()
+        if (rect.top <= navbarHeight + 100) {
+          currentTag = group.tag
+        }
+      }
+    }
+    activeTag.value = currentTag
+    scrollTimer = null
+  })
+}
+
+onMounted(() => {
+  fetchArticles()
+  fetchTags()
+  window.addEventListener('scroll', handleScroll, { passive: true })
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('scroll', handleScroll)
+})
 
 // 过滤后的分组
 const filteredGroups = computed(() => {
@@ -166,28 +220,6 @@ const filteredGroups = computed(() => {
   return groupArticlesByTag(filtered)
 })
 
-const getGroupTotalPages = (group) => {
-  return Math.ceil(group.articles.length / pageSize)
-}
-
-const getGroupArticles = (group) => {
-  const currentPage = group.currentPage || 1
-  const startIndex = (currentPage - 1) * pageSize
-  return group.articles.slice(startIndex, startIndex + pageSize)
-}
-
-const prevPage = (group) => {
-  if (group.currentPage > 1) {
-    group.currentPage--
-  }
-}
-
-const nextPage = (group) => {
-  if (group.currentPage < getGroupTotalPages(group)) {
-    group.currentPage++
-  }
-}
-
 const goToArticle = (article) => {
   router.push(`/article/${article.id}`)
 }
@@ -200,8 +232,7 @@ const groupArticlesByTag = (articles) => {
       groups[article.tag] = {
         tag: article.tag,
         tagColor: article.tagColor,
-        articles: [],
-        currentPage: 1
+        articles: []
       }
     }
     groups[article.tag].articles.push(article)
@@ -242,10 +273,6 @@ const fetchTags = async () => {
   }
 }
 
-onMounted(() => {
-  fetchArticles()
-  fetchTags()
-})
 </script>
 
 <style scoped>
@@ -294,7 +321,7 @@ onMounted(() => {
 
 /* 页面标题 */
 .page-header {
-  padding: 140px 0 60px;
+  padding: 120px 0 40px;
   text-align: center;
   position: relative;
   z-index: 1;
@@ -315,9 +342,20 @@ onMounted(() => {
 /* 检索栏 */
 .filter-bar {
   display: flex;
-  gap: 16px;
-  margin-bottom: 40px;
-  padding: 0 2px;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 8px 10px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.filter-bar:focus-within {
+  border-color: var(--accent-primary);
+  box-shadow: 0 2px 16px rgba(59, 130, 246, 0.12);
 }
 
 .search-box {
@@ -325,20 +363,24 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  padding: 12px 18px;
-  transition: border-color 0.3s;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: background 0.3s;
 }
 
+.search-box:hover,
 .search-box:focus-within {
-  border-color: var(--accent-primary);
+  background: var(--bg-secondary);
 }
 
 .search-box svg {
   color: var(--text-secondary);
   flex-shrink: 0;
+  transition: color 0.3s;
+}
+
+.search-box:focus-within svg {
+  color: var(--accent-primary);
 }
 
 .search-box input {
@@ -354,28 +396,139 @@ onMounted(() => {
   color: var(--text-secondary);
 }
 
+/* 竖向分隔线 */
+.filter-divider {
+  width: 1px;
+  height: 24px;
+  background: var(--border-color);
+  flex-shrink: 0;
+}
+
 .tag-select {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  padding: 12px 18px;
-  font-size: 15px;
+  appearance: none;
+  -webkit-appearance: none;
+  background: var(--bg-card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 12px center;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 34px 8px 12px;
+  font-size: 14px;
   color: var(--text-primary);
   outline: none;
   cursor: pointer;
-  min-width: 140px;
-  transition: border-color 0.3s;
+  min-width: 130px;
+  transition: background-color 0.3s;
 }
 
-.tag-select:focus {
-  border-color: var(--accent-primary);
+.tag-select:hover {
+  background-color: var(--bg-secondary);
+}
+
+.tag-select option {
+  background: var(--bg-card);
+  color: var(--text-primary);
 }
 
 /* 文章区域 */
 .article-sections {
-  padding: 0 0 80px;
+  padding: 0 0 60px;
   position: relative;
   z-index: 1;
+}
+
+/* 侧边栏 + 主内容布局 */
+.article-layout {
+  display: flex;
+  gap: 32px;
+  align-items: flex-start;
+}
+
+/* 左侧缩略预览 */
+.article-sidebar {
+  flex: 0 0 220px;
+  position: sticky;
+  top: 100px;
+  max-height: calc(100vh - 140px);
+  overflow-y: auto;
+}
+
+.sidebar-inner {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 20px;
+}
+
+.sidebar-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sidebar-tag-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.25s ease;
+  border: 1px solid transparent;
+}
+
+.sidebar-tag-item:hover {
+  background: var(--bg-secondary);
+  border-color: var(--border-color);
+}
+
+.sidebar-tag-item.active {
+  background: rgba(59, 130, 246, 0.08);
+  border-color: var(--accent-primary);
+}
+
+.sidebar-tag-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.sidebar-tag-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.sidebar-tag-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-tag-count {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+/* 右侧主内容 */
+.article-main {
+  flex: 1;
+  min-width: 0;
 }
 
 /* 加载状态 */
@@ -421,7 +574,11 @@ onMounted(() => {
 .article-groups {
   display: flex;
   flex-direction: column;
-  gap: 48px;
+  gap: 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 20px 24px;
 }
 
 .article-group {
@@ -438,8 +595,8 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 24px;
-  padding-bottom: 14px;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
   border-bottom: 2px solid var(--border-color);
   position: relative;
 }
@@ -458,7 +615,6 @@ onMounted(() => {
 .group-title-wrapper {
   display: flex;
   align-items: center;
-  gap: 12px;
 }
 
 .group-tag-dot {
@@ -473,134 +629,91 @@ onMounted(() => {
   color: var(--text-primary);
 }
 
-.group-count {
-  font-size: 14px;
-  color: var(--text-secondary);
-}
 
-.group-pagination {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
 
-.page-btn {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.page-btn:hover:not(:disabled) {
-  border-color: var(--accent-primary);
-  color: var(--accent-primary);
-}
-
-.page-btn:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-
-.page-info {
-  font-size: 13px;
-  color: var(--text-secondary);
-  min-width: 50px;
-  text-align: center;
-}
-
-.group-more {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  color: var(--accent-primary);
-  text-decoration: none;
-  font-size: 14px;
-  transition: opacity 0.3s;
-}
-
-.group-more:hover {
-  opacity: 0.8;
-}
-
-/* 紧凑型文章卡片 */
+/* 列表式文章列表 */
 .group-articles {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
+  display: flex;
+  flex-direction: column;
 }
 
-/* 文章卡片：极简现代风格 */
-.article-card-compact {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 16px;
-  overflow: hidden;
+/* 文章条目：列表式 */
+.article-list-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 0 -8px;
+  padding: 14px 12px;
+  border-bottom: 1px solid var(--border-color);
+  border-radius: 8px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.25s ease;
 }
 
-.article-card-compact:hover {
-  transform: translateY(-6px);
-  border-color: var(--accent-primary);
-  box-shadow: 0 12px 40px rgba(59, 130, 246, 0.18);
+.article-list-item:last-child {
+  border-bottom: none;
 }
 
-.article-image-compact {
-  height: 120px;
-  position: relative;
+.article-list-item:hover {
+  background: var(--bg-secondary);
+  transform: translateX(4px);
 }
 
-.article-tag-compact {
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  background: rgba(0, 0, 0, 0.5);
-  color: white;
-  padding: 4px 10px;
-  border-radius: 4px;
-  font-size: 12px;
+/* 内容主体 */
+.article-list-main {
+  flex: 1;
+  min-width: 0;
 }
 
-.article-content-compact {
-  padding: 16px;
-}
-
-.article-meta-compact {
+/* 元信息行：标签 + 日期 + 阅读时间 */
+.article-list-meta {
   display: flex;
   align-items: center;
   gap: 12px;
   font-size: 12px;
   color: var(--text-secondary);
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
-.article-title-compact {
-  font-size: 15px;
-  font-weight: 600;
+.article-list-date {
+  white-space: nowrap;
+}
+
+.article-list-read {
+  white-space: nowrap;
+}
+
+.article-list-title {
+  font-size: 16px;
+  font-weight: 400;
   color: var(--text-primary);
-  margin-bottom: 8px;
   line-height: 1.4;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  margin-bottom: 4px;
+  white-space: nowrap;
   overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.3s;
 }
 
-.article-desc-compact {
-  font-size: 13px;
+.article-list-item:hover .article-list-title {
+  color: var(--accent-primary);
+}
+
+/* 右侧箭头 */
+.article-list-arrow {
+  flex-shrink: 0;
+  font-size: 22px;
+  line-height: 1;
   color: var(--text-secondary);
-  line-height: 1.5;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  opacity: 0;
+  transform: translateX(-6px);
+  transition: all 0.3s ease;
+}
+
+.article-list-item:hover .article-list-arrow {
+  opacity: 1;
+  color: var(--accent-primary);
+  transform: translateX(0);
 }
 
 /* 页脚 */
@@ -662,15 +775,30 @@ onMounted(() => {
 }
 
 /* 响应式 */
-@media (max-width: 1200px) {
-  .group-articles {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
 @media (max-width: 992px) {
-  .group-articles {
-    grid-template-columns: repeat(2, 1fr);
+  .article-layout {
+    flex-direction: column;
+  }
+
+  .article-sidebar {
+    flex: none;
+    position: static;
+    max-height: none;
+    width: 100%;
+  }
+
+  .sidebar-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .sidebar-tag-item {
+    padding: 6px 12px;
+  }
+
+  .sidebar-tag-count {
+    display: none;
   }
 }
 
@@ -678,9 +806,81 @@ onMounted(() => {
   .page-title {
     font-size: 32px;
   }
-  
-  .group-articles {
-    grid-template-columns: 1fr;
+
+  .filter-bar {
+    padding: 6px 8px;
+  }
+
+  .search-box {
+    padding: 8px 10px;
+  }
+
+  .article-list-item {
+    margin: 0 -6px;
+    padding: 12px 10px;
+  }
+
+  .article-list-title {
+    font-size: 14px;
+  }
+
+  .article-list-arrow {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .article-sidebar {
+    display: none;
+  }
+
+  .article-main {
+    width: 100%;
+  }
+
+  .container {
+    padding: 0 16px;
+  }
+
+  .article-groups {
+    padding: 14px 16px;
+  }
+
+  .filter-bar {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .search-box {
+    flex: 1 1 100%;
+  }
+
+  .filter-divider {
+    display: none;
+  }
+
+  .tag-select {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .article-list-item {
+    margin: 0 -4px;
+    padding: 10px 8px;
+  }
+
+  .article-list-meta {
+    gap: 8px;
+    font-size: 11px;
+  }
+
+  .article-list-title {
+    font-size: 13px;
+    margin-bottom: 2px;
+  }
+
+  .article-list-desc {
+    display: none;
   }
 }
 </style>

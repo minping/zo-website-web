@@ -81,7 +81,6 @@
   font-weight: 500;
   transition: all 0.2s;
   position: relative;
-  border-left: 3px solid transparent;
 }
 
 .nav-item:hover {
@@ -92,7 +91,6 @@
 .nav-item.active {
   background: rgba(99, 102, 241, 0.08);
   color: var(--admin-accent-primary);
-  border-left-color: var(--admin-accent-primary);
 }
 
 .nav-item.has-children {
@@ -111,7 +109,6 @@
 .nav-item.has-children.active {
   background: rgba(99, 102, 241, 0.05);
   color: var(--admin-accent-primary);
-  border-left-color: var(--admin-accent-primary);
 }
 
 .sub-nav {

@@ -51,7 +51,7 @@
             <line x1="10" y1="12" x2="14" y2="12"/>
           </svg>
           <!-- 赛博朋克 → 芯片 -->
-          <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg v-else-if="theme === 'cyberpunk'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="4" y="4" width="16" height="16" rx="2" ry="2"/>
             <line x1="9" y1="2" x2="9" y2="4"/>
             <line x1="15" y1="2" x2="15" y2="4"/>
@@ -64,6 +64,28 @@
             <rect x="9" y="9" width="6" height="6"/>
             <line x1="12" y1="9" x2="12" y2="15"/>
             <line x1="9" y1="12" x2="15" y2="12"/>
+          </svg>
+          <!-- 森林清新 → 叶子 -->
+          <svg v-else-if="theme === 'forest'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 20A7 7 0 0 1 9.8 6.9C15.5 4.9 17 3.5 19 2c1 2 2 4.5 2 8 0 5.5-4.78 10-10 10Z"/>
+            <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
+          </svg>
+          <!-- 夏日天空蓝 → 太阳 -->
+          <svg v-else-if="theme === 'summer'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M12 2v2"/>
+            <path d="M12 20v2"/>
+            <path d="m4.93 4.93 1.41 1.41"/>
+            <path d="m17.66 17.66 1.41 1.41"/>
+            <path d="M2 12h2"/>
+            <path d="M20 12h2"/>
+            <path d="m6.34 17.66-1.41 1.41"/>
+            <path d="m19.07 4.93-1.41 1.41"/>
+          </svg>
+          <!-- 云墨 → 墨滴 -->
+          <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/>
+            <path d="M19 11a7 7 0 1 1-14 0"/>
           </svg>
         </button>
       </div>
@@ -92,13 +114,17 @@ const themeTitle = computed(() => {
   if (theme.value === 'dark') return '切换到亮色主题'
   if (theme.value === 'light') return '切换到复古主题'
   if (theme.value === 'retro') return '切换到赛博朋克主题'
+  if (theme.value === 'cyberpunk') return '切换到森林清新主题'
+  if (theme.value === 'forest') return '切换到夏日天空蓝主题'
+  if (theme.value === 'summer') return '切换到云墨主题'
   return '切换到深色主题'
 })
 
 const navLinks = [
   { name: '首页', path: '/', label: '首页' },
+  { name: '接口商城', path: '/api', label: '接口商城' },
   { name: '文章', path: '/articles', label: '文章' },
-  { name: 'API', path: '/api', label: 'API' },
+  { name: '笔记', path: '/notes', label: '笔记' },
   { name: '关于', path: '/about', label: '关于' }
 ]
 
@@ -242,6 +268,10 @@ const handleNavClick = (link) => {
 }
 
 @media (max-width: 768px) {
+  .logo-text {
+    display: none;
+  }
+
   .nav-links {
     gap: 16px;
   }

@@ -21,6 +21,36 @@
             <h3>基本信息</h3>
             <div class="form-row form-row-wide">
               <div class="form-group">
+                <label>接口图标</label>
+                <div class="icon-upload-area" :class="{ 'has-preview': formData.icon, 'is-uploading': uploading }" @click="!formData.icon && triggerIconUpload()">
+                  <template v-if="formData.icon">
+                    <img :src="formData.icon" class="icon-upload-preview" alt="图标预览" />
+                    <div class="icon-upload-actions">
+                      <button type="button" class="icon-btn" @click.stop="triggerIconUpload">更换</button>
+                      <button type="button" class="icon-btn icon-btn-remove" @click.stop="formData.icon = ''">移除</button>
+                    </div>
+                  </template>
+                  <template v-else>
+                    <div class="icon-upload-placeholder">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="4"/>
+                        <circle cx="8.5" cy="8.5" r="1.5"/>
+                        <polyline points="21 15 16 10 5 21"/>
+                      </svg>
+                      <span>{{ uploading ? '上传中...' : '上传图标' }}</span>
+                    </div>
+                  </template>
+                  <input ref="iconInputRef" type="file" accept="image/jpeg,image/png,image/webp,image/gif" class="file-input" @change="handleIconChange" />
+                </div>
+                <p class="hint">建议 128×128 透明底 PNG，≤5MB</p>
+              </div>
+              <div class="form-group">
+                <label>作者</label>
+                <input v-model="formData.author" type="text" placeholder="输入作者名称" />
+              </div>
+            </div>
+            <div class="form-row form-row-wide">
+              <div class="form-group">
                 <label>API 名称 <span class="required">*</span></label>
                 <input v-model="formData.name" type="text" placeholder="输入 API 名称" required />
               </div>
@@ -245,6 +275,8 @@ const isEditing = ref(false)
 
 const formData = reactive({
   id: null,
+  icon: '',
+  author: '',
   name: '',
   method: 'GET',
   endpoint: '',
@@ -489,6 +521,42 @@ const showToast = (message, type = 'success') => {
   setTimeout(() => { toast.value.show = false }, 3000)
 }
 
+const uploading = ref(false)
+const iconInputRef = ref(null)
+
+const triggerIconUpload = () => {
+  iconInputRef.value?.click()
+}
+
+const handleIconChange = async (event) => {
+  const file = event.target.files?.[0]
+  event.target.value = ''
+  if (!file) return
+  if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.type)) {
+    showToast('仅支持 JPG/PNG/WebP/GIF 图片', 'error')
+    return
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    showToast('图片大小不能超过 5MB', 'error')
+    return
+  }
+  uploading.value = true
+  try {
+    const res = await api.uploadImage(file)
+    if (res.success && res.data) {
+      formData.icon = res.data.url || res.data.filePath || ''
+      showToast('图标上传成功')
+    } else {
+      showToast(res.message || '上传失败', 'error')
+    }
+  } catch (error) {
+    console.error('上传图标失败:', error)
+    showToast('上传失败，请重试', 'error')
+  } finally {
+    uploading.value = false
+  }
+}
+
 const goBack = () => {
   router.push('/admin/apis')
 }
@@ -502,6 +570,8 @@ const loadApi = async (id) => {
         isEditing.value = true
         Object.assign(formData, {
           id: found.id,
+          icon: found.icon || '',
+          author: found.author || '',
           name: found.name || '',
           method: found.method || 'GET',
           endpoint: found.endpoint || '',
@@ -545,6 +615,8 @@ const handleSubmit = async () => {
 
   const data = {
     id: formData.id,
+    icon: formData.icon,
+    author: formData.author.trim(),
     name: formData.name.trim(),
     method: formData.method,
     endpoint: formData.endpoint.trim(),

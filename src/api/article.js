@@ -293,6 +293,8 @@ export const api = {
     if (res.data) {
       res.data = res.data.map(item => ({
         id: item.id || item.api_id || item.zo_website_api_id,
+        icon: item.icon || item.img || '',
+        author: item.author_name || item.author || '',
         name: item.name,
         description: item.description,
         endpoint: item.endpoint,
@@ -301,13 +303,13 @@ export const api = {
         tagText: item.tag_text || '',
         tag: item.tag || item.tag_text,
         tagColor: item.tag_color || item.color || '#6366f1',
-        isFree: item.is_free ?? true,
+        isFree: !(item.is_free === 'false' || item.is_free === false),
         price: item.price || 0,
         requestExample: item.request_example || '',
         responseExample: item.response_example || '',
         responseFormat: item.response_format || 'JSON',
         responseTime: item.response_time || 0,
-        status: item.status ?? 1,
+        status: Number(item.status ?? 1),
         inputParams: item.param_list || item.paramList || item.input_params || item.parameters || null,
         stats: {
           calls: item.call_count || 0,
@@ -334,6 +336,8 @@ export const api = {
       const item = res.data
       res.data = {
         id: item.id || item.api_id || item.zo_website_api_id,
+        icon: item.icon || item.img || '',
+        author: item.author_name || item.author || '',
         name: item.name,
         description: item.description,
         endpoint: item.endpoint,
@@ -342,13 +346,13 @@ export const api = {
         tagText: item.tag_text || '',
         tag: item.tag || item.tag_text,
         tagColor: item.tag_color || item.color || '#6366f1',
-        isFree: item.is_free ?? true,
+        isFree: !(item.is_free === 'false' || item.is_free === false),
         price: item.price || 0,
         requestExample: item.request_example || '',
         responseExample: item.response_example || '',
         responseFormat: item.response_format || 'JSON',
         responseTime: item.response_time || 0,
-        status: item.status ?? 1,
+        status: Number(item.status ?? 1),
         inputParams: item.param_list || item.paramList || item.input_params || item.parameters || null
       }
     }
@@ -374,6 +378,7 @@ export const api = {
       const first = mappedTags[0] || {}
       return {
         id: item.id || item.api_id || item.zo_website_api_id,
+        icon: item.icon || item.img || '',
         name: item.name,
         description: item.description,
         endpoint: item.endpoint,
@@ -383,9 +388,10 @@ export const api = {
         tagColor: first.color || '#6366f1',
         tagValue: first.value || '',
         tagText: first.text || '',
-        isFree: item.is_free ?? true,
+        isFree: !(item.is_free === 'false' || item.is_free === false),
         price: item.price || 0,
         responseTime: item.response_time || 0,
+        author: item.author_name || item.author || '',
         stats: {
           calls: item.call_count || 0,
           successRate: item.success_rate || 0,
@@ -424,6 +430,8 @@ export const api = {
       const first = mappedTags[0] || {}
       res.data = {
         id: item.id || item.api_id || item.zo_website_api_id,
+        icon: item.icon || item.img || '',
+        author: item.author_name || item.author || '',
         name: item.name,
         description: item.description,
         endpoint: item.endpoint,
@@ -433,13 +441,13 @@ export const api = {
         tagColor: first.color || '#6366f1',
         tagValue: first.value || '',
         tagText: first.text || '',
-        isFree: item.is_free ?? true,
+        isFree: !(item.is_free === 'false' || item.is_free === false),
         price: item.price || 0,
         requestExample: item.request_example || '',
         responseExample: item.response_example || '',
         responseFormat: item.response_format || 'JSON',
         responseTime: item.response_time || 0,
-        status: item.status ?? 1,
+        status: Number(item.status ?? 1),
         inputParams: item.param_list || item.paramList || item.input_params || item.parameters || null,
         stats: {
           calls: item.call_count || 0,
@@ -728,6 +736,151 @@ export const api = {
         tags: parseTags(item.tags)
       }
     }
+    return res
+  },
+
+  // ========== 笔记管理 ==========
+
+  // 保存笔记（新增/编辑统一，id 有则传无则不传）
+  // 需传 id, name, author, preface, statusValue（0 未发布 / 1 已发布）
+  async saveNote(data) {
+    return await request(API_PATHS.saveNoteInfo, {
+      method: 'POST',
+      body: JSON.stringify(data)
+    })
+  },
+
+  // 获取笔记列表
+  async getNoteList() {
+    const res = await request(API_PATHS.queryNoteList)
+    const mapItem = (item) => ({
+      id: item.id,
+      name: item.name,
+      author: item.author || item.author_name || '',
+      preface: item.preface || '',
+      statusValue: Number(item.status_value ?? item.statusValue ?? item.status ?? 0),
+      createTime: item.created_time || item.createdTime || '',
+      updateTime: item.updated_time || item.updatedTime || ''
+    })
+    if (res.data && Array.isArray(res.data)) {
+      res.data = res.data.map(mapItem)
+    } else if (res.data && res.data.rows && Array.isArray(res.data.rows)) {
+      // 兼容分页返回格式
+      res.data = res.data.rows.map(mapItem)
+    }
+    return res
+  },
+
+  // 获取已发布笔记列表（前台展示，GET）
+  async getPublishedNotes() {
+    const res = await request(API_PATHS.queryNoteListPublished)
+    const mapItem = (item) => ({
+      id: item.id,
+      name: item.name,
+      author: item.author || item.author_name || '',
+      preface: item.preface || '',
+      createTime: item.created_time || item.createdTime || '',
+      updateTime: item.updated_time || item.updatedTime || ''
+    })
+    if (res.data && Array.isArray(res.data)) {
+      res.data = res.data.map(mapItem)
+    } else if (res.data && res.data.rows && Array.isArray(res.data.rows)) {
+      // 兼容分页返回格式
+      res.data = res.data.rows.map(mapItem)
+    }
+    return res
+  },
+
+  // 获取笔记详情（GET 传 id，返回字段与传入一致）
+  async getNoteDetail(id) {
+    const res = await request(`${API_PATHS.queryNoteInfo}?id=${id}`)
+    if (res.data) {
+      const item = res.data
+      res.data = {
+        id: item.id,
+        name: item.name,
+        author: item.author || item.author_name || '',
+        preface: item.preface || '',
+        statusValue: Number(item.status_value ?? item.statusValue ?? item.status ?? 0),
+        createTime: item.created_time || item.createdTime || '',
+        updateTime: item.updated_time || item.updatedTime || ''
+      }
+    }
+    return res
+  },
+
+  // 更新笔记状态（0 未发布 / 1 已发布）
+  async updateNoteStatus(id, status) {
+    return await request(`${API_PATHS.updateNoteStatus}?id=${id}&status=${status}`)
+  },
+
+  // 删除笔记
+  async deleteNote(id) {
+    return await request(API_PATHS.deleteNoteInfo(id))
+  },
+
+  // 查询笔记章节列表（title 为标题，orders 为排序，content 为 markdown 文本）
+  async getChapterList(noteId) {
+    const res = await request(API_PATHS.queryChapterList(noteId))
+    const mapItem = (item) => ({
+      id: item.id ?? item.chapter_id ?? Date.now(),
+      title: item.title || item.name || '',
+      orders: Number(item.orders ?? item.order_num ?? item.sort ?? 0),
+      content: typeof item.content === 'string'
+        ? item.content
+        : Array.isArray(item.content) ? item.content.join('\n\n') : ''
+    })
+    const list = Array.isArray(res.data) ? res.data : res.data?.rows || []
+    res.data = list.map(mapItem).filter(item => item.title)
+    return res
+  },
+
+  // 保存章节（新增/编辑统一）
+  // 需传 noteId, title, orders, content（编辑时另传 id）
+  async saveChapter(data) {
+    return await request(API_PATHS.saveChapter, {
+      method: 'POST',
+      body: JSON.stringify(data)
+    })
+  },
+
+  // 删除章节
+  async deleteChapter(id) {
+    return await request(API_PATHS.deleteChapter(id))
+  },
+
+  // ========== 笔记前台只读接口 ==========
+
+  // 获取笔记详情（前台公开，GET 传 id）
+  async getPublicNoteDetail(id) {
+    const res = await request(API_PATHS.queryNoteDetailPublic(id))
+    if (res.data) {
+      const item = res.data
+      res.data = {
+        id: item.id,
+        name: item.name,
+        author: item.author || item.author_name || '',
+        preface: item.preface || '',
+        createTime: item.created_time || item.createdTime || '',
+        updateTime: item.updated_time || item.updatedTime || ''
+      }
+    }
+    return res
+  },
+
+  // 查询章节列表（前台公开，title 为标题，orders 为排序，content 为 markdown 文本）
+  async getPublicChapterList(noteId) {
+    const res = await request(API_PATHS.queryChapterListPublic(noteId))
+    const mapItem = (item) => ({
+      id: item.id ?? item.chapter_id ?? Date.now(),
+      title: item.title || item.name || '',
+      orders: Number(item.orders ?? item.order_num ?? item.sort ?? 0),
+      content: typeof item.content === 'string'
+        ? item.content
+        : Array.isArray(item.content) ? item.content.join('\n\n') : ''
+    })
+    const list = Array.isArray(res.data) ? res.data : res.data?.rows || []
+    res.data = list.map(mapItem).filter(item => item.title)
     return res
   },
 
