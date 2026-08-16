@@ -1,20 +1,20 @@
 <template>
-  <div class="article-detail" :class="{ 'immersive-mode': isImmersiveMode }">
+  <div class="article-detail">
     <!-- 背景效果 -->
-    <div v-if="!isImmersiveMode" class="bg-grid"></div>
-    <div v-if="!isImmersiveMode" class="bg-glow bg-glow-1"></div>
-    <div v-if="!isImmersiveMode" class="bg-glow bg-glow-2"></div>
+    <div class="bg-grid"></div>
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
 
     <!-- 导航栏 -->
-    <Navbar v-if="!isImmersiveMode" activeMenu="文章" @navigate="handleNavigate" />
+    <Navbar activeMenu="文章" @navigate="handleNavigate" />
 
     <!-- 沉浸式阅读切换按钮 -->
-    <button class="immersive-toggle" :class="{ active: isImmersiveMode }" @click="toggleImmersiveMode" :title="isImmersiveMode ? '退出沉浸式阅读' : '沉浸式阅读'">
+    <button class="immersive-toggle" @click="goImmersive" title="沉浸式阅读">
       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
         <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
       </svg>
-      <span class="immersive-label">{{ isImmersiveMode ? '退出' : '沉浸阅读' }}</span>
+      <span class="immersive-label">沉浸阅读</span>
     </button>
 
     <!-- 文章内容 -->
@@ -34,24 +34,24 @@
             <line x1="12" y1="16" x2="12.01" y2="16"/>
           </svg>
           <p>{{ error }}</p>
-          <button class="back-btn" @click="goHome">返回首页</button>
+          <button class="back-btn" @click="goBack">返回</button>
         </div>
 
         <article v-else class="article-container">
           <!-- 返回按钮 -->
-          <button v-if="!isImmersiveMode" class="back-btn" @click="goHome">
+          <button class="back-btn" @click="goBack">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <line x1="19" y1="12" x2="5" y2="12"/>
               <polyline points="12 19 5 12 12 5"/>
             </svg>
-            返回首页
+            返回
           </button>
 
           <!-- 文章头部 -->
           <header class="article-header">
             <h1 class="article-title">{{ article.title }}</h1>
             <p class="article-desc">{{ article.desc }}</p>
-            <div v-if="!isImmersiveMode" class="article-info-row">
+            <div class="article-info-row">
               <div class="article-tag" :style="{ background: article.tagColor }">
                 {{ article.tag }}
               </div>
@@ -74,9 +74,9 @@
           </div> -->
 
           <!-- 文章正文 -->
-          <div class="article-body">
+          <div class="article-body" :class="{ 'no-toc': toc.length === 0 }">
             <!-- 目录侧边栏 -->
-            <aside v-if="!isImmersiveMode && toc.length > 0" class="article-toc">
+            <aside v-if="toc.length > 0" class="article-toc">
               <div class="toc-container">
                 <div class="toc-header">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -113,7 +113,7 @@
             </div>
             
             <!-- 文章推荐侧边栏 -->
-            <aside v-if="!isImmersiveMode" class="article-sidebar">
+            <aside class="article-sidebar">
               <div class="sidebar-section">
                 <div class="sidebar-header">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -151,7 +151,7 @@
           </div>
 
           <!-- 文章标签 -->
-          <div v-if="!isImmersiveMode && attachments.length > 0" class="article-attachments">
+          <div v-if="attachments.length > 0" class="article-attachments">
             <div class="attachments-header">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
@@ -189,13 +189,13 @@
           </div>
 
           <!-- 文章标签 -->
-          <div v-if="!isImmersiveMode" class="article-tags">
+          <div class="article-tags">
             <span class="tags-label">标签：</span>
             <a href="#" class="tag-item" :style="{ '--tag-color': article.tagColor || '#3b82f6' }">{{ article.tag }}</a>
           </div>
 
           <!-- 点赞分享 -->
-          <div v-if="!isImmersiveMode" class="article-actions">
+          <div class="article-actions">
             <button class="action-btn like-btn" :class="{ active: isLiked }" @click="toggleLike">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" :fill="isLiked ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
@@ -245,6 +245,51 @@
         <polyline points="5 12 12 5 19 12"/>
       </svg>
     </button>
+
+    <!-- 图片查看器 -->
+    <Teleport to="body">
+      <div 
+        v-if="showImageViewer" 
+        class="image-viewer-overlay" 
+        @click="closeImageViewer"
+        @wheel.prevent="handleImageWheel"
+      >
+        <button class="image-viewer-close" @click="closeImageViewer">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+        <div class="image-viewer-toolbar">
+          <button class="image-viewer-btn" @click.stop="zoomIn" title="放大">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              <line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/>
+            </svg>
+          </button>
+          <button class="image-viewer-btn" @click.stop="zoomOut" title="缩小">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              <line x1="8" y1="11" x2="14" y2="11"/>
+            </svg>
+          </button>
+          <button class="image-viewer-btn" @click.stop="resetZoom" title="原始大小">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>
+            </svg>
+          </button>
+        </div>
+        <div 
+          class="image-viewer-container"
+          :style="{
+            transform: `scale(${imageScale})`,
+            cursor: imageScale > 1 ? 'grab' : 'default'
+          }"
+        >
+          <img :src="currentImageSrc" :alt="currentImageAlt" class="image-viewer-img" />
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -306,7 +351,7 @@ marked.use({ renderer })
 
 const router = useRouter()
 const route = useRoute()
-const { theme, toggleTheme } = useTheme()
+useTheme()
 
 const isLiked = ref(false)
 const likeCount = ref(0)
@@ -317,7 +362,12 @@ const relatedArticles = ref([])
 const showBackTop = ref(false)
 const showShare = ref(false)
 const copySuccess = ref(false)
-const isImmersiveMode = ref(false)
+
+// 图片查看器状态
+const showImageViewer = ref(false)
+const currentImageSrc = ref('')
+const currentImageAlt = ref('')
+const imageScale = ref(1)
 
 const article = ref({})
 
@@ -426,7 +476,7 @@ const fetchArticle = async (id) => {
       // 调用浏览接口
       api.viewArticle(id)
       // 获取相关文章
-      fetchRelatedArticles(res.data.tag, id)
+      fetchRelatedArticles(id)
     } else {
       error.value = res.message || '文章不存在'
     }
@@ -439,7 +489,7 @@ const fetchArticle = async (id) => {
 }
 
 // 获取推荐文章
-const fetchRelatedArticles = async (tag, excludeId) => {
+const fetchRelatedArticles = async (excludeId) => {
   try {
     const res = await api.getRecommendArticles(excludeId)
     if (res.success) {
@@ -463,10 +513,9 @@ const toggleLike = async () => {
   await api.likeArticle(article.value.id)
 }
 
-const toggleImmersiveMode = () => {
-  isImmersiveMode.value = !isImmersiveMode.value
-  // 切换后滚动到顶部
-  window.scrollTo({ top: 0, behavior: 'smooth' })
+const goImmersive = () => {
+  const id = route.params.id
+  router.push(`/article/${id}/immersive`)
 }
 
 // 分享相关
@@ -486,10 +535,45 @@ const copyShareLink = () => {
   })
 }
 
-// 点击外部关闭分享弹窗
-const closeSharePopup = (e) => {
-  if (showShare.value) {
-    showShare.value = false
+// 图片查看器方法
+const handleImageClick = (e) => {
+  if (e.target.tagName === 'IMG') {
+    currentImageSrc.value = e.target.src
+    currentImageAlt.value = e.target.alt || ''
+    imageScale.value = 1
+    showImageViewer.value = true
+  }
+}
+
+const closeImageViewer = () => {
+  showImageViewer.value = false
+  imageScale.value = 1
+}
+
+const zoomIn = () => {
+  imageScale.value = Math.min(imageScale.value + 0.25, 5)
+}
+
+const zoomOut = () => {
+  imageScale.value = Math.max(imageScale.value - 0.25, 0.25)
+}
+
+const resetZoom = () => {
+  imageScale.value = 1
+}
+
+const handleImageWheel = (e) => {
+  if (e.deltaY < 0) {
+    zoomIn()
+  } else {
+    zoomOut()
+  }
+}
+
+// ESC 键关闭图片查看器
+const handleKeyDown = (e) => {
+  if (e.key === 'Escape' && showImageViewer.value) {
+    closeImageViewer()
   }
 }
 
@@ -509,8 +593,13 @@ window.copyCode = (btn) => {
   })
 }
 
-const goHome = () => {
-  router.push('/')
+// 返回上一次访问的页面
+const goBack = () => {
+  if (window.history.length > 1) {
+    router.back()
+  } else {
+    router.push('/')
+  }
 }
 
 // 处理导航
@@ -544,6 +633,15 @@ onMounted(() => {
   }
   window.addEventListener('scroll', handleScroll)
   document.addEventListener('click', handleDocumentClick)
+  document.addEventListener('keydown', handleKeyDown)
+
+  // 图片点击放大 - 延迟绑定等待文章内容渲染
+  setTimeout(() => {
+    const content = document.querySelector('.article-content')
+    if (content) {
+      content.addEventListener('click', handleImageClick)
+    }
+  }, 800)
 })
 
 // 监听路由参数变化，点击推荐文章时重新加载
@@ -557,6 +655,12 @@ watch(() => route.params.id, (newId) => {
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll)
   document.removeEventListener('click', handleDocumentClick)
+  document.removeEventListener('keydown', handleKeyDown)
+
+  const content = document.querySelector('.article-content')
+  if (content) {
+    content.removeEventListener('click', handleImageClick)
+  }
 })
 </script>
 
@@ -645,6 +749,11 @@ onUnmounted(() => {
   position: relative;
   padding-top: 100px;
   z-index: 1;
+}
+
+/* 覆盖全局 .container 的宽度限制，让文章内容区更宽 */
+.article-main .container {
+  max-width: 1600px;
 }
 
 .article-container {
@@ -768,7 +877,14 @@ onUnmounted(() => {
   display: grid;
   grid-template-columns: 200px 1fr 240px;
   gap: 32px;
+  justify-content: center;
   margin-bottom: 48px;
+  min-height: 60vh;
+}
+
+/* 无目录时去除左侧 200px 列 */
+.article-body.no-toc {
+  grid-template-columns: 1fr 240px;
 }
 
 /* 文章推荐侧边栏 */
@@ -863,6 +979,7 @@ onUnmounted(() => {
   line-height: 1.4;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   margin-bottom: 4px;
@@ -882,8 +999,11 @@ onUnmounted(() => {
 }
 
 .article-content {
-  max-width: 740px;
+  max-width: 100%;
   width: 100%;
+  min-width: 0;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .article-content h2 {
@@ -1005,6 +1125,8 @@ onUnmounted(() => {
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.88em;
   color: #f472b6;
+  word-break: break-all;
+  overflow-wrap: anywhere;
 }
 
 .article-content :deep(a) {
@@ -1025,6 +1147,12 @@ onUnmounted(() => {
   border-radius: 12px;
   margin: 28px 0;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  cursor: zoom-in;
+  transition: opacity 0.2s;
+}
+
+.article-content :deep(img:hover) {
+  opacity: 0.9;
 }
 
 .article-content :deep(table) {
@@ -1472,48 +1600,6 @@ onUnmounted(() => {
   background: rgba(59, 130, 246, 0.1);
 }
 
-/* 沉浸模式 - 附件 */
-.immersive-mode .article-attachments {
-  border-top-color: var(--im-border);
-  border-bottom-color: var(--im-border);
-}
-
-.immersive-mode .attachments-header {
-  color: var(--im-text);
-}
-
-.immersive-mode .attachments-header svg {
-  color: var(--im-accent);
-}
-
-.immersive-mode .attachment-item {
-  background: var(--im-card-bg);
-  border-color: var(--im-border);
-}
-
-.immersive-mode .attachment-item:hover {
-  border-color: var(--im-accent);
-  background: rgba(180, 160, 140, 0.1);
-}
-
-.immersive-mode .attachment-item-icon {
-  background: rgba(139, 115, 85, 0.12);
-  color: var(--im-accent);
-}
-
-.immersive-mode .attachment-item-name {
-  color: var(--im-text);
-}
-
-.immersive-mode .attachment-item-size {
-  color: var(--im-text-light);
-}
-
-.immersive-mode .attachment-item:hover .attachment-item-download {
-  color: var(--im-accent);
-  background: rgba(139, 115, 85, 0.12);
-}
-
 /* 文章标签 */
 .article-tags {
   grid-column: 1 / -1;
@@ -1764,31 +1850,89 @@ onUnmounted(() => {
   color: var(--text-muted);
 }
 
-/* 响应式 */
+/* ========== 响应式 1100px ========== */
+/* 平板竖屏 / 小屏笔记本：隐藏右侧推荐栏，TOC 保留 */
 @media (max-width: 1100px) {
   .article-body {
     grid-template-columns: 200px 1fr;
+    justify-content: center;
+    gap: 24px;
+  }
+
+  .article-body.no-toc {
+    grid-template-columns: 1fr;
   }
   
   .article-sidebar {
     display: none;
   }
+
+  .article-container {
+    padding: 0 24px;
+  }
 }
 
+/* ========== 响应式 900px ========== */
+/* 平板横屏 / 大屏手机：隐藏 TOC，内容区居中 */
 @media (max-width: 900px) {
   .article-body {
     grid-template-columns: 1fr;
+    gap: 0;
   }
   
   .article-toc {
     display: none;
   }
+
+  .article-container {
+    padding: 0 20px;
+  }
+
+  .article-title {
+    font-size: 1.75rem;
+  }
+
+  .article-desc {
+    font-size: 0.92rem;
+  }
 }
 
-/* ========== 移动端适配 ========== */
+/* ========== 沉浸式阅读按钮 ========== */
+.immersive-toggle {
+  position: fixed;
+  top: 80px;
+  right: 24px;
+  z-index: 100;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 24px;
+  cursor: pointer;
+  color: var(--text-primary);
+  font-size: 14px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.immersive-toggle:hover {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+  background: var(--accent-glow);
+  transform: translateY(-1px);
+}
+
+/* ========== 移动端适配 768px ========== */
 @media (max-width: 768px) {
+  .article-main .container {
+    max-width: 100%;
+    padding: 0;
+  }
+
   .article-main {
-    padding-top: 70px;
+    padding-top: 64px;
   }
 
   .article-container {
@@ -1796,30 +1940,49 @@ onUnmounted(() => {
     padding: 0 16px;
   }
 
+  /* === 头部 === */
+  .article-header {
+    margin-bottom: 24px;
+  }
+
   .article-title {
-    font-size: 1.5rem;
+    font-size: 1.4rem;
+    line-height: 1.45;
   }
 
   .article-desc {
     font-size: 0.9rem;
+    line-height: 1.6;
+    margin-top: 10px;
   }
 
   .article-info-row {
     flex-direction: column;
     align-items: flex-start;
-    gap: 8px;
+    gap: 10px;
+    margin-top: 14px;
   }
 
   .article-meta {
     flex-wrap: wrap;
-    gap: 8px;
-    font-size: 0.85rem;
+    gap: 10px;
+    font-size: 0.82rem;
   }
 
+  .article-meta span {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* === 封面 === */
   .article-cover {
-    height: 200px;
+    height: 180px;
+    margin-bottom: 20px;
+    border-radius: 10px;
   }
 
+  /* === 正文排版 === */
   .article-body {
     gap: 0;
   }
@@ -1829,96 +1992,165 @@ onUnmounted(() => {
   }
 
   .article-content :deep(h1) {
-    font-size: 1.5rem;
+    font-size: 1.35rem;
+    margin: 24px 0 12px;
   }
 
   .article-content :deep(h2) {
-    font-size: 1.25rem;
+    font-size: 1.15rem;
+    margin: 22px 0 10px;
   }
 
   .article-content :deep(h3) {
-    font-size: 1.1rem;
+    font-size: 1.05rem;
+    margin: 18px 0 8px;
   }
 
   .article-content :deep(p) {
-    font-size: 0.95rem;
+    font-size: 0.93rem;
+    line-height: 1.85;
+    margin: 12px 0;
+    overflow-wrap: break-word;
+    word-break: break-word;
   }
 
-  /* 代码块移动端 */
+  .article-content :deep(li) {
+    font-size: 0.93rem;
+    line-height: 1.8;
+    margin: 6px 0;
+  }
+
+  .article-content :deep(a) {
+    word-break: break-all;
+  }
+
+  /* === 引用块 === */
+  .article-content :deep(blockquote) {
+    padding: 14px 16px;
+    margin: 18px 0;
+    font-size: 0.9rem;
+    border-left-width: 3px;
+  }
+
+  /* === 代码块 === */
   .article-content :deep(.code-block) {
     border-radius: 8px;
-    margin: 20px 0;
+    margin: 18px 0;
+    overflow-x: auto;
+    background: #1e1e1e;
+    touch-action: pan-x;
+  }
+
+  .article-content :deep(.code-header) {
+    padding: 8px 14px;
+    font-size: 0.72rem;
+  }
+
+  .article-content :deep(.code-header .copy-btn) {
+    padding: 3px 8px;
+    font-size: 0.7rem;
   }
 
   .article-content :deep(.code-body code) {
-    font-size: 0.8rem;
-    padding: 14px 16px;
+    font-size: 0.78rem;
+    padding: 12px 14px;
+    line-height: 1.65;
   }
 
+  /* === 表格 === */
   .article-content :deep(table) {
     display: block;
     overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x;
+    border-radius: 6px;
+    font-size: 0.82rem;
   }
 
+  .article-content :deep(th),
+  .article-content :deep(td) {
+    padding: 8px 12px;
+    white-space: nowrap;
+  }
+
+  /* === 图片 === */
   .article-content :deep(img) {
     border-radius: 8px;
-    margin: 20px 0;
+    margin: 18px 0;
   }
 
-  .article-content :deep(blockquote) {
-    padding: 16px 18px;
-    margin: 20px 0;
-  }
-
-  .related-grid {
-    grid-template-columns: 1fr;
-  }
-
-  /* 文章标签 */
+  /* === 文章标签 === */
   .article-tags {
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 6px;
     padding: 16px 0;
   }
 
-  /* 附件 */
+  .article-tag {
+    font-size: 0.8rem;
+    padding: 5px 12px;
+    border-radius: 14px;
+  }
+
+  /* === 附件 === */
   .article-attachments {
     padding: 16px 0;
   }
 
   .attachment-item {
-    padding: 10px 12px;
+    padding: 12px 14px;
+    border-radius: 8px;
   }
 
   .attachment-item-name {
     font-size: 0.82rem;
   }
 
-  /* 操作按钮 */
+  /* === 操作按钮 === */
   .article-actions {
     gap: 10px;
-    margin-bottom: 40px;
+    margin-bottom: 32px;
   }
 
   .action-btn {
-    min-width: 120px;
-    padding: 10px 16px;
-    font-size: 0.88rem;
+    min-width: 0;
+    flex: 1;
+    min-height: 44px;
+    padding: 10px 14px;
+    font-size: 0.85rem;
+    border-radius: 10px;
+    justify-content: center;
   }
 
-  /* 分享弹窗 */
+  /* === 分享弹窗 === */
   .share-popup {
     left: 50%;
     transform: translateX(-50%);
     width: calc(100vw - 32px);
     max-width: 340px;
     padding: 16px;
+    border-radius: 12px;
   }
 
   .share-popup-arrow {
     left: 50%;
     transform: translateX(-50%);
+  }
+
+  .share-link-row {
+    gap: 8px;
+  }
+
+  .share-link-input {
+    font-size: 0.78rem;
+    padding: 10px 12px;
+    border-radius: 8px;
+  }
+
+  .share-copy-btn {
+    padding: 10px 14px;
+    font-size: 0.78rem;
+    border-radius: 8px;
+    white-space: nowrap;
   }
 
   @keyframes shareFadeIn {
@@ -1932,20 +2164,35 @@ onUnmounted(() => {
     }
   }
 
-  /* 回到顶部 */
-  .back-to-top {
-    bottom: 2rem;
-    right: 2rem;
-    width: 2.5rem;
-    height: 2.5rem;
+  /* === 推荐文章 === */
+  .related-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
   }
 
-  /* 沉浸式按钮 */
+  /* === 回到顶部 === */
+  .back-to-top {
+    bottom: 20px;
+    right: 16px;
+    width: 40px;
+    height: 40px;
+  }
+
+  /* === 返回按钮 === */
+  .back-btn {
+    margin-bottom: 16px;
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    border-radius: 8px;
+  }
+
+  /* === 沉浸式按钮 === */
   .immersive-toggle {
-    top: 12px;
+    top: 72px;
     right: 12px;
     padding: 8px 14px;
     font-size: 13px;
+    border-radius: 20px;
   }
 
   .immersive-toggle .immersive-label {
@@ -1956,63 +2203,216 @@ onUnmounted(() => {
     width: 18px;
     height: 18px;
   }
-
-  /* 返回按钮 */
-  .back-btn {
-    margin-bottom: 20px;
-    padding: 8px 12px;
-    font-size: 0.88rem;
-  }
 }
 
+/* ========== 移动端适配 480px ========== */
 @media (max-width: 480px) {
-  .article-container {
-    padding: 24px 0px;
+  .article-main .container {
+    max-width: 100%;
+    padding: 0;
   }
 
   .article-main {
-    padding-top: 60px;
+    padding-top: 56px;
+  }
+
+  .article-container {
+    padding: 0 12px;
+  }
+
+  /* === 头部 === */
+  .article-header {
+    margin-bottom: 20px;
   }
 
   .article-title {
-    font-size: 1.3rem;
+    font-size: 1.25rem;
+    line-height: 1.45;
   }
 
+  .article-desc {
+    font-size: 0.85rem;
+    line-height: 1.6;
+    margin-top: 8px;
+  }
+
+  .article-info-row {
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .article-meta {
+    gap: 8px;
+    font-size: 0.78rem;
+  }
+
+  /* === 封面 === */
+  .article-cover {
+    height: 160px;
+    margin-bottom: 16px;
+    border-radius: 8px;
+  }
+
+  /* === 正文排版 === */
   .article-content :deep(h1) {
-    font-size: 1.3rem;
+    font-size: 1.2rem;
+    margin: 20px 0 10px;
   }
 
   .article-content :deep(h2) {
-    font-size: 1.1rem;
+    font-size: 1.05rem;
+    margin: 18px 0 8px;
   }
 
   .article-content :deep(h3) {
-    font-size: 1rem;
+    font-size: 0.98rem;
+    margin: 16px 0 6px;
   }
 
   .article-content :deep(p) {
-    font-size: 0.92rem;
+    font-size: 0.9rem;
     line-height: 1.8;
+    margin: 10px 0;
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+
+  .article-content :deep(li) {
+    font-size: 0.9rem;
+    line-height: 1.75;
+  }
+
+  /* === 引用块 === */
+  .article-content :deep(blockquote) {
+    padding: 12px 14px;
+    margin: 16px 0;
+    font-size: 0.85rem;
+    border-left-width: 3px;
+  }
+
+  /* === 代码块 === */
+  .article-content :deep(.code-block) {
+    border-radius: 6px;
+    margin: 16px 0;
+    overflow-x: auto;
+    touch-action: pan-x;
+  }
+
+  .article-content :deep(.code-header) {
+    padding: 6px 12px;
+    font-size: 0.68rem;
   }
 
   .article-content :deep(.code-body code) {
+    font-size: 0.72rem;
+    padding: 10px 12px;
+    line-height: 1.6;
+  }
+
+  /* === 表格 === */
+  .article-content :deep(table) {
+    display: block;
+    overflow-x: auto;
+    touch-action: pan-x;
+    font-size: 0.78rem;
+    border-radius: 6px;
+  }
+
+  .article-content :deep(th),
+  .article-content :deep(td) {
+    padding: 6px 10px;
+  }
+
+  /* === 图片 === */
+  .article-content :deep(img) {
+    border-radius: 6px;
+    margin: 14px 0;
+  }
+
+  /* === 文章标签 === */
+  .article-tags {
+    gap: 6px;
+    padding: 12px 0;
+  }
+
+  .article-tag {
     font-size: 0.75rem;
-    padding: 12px 14px;
+    padding: 4px 10px;
+    border-radius: 12px;
+  }
+
+  /* === 附件 === */
+  .article-attachments {
+    padding: 12px 0;
+  }
+
+  .attachment-item {
+    padding: 10px 12px;
+  }
+
+  .attachment-item-name {
+    font-size: 0.78rem;
+  }
+
+  /* === 操作按钮 === */
+  .article-actions {
+    gap: 8px;
+    margin-bottom: 24px;
   }
 
   .action-btn {
-    min-width: 110px;
-    padding: 8px 14px;
-    font-size: 0.82rem;
+    flex: 1;
+    min-width: 0;
+    min-height: 42px;
+    padding: 10px 12px;
+    font-size: 0.8rem;
+    border-radius: 8px;
+  }
+
+  /* === 分享弹窗 === */
+  .share-popup {
+    width: calc(100vw - 24px);
+    max-width: 320px;
+    padding: 14px;
   }
 
   .share-link-input {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
+    padding: 8px 10px;
   }
 
   .share-copy-btn {
     padding: 8px 12px;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
+  }
+
+  /* === 推荐文章 === */
+  .related-grid {
+    gap: 10px;
+  }
+
+  /* === 回到顶部 === */
+  .back-to-top {
+    bottom: 16px;
+    right: 12px;
+    width: 36px;
+    height: 36px;
+  }
+
+  /* === 返回按钮 === */
+  .back-btn {
+    margin-bottom: 14px;
+    padding: 7px 10px;
+    font-size: 0.8rem;
+  }
+
+  /* === 沉浸式按钮 === */
+  .immersive-toggle {
+    top: 68px;
+    right: 8px;
+    padding: 7px 10px;
+    font-size: 12px;
+    border-radius: 18px;
   }
 }
 
@@ -2060,452 +2460,173 @@ onUnmounted(() => {
   }
 }
 
-/* ========== 沉浸式阅读模式 ========== */
-.immersive-mode {
-  --im-bg: #f5f0e6;
-  --im-text: #3d3226;
-  --im-text-light: #6b5d4f;
-  --im-accent: #8b7355;
-  --im-border: #d4c8b4;
-  --im-card-bg: #faf7f0;
-}
-
-.immersive-mode {
-  background: var(--im-bg) !important;
-  min-height: 100vh;
-}
-
-/* 沉浸模式 - 隐藏背景效果 */
-.immersive-mode .bg-grid,
-.immersive-mode .bg-glow {
-  display: none !important;
-}
-
-/* 沉浸模式 - 文章主体布局 */
-.immersive-mode .article-main {
-  padding-top: 32px;
-  padding-bottom: 80px;
-}
-
-.immersive-mode .article-container {
-  max-width: 860px;
-  margin: 0 auto;
-  padding: 48px 40px;
-  background: var(--im-card-bg);
-  border-radius: 4px;
-  box-shadow: 
-    0 1px 3px rgba(0, 0, 0, 0.04),
-    0 8px 24px rgba(0, 0, 0, 0.06);
-  position: relative;
-}
-
-/* 书页纹理遮罩 */
-.immersive-mode .article-container::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 4px;
-  background:
-    repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 28px,
-      rgba(180, 160, 130, 0.04) 28px,
-      rgba(180, 160, 130, 0.04) 29px
-    );
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* 沉浸模式 - 文章标题 */
-.immersive-mode .article-header {
-  position: relative;
-  z-index: 1;
-  text-align: center;
-  margin-bottom: 40px;
-  padding-bottom: 32px;
-  border-bottom: 2px solid var(--im-border);
-}
-
-.immersive-mode .article-title {
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--im-text);
-  line-height: 1.5;
-  letter-spacing: 0.04em;
-  font-family: 'Noto Serif SC', 'Source Han Serif SC', 'STSong', 'SimSun', 'Georgia', 'Times New Roman', serif;
-}
-
-.immersive-mode .article-desc {
-  font-size: 0.95rem;
-  color: var(--im-text-light);
-  line-height: 1.7;
-  margin-bottom: 0;
-}
-
-/* 沉浸模式 - 正文 */
-.immersive-mode .article-body {
-  display: block;
-  position: relative;
-  z-index: 1;
-}
-
-.immersive-mode .article-content {
-  max-width: 100%;
-  font-family: 'Noto Serif SC', 'Source Han Serif SC', 'STSong', 'Georgia', 'Times New Roman', serif;
-}
-
-/* 沉浸模式 - 段落 */
-.immersive-mode .article-content :deep(p) {
-  font-size: 1.1rem;
-  line-height: 2;
-  color: var(--im-text);
-  margin-bottom: 28px;
-  text-indent: 2em;
-  letter-spacing: 0.02em;
-}
 
 
-/* 沉浸模式 - 标题 */
-.immersive-mode .article-content :deep(h1),
-.immersive-mode .article-content :deep(h2),
-.immersive-mode .article-content :deep(h3),
-.immersive-mode .article-content :deep(h4),
-.immersive-mode .article-content :deep(h5),
-.immersive-mode .article-content :deep(h6) {
-  font-family: 'Noto Serif SC', 'Source Han Serif SC', 'STSong', 'Georgia', 'Times New Roman', serif;
-  color: var(--im-text);
-  margin-top: 48px;
-  margin-bottom: 24px;
-  font-weight: 700;
-}
-
-.immersive-mode .article-content :deep(h1) {
-  font-size: 1.8rem;
-  text-align: center;
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--im-border);
-}
-
-.immersive-mode .article-content :deep(h2) {
-  font-size: 1.45rem;
-  padding-left: 0;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--im-border);
-}
-
-.immersive-mode .article-content :deep(h2)::before {
-  display: none;
-}
-
-.immersive-mode .article-content :deep(h3) {
-  font-size: 1.25rem;
-}
-
-.immersive-mode .article-content :deep(h4) {
-  font-size: 1.1rem;
-  color: var(--im-text-light);
-}
-
-/* 沉浸模式 - 引用块 */
-.immersive-mode .article-content :deep(blockquote) {
-  padding: 20px 28px;
-  margin: 32px 0;
-  background: rgba(180, 160, 140, 0.1);
-  border-left: 3px solid var(--im-accent);
-  border-radius: 0 4px 4px 0;
-  color: var(--im-text-light);
-  font-style: italic;
-  quotes: "\201C""\201D""\2018""\2019";
-}
-
-.immersive-mode .article-content :deep(blockquote p) {
-  text-indent: 0;
-  margin-bottom: 0;
-}
-
-/* 沉浸模式 - 列表 */
-.immersive-mode .article-content :deep(ul),
-.immersive-mode .article-content :deep(ol) {
-  padding-left: 28px;
-  margin-bottom: 28px;
-  color: var(--im-text);
-}
-
-.immersive-mode .article-content :deep(li) {
-  margin-bottom: 12px;
-  line-height: 1.9;
-}
-
-.immersive-mode .article-content :deep(ul li)::marker {
-  color: var(--im-accent);
-}
-
-.immersive-mode .article-content :deep(ol li)::marker {
-  color: var(--im-accent);
-  font-weight: 600;
-}
-
-/* 沉浸模式 - 代码块 (IDEA Darcula 主题统一) */
-.immersive-mode .article-content :deep(.code-block) {
-  background: #2b2b2b;
-  border: 1px solid #323232;
-  border-radius: 6px;
-  margin: 32px 0;
-}
-
-.immersive-mode .article-content :deep(.code-header) {
-  background: #3c3f41;
-  border-bottom: 1px solid #323232;
-}
-
-.immersive-mode .article-content :deep(.code-lang) {
-  color: #bbbbbb;
-  background: none;
-  -webkit-text-fill-color: #bbbbbb;
-}
-
-.immersive-mode .article-content :deep(.copy-btn) {
-  background: transparent;
-  border-color: #555;
-  color: #bbbbbb;
-}
-
-.immersive-mode .article-content :deep(.copy-btn:hover) {
-  background: #4a4d4f;
-  border-color: #888;
-  color: #e0e0e0;
-}
-
-.immersive-mode .article-content :deep(.code-body code) {
-  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
-  font-size: 0.875rem;
-  color: #a9b7c6;
-  background: #2b2b2b !important;
-}
-
-.immersive-mode .article-content :deep(.code-body pre) {
-  scrollbar-color: #4a4a4a #2b2b2b;
-}
-
-/* 沉浸模式 - 行内代码 */
-.immersive-mode .article-content :deep(code:not(pre code)) {
-  padding: 2px 8px;
-  background: rgba(180, 160, 140, 0.15);
-  border: 1px solid var(--im-border);
-  border-radius: 4px;
-  font-family: 'JetBrains Mono', 'Consolas', monospace;
-  font-size: 0.88em;
-  color: #8b6914;
-}
-
-/* 沉浸模式 - 链接 */
-.immersive-mode .article-content :deep(a) {
-  color: var(--im-accent);
-  border-bottom: 1px dashed var(--im-accent);
-}
-
-.immersive-mode .article-content :deep(a:hover) {
-  border-bottom-style: solid;
-}
-
-/* 沉浸模式 - 图片 */
-.immersive-mode .article-content :deep(img) {
-  max-width: 100%;
-  border-radius: 4px;
-  margin: 32px auto;
-  display: block;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-}
-
-/* 沉浸模式 - 表格 */
-.immersive-mode .article-content :deep(table) {
-  border: 1px solid var(--im-border);
-}
-
-.immersive-mode .article-content :deep(th) {
-  background: rgba(180, 160, 140, 0.12);
-  color: var(--im-text);
-  font-weight: 600;
-}
-
-.immersive-mode .article-content :deep(th),
-.immersive-mode .article-content :deep(td) {
-  border-color: var(--im-border);
-  padding: 12px 16px;
-  color: var(--im-text);
-}
-
-.immersive-mode .article-content :deep(tr:hover td) {
-  background: rgba(180, 160, 140, 0.06);
-}
-
-/* 沉浸模式 - 分割线 */
-.immersive-mode .article-content :deep(hr) {
-  height: 1px;
-  background: var(--im-border);
-  margin: 40px 0;
-  border: none;
-}
-
-/* 沉浸模式 - 切换按钮 */
-.immersive-toggle {
+/* ========== 图片查看器 ========== */
+.image-viewer-overlay {
   position: fixed;
-  top: 100px;
-  right: 60px;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.9);
+  z-index: 99999;
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 10px 18px;
-  background: var(--bg-card, #fff);
-  border: 1px solid var(--border-color, #e2e8f0);
-  border-radius: 22px;
-  color: var(--text-secondary, #64748b);
-  font-size: 14px;
-  font-weight: 500;
+  justify-content: center;
+  animation: fadeIn 0.2s ease;
+}
+
+.image-viewer-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 44px;
+  height: 44px;
+  border: none;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border-radius: 50%;
   cursor: pointer;
-  z-index: 100;
-  transition: all 0.3s;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+  z-index: 10;
 }
 
-.immersive-toggle:hover {
-  border-color: var(--accent-primary, #4f46e5);
-  color: var(--accent-primary, #4f46e5);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+.image-viewer-close:hover {
+  background: rgba(255, 255, 255, 0.25);
 }
 
-.immersive-toggle.active {
-  background: #8b7355;
-  border-color: #8b7355;
-  color: #faf7f0;
-  box-shadow: 0 4px 16px rgba(139, 115, 85, 0.3);
+.image-viewer-toolbar {
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 8px 16px;
+  z-index: 10;
+  backdrop-filter: blur(10px);
 }
 
-.immersive-toggle.active:hover {
-  background: #7a6448;
-  opacity: 1;
+.image-viewer-btn {
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: transparent;
+  color: #fff;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
 }
 
-.immersive-label {
-  white-space: nowrap;
+.image-viewer-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 
-/* 沉浸模式 - 回到顶部按钮适配 */
-.immersive-mode .back-to-top {
-  border-color: var(--im-border);
-  background: var(--im-card-bg);
-  color: var(--im-text-light);
+.image-viewer-container {
+  max-width: 90vw;
+  max-height: 85vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
 }
 
-.immersive-mode .back-to-top:hover {
-  color: var(--im-accent);
-  border-color: var(--im-accent);
+.image-viewer-img {
+  max-width: 90vw;
+  max-height: 85vh;
+  object-fit: contain;
+  border-radius: 4px;
+  user-select: none;
 }
 
-/* 沉浸模式 - 响应式 */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ========== 图片查看器移动端 ========== */
 @media (max-width: 768px) {
-  .immersive-mode .article-main {
-    padding-top: 16px;
-    padding-bottom: 40px;
+  .image-viewer-overlay {
+    padding: 0;
   }
 
-  .immersive-mode .article-container {
-    max-width: 100%;
-    padding: 32px 16px;
-    margin: 0;
-    border-radius: 0;
-    box-shadow: none;
+  .image-viewer-close {
+    top: 12px;
+    right: 12px;
+    width: 40px;
+    height: 40px;
+    background: rgba(0, 0, 0, 0.45);
   }
 
-  .immersive-mode .article-container::before {
-    display: none;
+  .image-viewer-toolbar {
+    bottom: 24px;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 24px;
   }
 
-  .immersive-mode .article-header {
-    margin-bottom: 28px;
-    padding-bottom: 20px;
+  .image-viewer-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
   }
 
-  .immersive-mode .article-title {
-    font-size: 1.5rem;
+  .image-viewer-container {
+    max-width: 96vw;
+    max-height: 80vh;
   }
 
-  .immersive-mode .article-content :deep(p) {
-    font-size: 1.05rem;
-    text-indent: 2em;
-  }
-
-  .immersive-mode .article-content :deep(h2) {
-    font-size: 1.25rem;
-  }
-
-  .immersive-mode .article-content :deep(h3) {
-    font-size: 1.1rem;
-  }
-
-  .immersive-mode .article-content :deep(h1) {
-    font-size: 1.5rem;
-  }
-
-  .immersive-mode .article-content :deep(.code-block) {
-    border-radius: 4px;
-    margin: 20px 0;
-  }
-
-  .immersive-mode .article-content :deep(.code-body code) {
-    font-size: 0.8rem;
-    padding: 14px 16px;
-  }
-
-  .immersive-mode .article-content :deep(table) {
-    display: block;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .immersive-mode .article-content :deep(img) {
-    border-radius: 4px;
-    margin: 20px auto;
+  .image-viewer-img {
+    max-width: 96vw;
+    max-height: 80vh;
+    border-radius: 8px;
   }
 }
 
 @media (max-width: 480px) {
-  .immersive-mode .container {
-    padding: 0px 6px;
-  }
-  .immersive-mode .article-main {
-    padding-top: 6px;
-    padding-bottom: 20px;
-  }
-  .immersive-mode .article-container {
-    padding: 0 12px;
+  .image-viewer-close {
+    top: 10px;
+    right: 10px;
+    width: 36px;
+    height: 36px;
   }
 
-  .immersive-mode .article-title {
-    font-size: 1.3rem;
+  .image-viewer-close svg {
+    width: 18px;
+    height: 18px;
   }
 
-  .immersive-mode .article-content :deep(p) {
-    font-size: 0.98rem;
+  .image-viewer-toolbar {
+    bottom: 20px;
+    padding: 6px 12px;
+    border-radius: 22px;
   }
 
-  .immersive-mode .article-content :deep(h2) {
-    font-size: 1.1rem;
+  .image-viewer-btn {
+    width: 36px;
+    height: 36px;
   }
 
-  .immersive-mode .article-content :deep(h3) {
-    font-size: 1rem;
+  .image-viewer-btn svg {
+    width: 16px;
+    height: 16px;
   }
 
-  .immersive-mode .article-content :deep(h1) {
-    font-size: 1.3rem;
+  .image-viewer-container {
+    max-width: 98vw;
+    max-height: 75vh;
   }
 
-  .immersive-mode .article-content :deep(.code-body code) {
-    font-size: 0.75rem;
-    padding: 12px 14px;
+  .image-viewer-img {
+    max-width: 98vw;
+    max-height: 75vh;
+    border-radius: 6px;
   }
 }
-
 </style>

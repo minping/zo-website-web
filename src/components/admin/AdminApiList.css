@@ -111,6 +111,9 @@
 }
 
 .api-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
   background: var(--admin-bg-card);
   border: 1px solid var(--admin-border-color);
   border-radius: 12px;
@@ -118,6 +121,33 @@
   transition: all 0.3s;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   cursor: pointer;
+}
+
+/* 右上角状态标识（非标签样式） */
+.status-flag {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.status-flag.status-on {
+  color: #22c55e;
+}
+
+.status-flag.status-off {
+  color: #64748b;
 }
 
 .api-card:hover {
@@ -130,6 +160,7 @@
   align-items: flex-start;
   justify-content: space-between;
   margin-bottom: 12px;
+  padding-right: 72px;
 }
 
 .api-title {
@@ -210,21 +241,18 @@
   color: #f59e0b;
 }
 
-.status-tag.status-on {
-  background: rgba(34, 197, 94, 0.1);
-  color: #22c55e;
-}
-
-.status-tag.status-off {
-  background: rgba(161, 161, 170, 0.1);
-  color: #64748b;
-}
-
 .api-stats {
   display: flex;
   gap: 16px;
   padding-top: 12px;
-  border-top: 1px solid var(--admin-border-color);
+}
+
+/* 卡片底部：删除按钮右下角 */
+.api-card-footer {
+  margin-top: auto;
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 12px;
 }
 
 .api-stats span {

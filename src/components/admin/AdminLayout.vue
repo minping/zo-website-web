@@ -105,6 +105,9 @@ const getActiveNav = () => {
   if (path.includes('/admin/apis')) {
     return 'apis'
   }
+  if (path.includes('/admin/notes')) {
+    return 'notes'
+  }
   if (path.includes('/admin/dashboard')) {
     return 'dashboard'
   }
@@ -114,7 +117,7 @@ const getActiveNav = () => {
 const activeNav = ref(getActiveNav())
 
 // 展开状态
-const expandedMenus = ref(['articles', 'apimanage', 'profile'])
+const expandedMenus = ref(['articles', 'apimanage', 'profile', 'notemanage'])
 
 const isExpanded = (item) => {
   return expandedMenus.value.includes(item.id)
@@ -192,6 +195,13 @@ const SelfProjectsIcon = {
   ])
 }
 
+const NotesIcon = {
+  render: () => h('svg', { xmlns: 'http://www.w3.org/2000/svg', width: '20', height: '20', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, [
+    h('path', { d: 'M12 20h9' }),
+    h('path', { d: 'M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z' })
+  ])
+}
+
 const navItems = [
   { id: 'dashboard', label: '仪表盘', icon: DashboardIcon, path: '/admin/dashboard' },
   { 
@@ -208,11 +218,11 @@ const navItems = [
 
   {
     id: 'apimanage',
-    label: 'API 管理',
+    label: '接口管理',
     icon: ApisIcon,
     path: '/admin/apis',
     children: [
-      { id: 'apis', label: 'API 管理', icon: ApisIcon, path: '/admin/apis' },
+      { id: 'apis', label: '接口管理', icon: ApisIcon, path: '/admin/apis' },
     ] 
   },
   {
@@ -224,6 +234,15 @@ const navItems = [
       { id: 'myinfo', label: '我的信息', icon: ProfileIcon, path: '/admin/profile' },
       { id: 'projects', label: '项目经历', icon: ProjectsIcon, path: '/admin/projects' },
       { id: 'self-projects', label: '自研项目', icon: SelfProjectsIcon, path: '/admin/self-projects' }
+    ]
+  },
+  {
+    id: 'notemanage',
+    label: '笔记管理',
+    icon: NotesIcon,
+    path: '/admin/notes',
+    children: [
+      { id: 'notes', label: '我的笔记', icon: NotesIcon, path: '/admin/notes' }
     ]
   }
 ]
@@ -265,6 +284,11 @@ watch(() => route.path, () => {
   if (path.includes('/admin/apis')) {
     if (!expandedMenus.value.includes('apimanage')) {
       expandedMenus.value.push('apimanage')
+    }
+  }
+  if (path.includes('/admin/notes')) {
+    if (!expandedMenus.value.includes('notemanage')) {
+      expandedMenus.value.push('notemanage')
     }
   }
 }, { immediate: true })

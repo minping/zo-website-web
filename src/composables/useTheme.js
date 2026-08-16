@@ -3,7 +3,7 @@ import { getApiUrl, API_PATHS } from '../config.js'
 
 const theme = ref('light')
 
-const themeCycle = ['dark', 'light', 'retro', 'cyberpunk']
+const themeCycle = ['dark', 'light', 'retro', 'cyberpunk', 'forest', 'summer', 'ink']
 
 // 标记：服务端主题是否已加载完毕，之后才允许同步到服务端
 let enableServerSync = false

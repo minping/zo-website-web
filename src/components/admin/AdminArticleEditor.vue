@@ -13,6 +13,18 @@
             <p>{{ isEditing ? '修改文章内容' : '创建一个新文章' }}</p>
           </div>
         </div>
+        <button 
+          type="button" 
+          class="btn btn-secondary focus-mode-btn" 
+          @click="openFocusMode"
+          :disabled="focusOpening || saving"
+          :title="isEditing ? '在新标签页只展示文章内容编辑器，先保存再打开' : '先保存文章，再在新标签页只展示内容编辑器'"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+          </svg>
+          {{ focusOpening ? '打开中...' : '专注模式' }}
+        </button>
       </header>
 
       <form class="editor-form" @submit.prevent="saveArticle">
@@ -233,47 +245,71 @@ const autoSavePending = ref(false)
 // 自动保存
 let autoSaveTimer = null
 const AUTO_SAVE_DELAY = 10000
+const autoSaving = ref(false)
 
-// 检查必填项
+// 清除待执行的自动保存计时器
+const clearAutoSaveTimer = () => {
+  if (autoSaveTimer) {
+    clearTimeout(autoSaveTimer)
+    autoSaveTimer = null
+  }
+}
+
+// 检查必填项（标签对象匹配不上时用 selectedTagId 兜底，避免自动保存被永久阻塞）
 const hasRequiredFields = () => {
   return formData.value.title.trim() &&
     formData.value.desc.trim() &&
     formData.value.content.trim() &&
-    formData.value.selectedTag &&
+    (formData.value.selectedTag || formData.value.selectedTagId) &&
     formData.value.author.trim()
+}
+
+// 构建提交参数
+const buildArticleData = () => {
+  const selectedTag = formData.value.selectedTag
+  return {
+    ...formData.value,
+    tagValue: selectedTag?.id ?? formData.value.selectedTagId ?? '',
+    tagText: selectedTag?.name ?? formData.value.selectedTagName ?? '',
+    id: isEditing.value ? formData.value.id : undefined,
+    files: JSON.stringify(attachments.value)
+  }
+}
+
+// 解析后端返回的文章 ID（兼容不同返回结构）
+const resolveArticleId = (res) => {
+  return res.data?.id ?? res.data?.zo_website_article_id ?? res.data?.data?.id ?? ''
 }
 
 // 自动保存
 const autoSave = async () => {
-  if (saving.value || !hasRequiredFields()) return
+  if (saving.value || autoSaving.value || !hasRequiredFields()) return
+  autoSaving.value = true
   autoSavePending.value = true
   try {
-    const selectedTag = formData.value.selectedTag
-    const articleData = {
-      ...formData.value,
-      tagValue: selectedTag?.id || '',
-      tagText: selectedTag?.name || '',
-      id: isEditing.value ? formData.value.id : undefined,
-      files: JSON.stringify(attachments.value)
-    }
-
+    const articleData = buildArticleData()
     const res = isEditing.value
       ? await api.updateArticle(articleData)
       : await api.createArticle(articleData)
 
     if (res.success) {
-      // 新建文章首次自动保存后，切换到编辑模式
+      // 新建文章首次自动保存后，切换到编辑模式并记录文章 ID
       if (!isEditing.value) {
         isEditing.value = true
-        if (res.data?.id) {
-          formData.value.id = res.data.id
+        const id = resolveArticleId(res)
+        if (id) {
+          formData.value.id = id
         }
       }
       showToast('已自动保存', 'success')
+    } else {
+      showToast(res.message || '自动保存失败，请手动保存', 'error')
     }
   } catch (error) {
     console.error('自动保存失败:', error)
+    showToast('自动保存失败，请手动保存', 'error')
   } finally {
+    autoSaving.value = false
     autoSavePending.value = false
   }
 }
@@ -413,9 +449,9 @@ const loadTags = async () => {
     const res = await api.getArticleTags()
     if (res.success && res.data) {
       availableTags.value = res.data
-      // 如果有待回显的文章，根据 tagValue 匹配 selectedTag
+      // 如果有待回显的文章，根据 tagValue 匹配 selectedTag（宽松比较兼容数字/字符串 ID）
       if (pendingArticle) {
-        const matchedTag = availableTags.value.find(t => t.id === pendingArticle.tagValue)
+        const matchedTag = availableTags.value.find(t => t.id == pendingArticle.tagValue)
         formData.value.selectedTag = matchedTag || availableTags.value[0] || ''
         pendingArticle = null
       }
@@ -446,9 +482,11 @@ watch(
 )
 
 // 显示提示
+let toastTimer = null
 const showToast = (message, type = 'success') => {
   toast.value = { show: true, message, type }
-  setTimeout(() => {
+  if (toastTimer) clearTimeout(toastTimer)
+  toastTimer = setTimeout(() => {
     toast.value.show = false
   }, 3000)
 }
@@ -498,9 +536,9 @@ const fetchArticle = async (id) => {
       }
       // 保存待回显的文章数据，等标签加载完成后匹配
       pendingArticle = { tagValue: article.tagValue }
-      // 如果标签已加载，立即匹配
+      // 如果标签已加载，立即匹配（宽松比较兼容数字/字符串 ID）
       if (availableTags.value.length > 0) {
-        const matchedTag = availableTags.value.find(t => t.id === article.tagValue)
+        const matchedTag = availableTags.value.find(t => t.id == article.tagValue)
         formData.value.selectedTag = matchedTag || ''
       }
     } else {
@@ -512,39 +550,77 @@ const fetchArticle = async (id) => {
   }
 }
 
-// 保存文章
+// 保存文章，成功返回 true
 const saveArticle = async () => {
   try {
     saving.value = true
     
-    // 处理标签数据
-    const selectedTag = formData.value.selectedTag
-    const articleData = {
-      ...formData.value,
-      tagValue: selectedTag?.id || '',
-      tagText: selectedTag?.name || '',
-      id: isEditing.value ? formData.value.id : undefined,
-      files: JSON.stringify(attachments.value)
-    }
+    const articleData = buildArticleData()
     
     const res = isEditing.value 
       ? await api.updateArticle(articleData)
       : await api.createArticle(articleData)
     
     if (res.success) {
+      // 新建文章首次保存后切换到编辑模式
+      if (!isEditing.value) {
+        isEditing.value = true
+        const id = resolveArticleId(res)
+        if (id) {
+          formData.value.id = id
+        }
+      }
+      // 已保存成功，清除待执行的自动保存，避免重复保存
+      clearAutoSaveTimer()
       showToast(isEditing.value ? '文章更新成功' : '文章创建成功')
+      return true
     } else {
       showToast(res.message || '操作失败', 'error')
+      return false
     }
   } catch (error) {
     console.error('保存文章失败:', error)
     showToast('保存文章失败', 'error')
+    return false
   } finally {
     saving.value = false
   }
 }
 
+// 专注模式
+const focusOpening = ref(false)
+
+// 打开专注模式：先保存文章，再新开标签页只展示内容编辑器
+const openFocusMode = async () => {
+  if (focusOpening.value || saving.value) return
+  focusOpening.value = true
+  try {
+    const ok = await saveArticle()
+    if (!ok) return
+    const id = formData.value.id
+    if (!id) {
+      showToast('未获取到文章 ID，无法打开专注模式', 'error')
+      return
+    }
+    window.open(`/admin/editor/focus?id=${id}`, '_blank')
+    showToast('已保存，专注模式已在新标签页打开', 'success')
+  } finally {
+    focusOpening.value = false
+  }
+}
+
+// 接收专注模式窗口保存后同步的内容
+const handleFocusMessage = (e) => {
+  if (e.data && e.data.type === 'FOCUS_SAVED' && e.data.content !== undefined) {
+    if (formData.value.content !== e.data.content) {
+      formData.value.content = e.data.content
+      showToast('专注模式内容已同步', 'success')
+    }
+  }
+}
+
 onMounted(() => {
+  window.addEventListener('message', handleFocusMessage)
   loadTags()
   const articleId = route.query.id
   if (articleId) {
@@ -553,7 +629,8 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
-  if (autoSaveTimer) clearTimeout(autoSaveTimer)
+  window.removeEventListener('message', handleFocusMessage)
+  clearAutoSaveTimer()
 })
 </script>
 

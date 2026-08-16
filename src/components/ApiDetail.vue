@@ -6,7 +6,7 @@
     <div class="bg-glow bg-glow-2"></div>
 
     <!-- 导航栏 -->
-    <Navbar activeMenu="API" @navigate="handleNavigate" />
+    <Navbar activeMenu="接口商城" @navigate="handleNavigate" />
 
     <!-- 页面内容 -->
     <main class="api-detail-main">
@@ -317,9 +317,13 @@ const fetchApiDetail = async (id) => {
   }
 }
 
-// 返回上一页
+// 返回上一次访问的页面
 const goBack = () => {
-  router.push('/api')
+  if (window.history.length > 1) {
+    router.back()
+  } else {
+    router.push('/api')
+  }
 }
 
 // 复制请求地址

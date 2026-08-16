@@ -6,15 +6,14 @@
     <div class="bg-glow bg-glow-2"></div>
 
     <!-- 导航栏 -->
-    <Navbar activeMenu="API" @navigate="handleNavigate" />
+    <Navbar activeMenu="接口商城" @navigate="handleNavigate" />
 
     <!-- 检索区域 -->
     <section class="search-section">
       <div class="container">
-        <h1 class="page-title">开放 API</h1>
-        <p class="page-desc">探索并使用高质量的免费 API 接口</p>
-        
-        <div class="search-box">
+        <div class="search-header">
+          <h1 class="page-title">接口商城</h1>
+          <div class="search-box">
           <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="11" cy="11" r="8"/>
             <line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -32,6 +31,7 @@
             </svg>
           </button>
         </div>
+        </div>
 
         <!-- 标签筛选 -->
         <div class="filter-tags">
@@ -47,7 +47,6 @@
             :key="tag.id"
             class="filter-tag"
             :class="{ active: selectedTag === tag.id }"
-            :style="selectedTag === tag.id ? { background: tag.color + '20', color: tag.color, borderColor: tag.color } : {}"
             @click="selectedTag = tag.id"
           >
             {{ tag.name }}
@@ -69,60 +68,48 @@
           <span>加载中...</span>
         </div>
         <template v-else>
-        <div class="api-grid">
-          <div 
-            v-for="api in apiList" 
-            :key="api.id" 
-            class="api-card"
-            @click="goToApiDetail(api)"
-          >
-            <div class="api-card-header">
-              <span class="api-name">{{ api.name }}</span>
-              <span class="api-method" :style="{ background: methodColors[api.method] }">
-                {{ api.method }}
-              </span>
-            </div>
-            <p class="api-desc">{{ api.description }}</p>
-            <div class="api-tags">
-              <span v-for="t in api.tags" :key="t.value" class="api-tag" :style="{ background: t.color + '20', color: t.color }">
-                {{ t.text }}
-              </span>
-              <span v-if="!api.isFree" class="api-tag paid-tag">
-                付费
-              </span>
-            </div>
-            <div class="api-stats">
-              <span class="api-stat" data-tip="累计 API 调用次数">
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
-                </svg>
-                {{ api.stats.calls }}
-              </span>
-              <span class="api-stat" data-tip="请求成功比例">
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="20 6 9 17 4 12"/>
-                </svg>
-                {{ api.stats.successRate }}%
-              </span>
-              <span class="api-stat" data-tip="平均响应时间">
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="12" r="10"/>
-                  <polyline points="12 6 12 12 16 14"/>
-                </svg>
-                {{ api.responseTime }}ms
-              </span>
-              <span class="api-stat" data-tip="用户点赞数">
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                </svg>
-                {{ api.stats.likes }}
-              </span>
-            </div>
+        <!-- 精选付费接口 -->
+        <div v-if="paidApis.length" class="featured-section">
+          <div class="section-header">
+            <h2 class="section-title">精选付费接口</h2>
+            <button
+              v-if="paidApis.length > paidLimit"
+              class="more-btn"
+              @click="paidLimit = Infinity"
+            >查看更多</button>
+          </div>
+          <div class="api-grid">
+            <ApiCard
+              v-for="api in visiblePaidApis"
+              :key="api.id"
+              :api="api"
+              @select="goToApiDetail"
+            />
           </div>
         </div>
 
+        <!-- 精选免费接口 -->
+        <template v-if="freeApis.length">
+          <div class="section-header">
+            <h2 class="section-title">精选免费接口</h2>
+            <button
+              v-if="freeApis.length > freeLimit"
+              class="more-btn"
+              @click="freeLimit = Infinity"
+            >查看更多</button>
+          </div>
+          <div class="api-grid">
+            <ApiCard
+              v-for="api in visibleFreeApis"
+              :key="api.id"
+              :api="api"
+              @select="goToApiDetail"
+            />
+          </div>
+        </template>
+
         <!-- 空状态 -->
-        <div v-if="apiList.length === 0" class="empty-state">
+        <div v-else-if="apiList.length === 0" class="empty-state">
           <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="11" cy="11" r="8"/>
             <line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -140,11 +127,12 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Navbar from './Navbar.vue'
 import Footer from './Footer.vue'
-import { getApis, getApiTags, methodColors } from '../api/modules'
+import ApiCard from './ApiCard.vue'
+import { getApis, getApiTags } from '../api/modules'
 
 const router = useRouter()
 
@@ -189,6 +177,16 @@ const handleNavigate = (menu) => {
 const goToApiDetail = (api) => {
   router.push(`/api/${api.id}`)
 }
+
+// 付费 / 免费接口分组
+const paidApis = computed(() => apiList.value.filter(a => !a.isFree))
+const freeApis = computed(() => apiList.value.filter(a => a.isFree))
+
+// 列表展开控制
+const paidLimit = ref(4)
+const freeLimit = ref(8)
+const visiblePaidApis = computed(() => paidApis.value.slice(0, paidLimit.value))
+const visibleFreeApis = computed(() => freeApis.value.slice(0, freeLimit.value))
 
 // 初次加载
 onMounted(async () => {
@@ -254,36 +252,38 @@ onMounted(async () => {
 
 /* 检索区域 */
 .search-section {
-  padding: 140px 0 40px;
+  padding: 84px 0 24px;
   position: relative;
   z-index: 1;
 }
 
-.page-title {
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  text-align: center;
-  margin: 0 0 12px;
+.search-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 16px;
 }
 
-.page-desc {
-  font-size: 1.1rem;
-  color: var(--text-secondary);
-  text-align: center;
-  margin: 0 0 40px;
+.page-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  white-space: nowrap;
 }
 
 .search-box {
   display: flex;
   align-items: center;
-  gap: 10px;
-  max-width: 600px;
-  margin: 0 auto 24px;
-  padding: 0 16px;
+  gap: 8px;
+  width: 300px;
+  flex: 0 0 auto;
+  max-width: 100%;
+  margin-left: auto;
+  padding: 0 12px;
   background: var(--bg-secondary);
   border: 2px solid var(--border-color);
-  border-radius: 16px;
+  border-radius: 12px;
   transition: border-color 0.3s, box-shadow 0.3s;
 }
 
@@ -303,8 +303,8 @@ onMounted(async () => {
 
 .search-input {
   flex: 1;
-  padding: 16px 0;
-  font-size: 16px;
+  padding: 12px 0;
+  font-size: 14px;
   background: transparent;
   border: none;
   color: var(--text-primary);
@@ -339,26 +339,27 @@ onMounted(async () => {
 .filter-tags {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 10px;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 
 .filter-tag {
-  padding: 8px 18px;
-  font-size: 14px;
+  padding: 5px 14px;
+  font-size: 13px;
   font-weight: 500;
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
-  border-radius: 20px;
+  border-radius: 14px;
   color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.3s;
 }
 
 .filter-tag:hover {
+  background: var(--accent-primary);
   border-color: var(--accent-primary);
-  color: var(--accent-primary);
+  color: white;
 }
 
 .filter-tag.active {
@@ -380,134 +381,55 @@ onMounted(async () => {
 
 /* API 列表 */
 .api-list-section {
-  padding: 20px 0 100px;
+  padding: 16px 0 80px;
   position: relative;
   z-index: 1;
 }
 
 .api-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  column-gap: 14px;
+  row-gap: 20px;
 }
 
-.api-card {
-  display: flex;
-  flex-direction: column;
-  padding: 24px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: 16px;
-  text-decoration: none;
-  transition: all 0.3s;
-}
-
-.api-card:hover {
-  transform: translateY(-4px);
-  border-color: var(--accent-primary);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
-}
-
-.api-card-header {
+/* 区块标题 */
+.section-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  gap: 12px;
+  margin-bottom: 14px;
 }
 
-.api-name {
+.section-title {
   font-size: 16px;
   font-weight: 600;
   color: var(--text-primary);
+  margin: 0;
 }
 
-.api-method {
-  padding: 4px 10px;
-  font-size: 12px;
-  font-weight: 600;
-  border-radius: 6px;
-  color: white;
-}
-
-.api-desc {
+.more-btn {
+  padding: 4px 14px;
   font-size: 13px;
-  color: var(--text-secondary);
-  line-height: 1.6;
-  margin: 0 0 12px;
-  flex: 1;
-}
-
-.api-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 12px;
-}
-
-.api-tag {
-  padding: 4px 10px;
-  font-size: 12px;
-  font-weight: 500;
-  border-radius: 12px;
-}
-
-.paid-tag {
-  background: rgba(245, 158, 11, 0.1);
-  color: #f59e0b;
-}
-
-.api-stats {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-  padding-top: 12px;
-  border-top: 1px solid var(--border-color);
-}
-
-.api-stat {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 11px;
-  color: var(--text-secondary);
-  cursor: help;
-  position: relative;
-}
-
-.api-stat svg {
-  color: var(--text-tertiary);
-}
-
-.api-stat:hover {
   color: var(--accent-primary);
-}
-
-.api-stat:hover::after {
-  content: attr(data-tip);
-  position: absolute;
-  bottom: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 6px 10px;
-  background: var(--bg-elevated);
+  background: transparent;
   border: 1px solid var(--border-color);
-  border-radius: 6px;
-  font-size: 11px;
-  color: var(--text-primary);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.3s;
   white-space: nowrap;
-  z-index: 10;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.api-stat:hover::before {
-  content: '';
-  position: absolute;
-  bottom: calc(100% + 2px);
-  left: 50%;
-  transform: translateX(-50%);
-  border: 5px solid transparent;
-  border-top-color: var(--border-color);
-  z-index: 10;
+.more-btn:hover {
+  color: #fff;
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+}
+
+/* 精选付费接口 */
+.featured-section {
+  margin-bottom: 32px;
 }
 
 /* 加载状态 */
@@ -559,14 +481,37 @@ onMounted(async () => {
 }
 
 /* 响应式 */
+@media (max-width: 1140px) {
+  .api-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 992px) {
+  .api-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 768px) {
+  .search-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
   .page-title {
-    font-size: 1.8rem;
+    font-size: 1.5rem;
   }
-  
-  .search-section {
-    padding: 120px 0 30px;
+
+  .search-box {
+    max-width: 100%;
+    margin: 0;
   }
+
+.search-section {
+  padding: 110px 0 24px;
+}
   
   .api-grid {
     grid-template-columns: 1fr;

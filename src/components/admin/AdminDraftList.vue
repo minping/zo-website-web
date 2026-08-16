@@ -53,6 +53,7 @@
           v-for="article in paginatedArticles" 
           :key="article.id" 
           class="article-item"
+          @click="editArticle(article)"
         >
           <div class="article-thumb" :style="{ background: article.gradient }">
             <span class="tag-badge" :style="{ background: 'rgba(0,0,0,0.5)', color: 'white' }">
@@ -72,7 +73,7 @@
             <span class="status-badge draft">草稿</span>
             <button 
               class="action-btn preview" 
-              @click="previewArticle(article)" 
+              @click.stop="previewArticle(article)" 
               title="预览"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -82,7 +83,7 @@
             </button>
             <button 
               class="action-btn edit" 
-              @click="editArticle(article)" 
+              @click.stop="editArticle(article)" 
               title="编辑"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -92,7 +93,7 @@
             </button>
             <button 
               class="action-btn publish" 
-              @click="publishArticle(article)"
+              @click.stop="publishArticle(article)"
               title="发布"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -101,7 +102,7 @@
             </button>
             <button 
               class="action-btn delete" 
-              @click="confirmDelete(article)" 
+              @click.stop="confirmDelete(article)" 
               title="删除"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

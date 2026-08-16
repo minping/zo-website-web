@@ -1,8 +1,9 @@
 // API 配置文件
-// 后端接口地址
-export const API_BASE_URL = 'https://www.mpgapay.cn/website'
-// export const API_BASE_URL = 'http://localhost:8014/website'
-
+// 后端接口地址（开发环境 / 生产环境自动切换）
+export const API_BASE_URL = import.meta.env.PROD
+  ? 'https://www.mpgapay.cn/website'
+  : 'http://localhost:8014/website'
+// export const API_BASE_URL = 'https://www.mpgapay.cn/website'
 // API 接口路径配置
 export const API_PATHS = {
   // 文章相关
@@ -75,6 +76,21 @@ export const API_PATHS = {
   saveProductInfo: '/auth/saveProductInfo',
   queryProductList: '/auth/queryProductList',
   queryProductInfo: (id) => `/auth/queryProductInfo?id=${id}`,
+
+  // 笔记管理
+  saveNoteInfo: '/admin/notes/saveNote',
+  queryNoteList: '/admin/notes/queryNoteList',
+  queryNoteInfo: '/admin/notes/queryNoteDetail',
+  updateNoteStatus: '/admin/notes/updateStatus',
+  deleteNoteInfo: (id) => `/admin/notes/deleteNote?id=${id}`,
+  queryChapterList: (noteId) => `/admin/notes/queryChapterList?noteId=${noteId}`,
+  saveChapter: '/admin/notes/saveChapter',
+  deleteChapter: (id) => `/admin/notes/deleteChapter?id=${id}`,
+  // 已发布笔记列表（前台展示）
+  queryNoteListPublished: '/index/notes/queryNoteListPublished',
+  // 前台公开接口（只读预览）
+  queryNoteDetailPublic: (id) => `/index/notes/queryNoteDetail?id=${id}`,
+  queryChapterListPublic: (noteId) => `/index/notes/queryChapterList?noteId=${noteId}`,
 
 
   // 文章标签

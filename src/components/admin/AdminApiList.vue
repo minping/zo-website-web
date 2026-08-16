@@ -54,28 +54,30 @@
 
       <div v-else class="api-grid">
         <div v-for="api in paginatedApis" :key="api.id" class="api-card" @click="editApi(api)">
+          <span class="status-flag" :class="Number(api.status) === 1 ? 'status-on' : 'status-off'">
+            <span class="status-dot"></span>{{ Number(api.status) === 1 ? '已上架' : '已下架' }}
+          </span>
           <div class="api-card-header">
             <div class="api-title">
               <h3>{{ api.name }}</h3>
               <span class="api-method" :style="{ background: methodColors[api.method] }">{{ api.method }}</span>
-            </div>
-            <div class="api-actions">
-              <button class="action-btn delete" @click.stop="confirmDelete(api)" title="删除">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-              </button>
             </div>
           </div>
           <p class="api-desc">{{ api.description }}</p>
           <div class="api-tags">
             <span v-for="tag in getApiTags(api)" :key="tag" class="api-tag" :style="{ background: (getTagColor(tag) || '#6366f1') + '20', color: getTagColor(tag) || '#6366f1' }">{{ tag }}</span>
             <span v-if="!api.isFree" class="api-tag paid-tag">付费</span>
-            <span class="api-tag status-tag" :class="api.status === 1 ? 'status-on' : 'status-off'">{{ api.status === 1 ? '已上架' : '已下架' }}</span>
           </div>
           <div class="api-stats">
             <span><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>{{ api.stats?.calls || 0 }}</span>
             <span><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>{{ api.stats?.successRate || 0 }}%</span>
             <span><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>{{ api.stats?.avgTime || 0 }}ms</span>
             <span v-if="api.responseTime > 0" class="stat-response"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>{{ api.responseTime }}ms</span>
+          </div>
+          <div class="api-card-footer">
+            <button class="action-btn delete" @click.stop="confirmDelete(api)" title="删除">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </button>
           </div>
         </div>
       </div>
