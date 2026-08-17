@@ -12,7 +12,7 @@
     <section class="page-header">
       <div class="container">
         <h1 class="page-title">技术文章</h1>
-        <p class="page-desc">探索前沿技术，分享实战经验</p>
+        <p class="page-desc">总该写点什么吧</p>
       </div>
     </section>
 
@@ -321,22 +321,23 @@ const fetchTags = async () => {
 
 /* 页面标题 */
 .page-header {
-  padding: 120px 0 40px;
-  text-align: center;
+  padding: 100px 0 30px;
+  text-align: left;
   position: relative;
   z-index: 1;
 }
 
 .page-title {
-  font-size: 48px;
+  font-size: 30px;
   font-weight: 700;
   color: var(--text-primary);
-  margin-bottom: 16px;
+  margin: 0 0 8px;
 }
 
 .page-desc {
-  font-size: 18px;
-  color: var(--text-secondary);
+  font-size: 15px;
+  color: var(--text-muted);
+  margin: 0;
 }
 
 /* 检索栏 */
@@ -803,8 +804,12 @@ const fetchTags = async () => {
 }
 
 @media (max-width: 768px) {
+  .page-header {
+    padding: 80px 0 20px;
+  }
+
   .page-title {
-    font-size: 32px;
+    font-size: 24px;
   }
 
   .filter-bar {

@@ -12,7 +12,7 @@
     <section class="page-header">
       <div class="container">
         <h1 class="page-title">知识笔记</h1>
-        <p class="page-desc">记录思考，沉淀知识</p>
+        <p class="page-desc">总该学点什么吧</p>
       </div>
     </section>
 
@@ -54,6 +54,15 @@
             <div class="card-body">
               <h3 class="note-name">{{ note.name }}</h3>
               <p class="note-preface">{{ note.preface || '暂无简介' }}</p>
+            </div>
+            <div class="card-progress">
+              <div class="progress-track">
+                <div
+                  class="progress-fill"
+                  :style="{ width: clampProcess(note.process) + '%' }"
+                ></div>
+              </div>
+              <span class="progress-text">{{ clampProcess(note.process) }}%</span>
             </div>
             <div class="card-foot">
               <span class="note-author">{{ note.author || '未知作者' }}</span>
@@ -108,6 +117,13 @@ const loadNotes = async () => {
 }
 
 onMounted(loadNotes)
+
+// 进度值处理：process 为 0-100 数字，100 时满格；缺失或非法值按 0 处理
+const clampProcess = (v) => {
+  const n = Number(v)
+  if (Number.isNaN(n)) return 0
+  return Math.min(100, Math.max(0, n))
+}
 
 // 点击笔记卡片：新标签页打开只读阅读页（仅传 id）
 const getNoteHref = (note) =>
@@ -329,6 +345,39 @@ const handleNavigate = (menu) => {
   -webkit-line-clamp: 3;
   line-clamp: 3;
   -webkit-box-orient: vertical;
+}
+
+/* 卡片进度条 */
+.card-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 4px 14px;
+}
+
+.progress-track {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  flex-shrink: 0;
+  min-width: 32px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-align: right;
 }
 
 /* 卡片底部 */

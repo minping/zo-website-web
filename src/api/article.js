@@ -759,6 +759,7 @@ export const api = {
       author: item.author || item.author_name || '',
       preface: item.preface || '',
       statusValue: Number(item.status_value ?? item.statusValue ?? item.status ?? 0),
+      process: Number(item.process ?? 0),
       createTime: item.created_time || item.createdTime || '',
       updateTime: item.updated_time || item.updatedTime || ''
     })
@@ -779,6 +780,7 @@ export const api = {
       name: item.name,
       author: item.author || item.author_name || '',
       preface: item.preface || '',
+      process: Number(item.process ?? 0),
       createTime: item.created_time || item.createdTime || '',
       updateTime: item.updated_time || item.updatedTime || ''
     })
@@ -826,6 +828,7 @@ export const api = {
       id: item.id ?? item.chapter_id ?? Date.now(),
       title: item.title || item.name || '',
       orders: Number(item.orders ?? item.order_num ?? item.sort ?? 0),
+      complete: Number(item.complete ?? item.isComplete ?? 0),
       content: typeof item.content === 'string'
         ? item.content
         : Array.isArray(item.content) ? item.content.join('\n\n') : ''
@@ -847,6 +850,11 @@ export const api = {
   // 删除章节
   async deleteChapter(id) {
     return await request(API_PATHS.deleteChapter(id))
+  },
+
+  // 完成章节（标记笔记为完成状态，GET 传 id）
+  async completeChapter(id) {
+    return await request(API_PATHS.completeChapter(id))
   },
 
   // ========== 笔记前台只读接口 ==========
