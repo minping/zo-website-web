@@ -80,6 +80,17 @@
           <!-- 卡片摘要 -->
           <p v-if="note.preface" class="cover-preface">{{ note.preface }}</p>
 
+          <!-- 进度条 -->
+          <div class="cover-progress">
+            <div class="progress-track">
+              <div
+                class="progress-fill"
+                :style="{ width: clampProcess(note.process) + '%' }"
+              ></div>
+            </div>
+            <span class="progress-text">{{ clampProcess(note.process) }}%</span>
+          </div>
+
           <!-- 卡片底部 -->
           <div class="cover-foot">
             <div class="cover-meta">
@@ -183,6 +194,13 @@ import AdminLayout from './AdminLayout.vue'
 import api from '../../api/article.js'
 
 const router = useRouter()
+
+// 进度值处理：process 为 0-100 数字，100 时满格；缺失或非法值按 0 处理
+const clampProcess = (v) => {
+  const n = Number(v)
+  if (Number.isNaN(n)) return 0
+  return Math.min(100, Math.max(0, n))
+}
 
 // 点击笔记卡片：新标签页打开章节页面，仅携带笔记 id，其余信息由章节页通过详情接口获取
 const goToChapter = (note) => {

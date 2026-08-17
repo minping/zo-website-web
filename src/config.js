@@ -86,6 +86,7 @@ export const API_PATHS = {
   queryChapterList: (noteId) => `/admin/notes/queryChapterList?noteId=${noteId}`,
   saveChapter: '/admin/notes/saveChapter',
   deleteChapter: (id) => `/admin/notes/deleteChapter?id=${id}`,
+  completeChapter: (id) => `/admin/notes/completeChapter?id=${id}`,
   // 已发布笔记列表（前台展示）
   queryNoteListPublished: '/index/notes/queryNoteListPublished',
   // 前台公开接口（只读预览）

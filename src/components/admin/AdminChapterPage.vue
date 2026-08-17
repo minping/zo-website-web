@@ -157,6 +157,16 @@
                   :disabled="savingContent || !dirty"
                   @click="saveCurrentChapter"
                 >{{ savingContent ? '保存中…' : (dirty ? '保存本章' : '已保存') }}</button>
+                <template v-if="Number(currentChapter.complete) === 1">
+                  <span class="editor-completed-badge">✓ 已完成</span>
+                </template>
+                <template v-else>
+                  <button
+                    class="editor-complete-btn"
+                    :disabled="completing"
+                    @click="handleCompleteChapter"
+                  >{{ completing ? '完成中…' : '完成章节' }}</button>
+                </template>
               </div>
             </div>
             <div class="editor-body">
@@ -187,6 +197,20 @@
         <div class="modal-actions">
           <button class="btn btn-secondary dialog-cancel" :disabled="saving" @click="closeAddDialog">取消</button>
           <button class="btn btn-primary dialog-confirm" :disabled="saving" @click="handleSaveChapter">{{ saving ? '保存中…' : '确定' }}</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 完成章节确认弹窗 -->
+    <div v-if="completeConfirmVisible" class="modal-overlay" @click.self="closeCompleteConfirm">
+      <div class="modal complete-modal">
+        <h3>确认完成章节</h3>
+        <p>确定将当前笔记标记为「已完成」吗？完成后将展示「✓ 已完成」标记。</p>
+        <div class="modal-actions">
+          <button class="btn btn-secondary complete-cancel" :disabled="completing" @click="closeCompleteConfirm">取消</button>
+          <button class="btn complete-confirm" :disabled="completing" @click="confirmCompleteChapter">
+            {{ completing ? '完成中…' : '确认完成' }}
+          </button>
         </div>
       </div>
     </div>
@@ -325,6 +349,52 @@ const goBack = () => {
   }
 }
 
+// 完成章节：调接口标记章节为完成状态（GET /admin/notes/completeChapter?id=<章节id>）
+const completing = ref(false)
+const completeConfirmVisible = ref(false)
+
+// 点击「完成章节」按钮：打开二次确认弹窗
+const handleCompleteChapter = () => {
+  const chapter = currentChapter.value
+  if (!chapter || !chapter.id) {
+    showToast('请先选择章节', 'error')
+    return
+  }
+  if (completing.value) return
+  completeConfirmVisible.value = true
+}
+
+const closeCompleteConfirm = () => {
+  if (completing.value) return
+  completeConfirmVisible.value = false
+}
+
+// 弹窗确认后真正执行
+const confirmCompleteChapter = async () => {
+  const chapter = currentChapter.value
+  if (!chapter || !chapter.id) return
+  if (completing.value) return
+  completing.value = true
+  try {
+    const res = await api.completeChapter(chapter.id)
+    if (res.success || res.code === 200 || res.code === 0) {
+      showToast('章节已标记为完成')
+      completeConfirmVisible.value = false
+      // 本地乐观更新：立即把当前章节标记为已完成（无论接口刷新时序）
+      chapter.complete = 1
+      // 刷新章节列表（静默刷新，保留当前章节位置）
+      loadChapters({ keepCurrent: true, silent: true })
+    } else {
+      showToast(res.message || res.msg || '操作失败', 'error')
+    }
+  } catch (e) {
+    console.error('完成章节失败', e)
+    showToast('操作失败，请稍后重试', 'error')
+  } finally {
+    completing.value = false
+  }
+}
+
 // 书籍数据（章节结构，由接口读取）
 const book = ref({
   title: '',
@@ -352,22 +422,28 @@ const loadNoteInfo = async () => {
   }
 }
 
-const loadChapters = async () => {
+const loadChapters = async (opts = {}) => {
+  const { keepCurrent = false, silent = false } = opts
   if (!noteId) return
-  loading.value = true
+  if (!silent) loading.value = true
   loadError.value = ''
   try {
     const res = await api.getChapterList(noteId)
     const list = res.data || []
     book.value.chapters = list
-    // 默认停留在「序言」章节
-    currentIndex.value = -1
-    loadChapterContent()
+    if (keepCurrent && currentIndex.value >= 0 && currentIndex.value < list.length) {
+      // 保留当前章节位置，仅刷新内容
+      loadChapterContent()
+    } else {
+      // 默认停留在「序言」章节
+      currentIndex.value = -1
+      loadChapterContent()
+    }
   } catch (e) {
     console.error('查询章节列表失败', e)
     loadError.value = '章节加载失败，请稍后重试'
   } finally {
-    loading.value = false
+    if (!silent) loading.value = false
   }
 }
 
@@ -1081,6 +1157,47 @@ onMounted(() => {
   cursor: not-allowed;
 }
 
+/* 完成章节按钮：主题渐变，与保存按钮区分 */
+.editor-complete-btn {
+  padding: 7px 18px;
+  border-radius: 8px;
+  border: none;
+  background: linear-gradient(135deg, var(--admin-accent-primary), var(--admin-accent-secondary));
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s;
+  white-space: nowrap;
+}
+
+.editor-complete-btn:hover:not(:disabled) {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.32);
+}
+
+.editor-complete-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 已完成标记 */
+.editor-completed-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 7px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #22c55e;
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  white-space: nowrap;
+  cursor: default;
+}
+
 .editor-body {
   flex: 1;
   padding: 18px 20px 8px;
@@ -1165,6 +1282,24 @@ onMounted(() => {
 @media (max-width: 560px) {
   .chapter-page {
     padding: 84px 16px 40px;
+  }
+
+  .chapter-topbar {
+    padding: 0 14px;
+    gap: 8px;
+  }
+
+  .editor-complete-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .note-id-badge {
+    padding: 5px 10px;
+    font-size: 12px;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .book-page {
@@ -1263,6 +1398,61 @@ onMounted(() => {
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
+}
+
+/* ========== 完成章节确认弹窗 ========== */
+.complete-modal {
+  text-align: center;
+}
+
+.complete-modal h3 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.complete-modal .modal-actions {
+  justify-content: center;
+}
+
+.complete-modal .complete-cancel {
+  min-width: 92px;
+  padding: 10px 24px;
+  border-radius: 10px;
+  border: 1px solid var(--admin-border-color);
+  background: var(--admin-bg-input);
+  color: var(--admin-text-secondary);
+  font-weight: 500;
+  transition: all 0.25s ease;
+}
+
+.complete-modal .complete-cancel:hover:not(:disabled) {
+  border-color: var(--admin-accent-primary);
+  color: var(--admin-accent-primary);
+  background: var(--admin-accent-glow);
+}
+
+.complete-modal .complete-confirm {
+  min-width: 118px;
+  padding: 10px 26px;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: #fff;
+  font-weight: 600;
+  letter-spacing: 1px;
+  transition: all 0.25s ease;
+}
+
+.complete-modal .complete-confirm:hover:not(:disabled) {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(34, 197, 94, 0.4);
+}
+
+.complete-modal .complete-confirm:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 /* ========== 轻提示 ========== */
