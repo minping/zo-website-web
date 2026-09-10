@@ -57,7 +57,6 @@
               </div>
               <div class="article-meta">
                 <div class="article-author">
-                  <div class="author-avatar">{{ article.author ? article.author[0] : '' }}</div>
                   <span class="author-name">{{ article.author }}</span>
                 </div>
                 <span class="meta-divider">|</span>
@@ -832,19 +831,6 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 10px;
-}
-
-.author-avatar {
-  width: 32px;
-  height: 32px;
-  background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: white;
 }
 
 .meta-divider {

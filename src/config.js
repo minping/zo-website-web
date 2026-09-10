@@ -92,6 +92,15 @@ export const API_PATHS = {
   // 前台公开接口（只读预览）
   queryNoteDetailPublic: (id) => `/index/notes/queryNoteDetail?id=${id}`,
   queryChapterListPublic: (noteId) => `/index/notes/queryChapterList?noteId=${noteId}`,
+  // 随机获取一篇笔记中的小节（前台公开，GET）
+  // 返回 data: { name 笔记名称, title 小节标题, content 小节内容(markdown) }
+  getRandomContent: '/index/notes/getRandomContent',
+  // 学习打卡记录保存（前台公开，POST）
+  saveStudyRecord: '/index/notes/saveStudyRecord',
+  // 学习打卡历史记录查询（前台公开，GET，relationId 为小节 id）
+  queryStudyRecord: (relationId) => `/index/notes/queryStudyRecord?relationId=${encodeURIComponent(relationId)}`,
+  // 斩杀知识点（前台公开，POST）
+  saveStudyBan: '/index/notes/saveStudyBan',
 
 
   // 文章标签

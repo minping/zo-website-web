@@ -4,9 +4,11 @@
     <div class="bg-grid"></div>
     <div class="bg-glow bg-glow-1"></div>
     <div class="bg-glow bg-glow-2"></div>
+    <!-- 主题背景装饰（随主题切换树木/风车等元素） -->
+    <BgScenery />
 
     <!-- 导航栏 -->
-    <Navbar activeMenu="接口商城" @navigate="handleNavigate" />
+    <Navbar activeMenu="接口" @navigate="handleNavigate" />
 
     <!-- 检索区域 -->
     <section class="search-section">
@@ -131,6 +133,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Navbar from './Navbar.vue'
+import BgScenery from './BgScenery.vue'
 import Footer from './Footer.vue'
 import ApiCard from './ApiCard.vue'
 import { getApis, getApiTags } from '../api/modules'
@@ -176,7 +179,7 @@ const handleNavigate = (menu) => {
 }
 
 const goToApiDetail = (api) => {
-  router.push(`/api/${api.id}`)
+  router.push(`/apis/${api.id}`)
 }
 
 // 付费 / 免费接口分组
@@ -267,15 +270,16 @@ onMounted(async () => {
 .search-header {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 14px;
   margin-bottom: 16px;
 }
 
 .page-title {
-  font-size: 1.5rem;
-  font-weight: 600;
+  font-size: 22px;
+  font-weight: 700;
   color: var(--text-primary);
   margin: 0;
+  flex-shrink: 0;
   white-space: nowrap;
 }
 
@@ -508,7 +512,7 @@ onMounted(async () => {
   }
 
   .page-title {
-    font-size: 1.5rem;
+    font-size: 18px;
   }
 
   .search-box {

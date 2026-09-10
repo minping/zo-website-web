@@ -6,6 +6,7 @@ import ArticleImmersive from '../components/ArticleImmersive.vue'
 import About from '../components/About.vue'
 import NotesPage from '../components/NotesPage.vue'
 import NoteReader from '../components/NoteReader.vue'
+import RandomStudy from '../components/RandomStudy.vue'
 import ApiPage from '../components/ApiPage.vue'
 import ApiDetail from '../components/ApiDetail.vue'
 import AdminDashboard from '../components/admin/AdminDashboard.vue'
@@ -46,12 +47,12 @@ const routes = [
     component: ArticleImmersive
   },
   {
-    path: '/api',
+    path: '/apis',
     name: 'ApiPage',
     component: ApiPage
   },
   {
-    path: '/api/:id',
+    path: '/apis/:id',
     name: 'ApiDetail',
     component: ApiDetail
   },
@@ -69,6 +70,11 @@ const routes = [
     path: '/notes/:id',
     name: 'NoteReader',
     component: NoteReader
+  },
+  {
+    path: '/random-study',
+    name: 'RandomStudy',
+    component: RandomStudy
   },
   {
     path: '/admin',

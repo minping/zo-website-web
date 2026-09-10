@@ -4,6 +4,8 @@
     <div class="bg-grid"></div>
     <div class="bg-glow bg-glow-1"></div>
     <div class="bg-glow bg-glow-2"></div>
+    <!-- 主题背景装饰（随主题切换树木/风车等元素） -->
+    <BgScenery />
 
     <!-- 导航栏 -->
     <Navbar activeMenu="文章" @navigate="handleNavigate" />
@@ -137,6 +139,7 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { api } from '../api/article'
 import Navbar from './Navbar.vue'
+import BgScenery from './BgScenery.vue'
 import Footer from './Footer.vue'
 
 const router = useRouter()
@@ -327,11 +330,19 @@ const fetchTags = async () => {
   z-index: 1;
 }
 
+/* 标题与描述一行展示 */
+.page-header .container {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
 .page-title {
-  font-size: 30px;
+  font-size: 22px;
   font-weight: 700;
   color: var(--text-primary);
-  margin: 0 0 8px;
+  margin: 0;
+  flex-shrink: 0;
 }
 
 .page-desc {
@@ -809,7 +820,7 @@ const fetchTags = async () => {
   }
 
   .page-title {
-    font-size: 24px;
+    font-size: 18px;
   }
 
   .filter-bar {
