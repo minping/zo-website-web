@@ -128,7 +128,7 @@
           </div>
           <div class="form-group">
             <label class="form-label">序言</label>
-            <textarea v-model="formData.preface" class="form-textarea" placeholder="请输入序言" rows="5" maxlength="500"></textarea>
+            <textarea v-model="formData.preface" class="form-textarea" placeholder="请输入序言" rows="5"></textarea>
           </div>
           <div class="form-group">
             <label class="form-label">发布状态</label>

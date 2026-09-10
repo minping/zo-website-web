@@ -322,7 +322,7 @@ const goBack = () => {
   if (window.history.length > 1) {
     router.back()
   } else {
-    router.push('/api')
+    router.push('/apis')
   }
 }
 

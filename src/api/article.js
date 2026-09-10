@@ -781,6 +781,8 @@ export const api = {
       author: item.author || item.author_name || '',
       preface: item.preface || '',
       process: Number(item.process ?? 0),
+      chapterNum: Number(item.chapter_num ?? item.chapterNum ?? 0),
+      sectionNum: Number(item.section_num ?? item.sectionNum ?? 0),
       createTime: item.created_time || item.createdTime || '',
       updateTime: item.updated_time || item.updatedTime || ''
     })
@@ -828,10 +830,12 @@ export const api = {
       id: item.id ?? item.chapter_id ?? Date.now(),
       title: item.title || item.name || '',
       orders: Number(item.orders ?? item.order_num ?? item.sort ?? 0),
+      pid: item.tree_pid || item.pid || null,
       complete: Number(item.complete ?? item.isComplete ?? 0),
       content: typeof item.content === 'string'
         ? item.content
-        : Array.isArray(item.content) ? item.content.join('\n\n') : ''
+        : Array.isArray(item.content) ? item.content.join('\n\n') : '',
+      children: Array.isArray(item.children) ? item.children.map(mapItem) : []
     })
     const list = Array.isArray(res.data) ? res.data : res.data?.rows || []
     res.data = list.map(mapItem).filter(item => item.title)
@@ -883,13 +887,45 @@ export const api = {
       id: item.id ?? item.chapter_id ?? Date.now(),
       title: item.title || item.name || '',
       orders: Number(item.orders ?? item.order_num ?? item.sort ?? 0),
+      pid: item.tree_pid || item.pid || null,
       content: typeof item.content === 'string'
         ? item.content
-        : Array.isArray(item.content) ? item.content.join('\n\n') : ''
+        : Array.isArray(item.content) ? item.content.join('\n\n') : '',
+      children: Array.isArray(item.children) ? item.children.map(mapItem) : []
     })
     const list = Array.isArray(res.data) ? res.data : res.data?.rows || []
     res.data = list.map(mapItem).filter(item => item.title)
     return res
+  },
+
+  // 随机获取一篇笔记中的小节（前台公开，GET）
+  // 返回 data: { name 笔记名称, title 小节标题, content 小节内容(markdown) }
+  async getRandomNoteContent() {
+    return await request(API_PATHS.getRandomContent)
+  },
+
+  // 保存学习打卡记录（前台公开，POST）
+  // 参数: relationId 小节id, timing 学习时长(秒), relationTypeText/relationTypeValue 关联类型(笔记=2)
+  async saveStudyRecord(params) {
+    return await request(API_PATHS.saveStudyRecord, {
+      method: 'POST',
+      body: JSON.stringify(params)
+    })
+  },
+
+  // 查询小节的打卡历史（前台公开，GET，relationId 为小节 id）
+  // 返回 data: [{ study_time: 'YYYY-MM-DD HH:mm', timing: 秒数 }, ...]（按学习时间倒序）
+  async queryStudyRecord(relationId) {
+    return await request(API_PATHS.queryStudyRecord(relationId))
+  },
+
+  // 斩杀知识点（前台公开，POST）
+  // 参数: relationId 小节 id, relationTypeText 关联类型文本(笔记), relationTypeValue 关联类型值(2)
+  async saveStudyBan(params) {
+    return await request(API_PATHS.saveStudyBan, {
+      method: 'POST',
+      body: JSON.stringify(params)
+    })
   },
 
 }

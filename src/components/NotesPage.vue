@@ -4,6 +4,8 @@
     <div class="bg-grid"></div>
     <div class="bg-glow bg-glow-1"></div>
     <div class="bg-glow bg-glow-2"></div>
+    <!-- 主题背景装饰（随主题切换树木/风车等元素） -->
+    <BgScenery />
 
     <!-- 导航栏 -->
     <Navbar activeMenu="笔记" @navigate="handleNavigate" />
@@ -51,6 +53,10 @@
             rel="noopener noreferrer"
             class="note-card"
           >
+            <!-- 章节统计：固定在卡片最右上角 -->
+            <div v-if="hasStats(note)" class="card-stats">
+              <span class="stats-badge">共计:{{ note.chapterNum }}章{{ note.sectionNum }}节</span>
+            </div>
             <div class="card-body">
               <h3 class="note-name">{{ note.name }}</h3>
               <p class="note-preface">{{ note.preface || '暂无简介' }}</p>
@@ -83,6 +89,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../api/article.js'
 import Navbar from './Navbar.vue'
+import BgScenery from './BgScenery.vue'
 import Footer from './Footer.vue'
 
 const router = useRouter()
@@ -125,6 +132,10 @@ const clampProcess = (v) => {
   return Math.min(100, Math.max(0, n))
 }
 
+// 章节统计是否存在（至少一个字段大于 0 才展示，避免出现 0章0节）
+const hasStats = (note) =>
+  Number(note.chapterNum ?? 0) > 0 || Number(note.sectionNum ?? 0) > 0
+
 // 点击笔记卡片：新标签页打开只读阅读页（仅传 id）
 const getNoteHref = (note) =>
   router.resolve({ path: `/notes/${note.id}` }).href
@@ -141,6 +152,8 @@ const handleNavigate = (menu) => {
   min-height: 100vh;
   position: relative;
   overflow-x: hidden;
+  /* 为 fixed 导航栏预留空间 */
+  padding-top: 64px;
 }
 
 /* ========== 背景效果 ========== */
@@ -189,14 +202,24 @@ const handleNavigate = (menu) => {
 
 /* ========== 页面标题 ========== */
 .page-header {
-  padding: 100px 0 30px;
+  padding: 40px 0 12px;
+  position: relative;
+  z-index: 1;
+}
+
+/* 标题与描述一行展示 */
+.page-header .container {
+  display: flex;
+  align-items: center;
+  gap: 14px;
 }
 
 .page-title {
-  font-size: 30px;
+  font-size: 22px;
   font-weight: 700;
   color: var(--text-primary);
-  margin: 0 0 8px;
+  margin: 0;
+  flex-shrink: 0;
 }
 
 .page-desc {
@@ -207,7 +230,9 @@ const handleNavigate = (menu) => {
 
 /* ========== 内容区 ========== */
 .notes-section {
-  padding: 40px 0 80px;
+  padding: 12px 0 80px;
+  position: relative;
+  z-index: 1;
 }
 
 /* ========== 加载 / 错误 / 空状态 ========== */
@@ -269,11 +294,12 @@ const handleNavigate = (menu) => {
   background: var(--accent-glow);
 }
 
-/* ========== 笔记卡片（简洁笔记本封面） ========== */
+/* ========== 笔记卡片（简洁笔记本封面，样式对齐首页精选笔记） ========== */
 .notes-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  column-gap: 14px;
+  row-gap: 20px;
 }
 
 .note-card {
@@ -320,6 +346,26 @@ const handleNavigate = (menu) => {
   flex-direction: column;
   justify-content: center;
   padding: 22px 4px;
+}
+
+/* 章节统计：固定在卡片最左上角 */
+.card-stats {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 1;
+}
+
+.stats-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--accent-primary);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  white-space: nowrap;
 }
 
 .note-name {
@@ -406,23 +452,29 @@ const handleNavigate = (menu) => {
 }
 
 /* ========== 响应式 ========== */
+@media (max-width: 1200px) {
+  .notes-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 992px) {
+  .notes-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 768px) {
   .page-header {
-    padding: 80px 0 20px;
+    padding: 32px 0 10px;
   }
 
   .page-title {
-    font-size: 24px;
+    font-size: 18px;
   }
 
   .notes-grid {
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 18px;
-  }
-
-  .note-card {
-    min-height: 220px;
-    padding: 24px 20px 16px;
+    grid-template-columns: 1fr;
   }
 }
 </style>

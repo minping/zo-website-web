@@ -122,9 +122,10 @@ const themeTitle = computed(() => {
 
 const navLinks = [
   { name: '首页', path: '/', label: '首页' },
-  { name: '接口商城', path: '/api', label: '接口商城' },
+  { name: '接口', path: '/apis', label: '接口' },
   { name: '文章', path: '/articles', label: '文章' },
   { name: '笔记', path: '/notes', label: '笔记' },
+  { name: '摇一摇', path: '/random-study', label: '摇一摇' },
   { name: '关于', path: '/about', label: '关于' }
 ]
 
@@ -268,16 +269,37 @@ const handleNavClick = (link) => {
 }
 
 @media (max-width: 768px) {
+  .navbar-content {
+    gap: 6px;
+  }
+
   .logo-text {
     display: none;
   }
 
+  /* 菜单占满剩余空间并支持横向滑动，禁止换行 */
   .nav-links {
-    gap: 16px;
+    flex: 1;
+    min-width: 0;
+    justify-content: flex-start;
+    gap: 2px;
+    overflow-x: auto;
+    white-space: nowrap;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    mask-image: linear-gradient(to right, transparent 0, #000 12px, #000 calc(100% - 12px), transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 12px, #000 calc(100% - 12px), transparent 100%);
   }
-  
+
+  .nav-links::-webkit-scrollbar {
+    display: none;
+  }
+
   .nav-link {
-    font-size: 13px;
+    flex: 0 0 auto;
+    white-space: nowrap;
+    padding: 8px 12px;
+    font-size: 14px;
   }
 }
 </style>

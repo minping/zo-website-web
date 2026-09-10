@@ -4,6 +4,8 @@
     <div class="bg-grid"></div>
     <div class="bg-glow bg-glow-1"></div>
     <div class="bg-glow bg-glow-2"></div>
+    <!-- 主题背景装饰（随主题切换树木/风车等元素） -->
+    <BgScenery />
 
     <!-- 导航栏 -->
     <Navbar activeMenu="首页" @navigate="handleNavigate" />
@@ -125,68 +127,71 @@
       </div>
     </section>
 
-    <!-- 开放 API 模块 -->
+    <!-- 精选接口 模块 -->
     <section class="api-section">
       <div class="container">
         <div class="section-header">
-          <h2 class="section-title">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>
-            </svg>
-            开放 API
-          </h2>
-          <a href="#" class="section-more-inline" @click.prevent="goToApis">
+          <h2 class="section-title">精选接口</h2>
+          <a href="#" class="more-btn" @click.prevent="goToApis">
             查看更多
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="5" y1="12" x2="19" y2="12"/>
-              <polyline points="12 5 19 12 12 19"/>
-            </svg>
           </a>
         </div>
-        <!-- DevTools Network 面板风格 -->
-        <div class="devtools-panel">
-          <div class="devtools-toolbar">
-            <div class="dt-dots">
-              <span class="dt-dot dt-dot-red"></span>
-              <span class="dt-dot dt-dot-yellow"></span>
-              <span class="dt-dot dt-dot-green"></span>
+        <!-- 接口卡片网格 -->
+        <div v-if="openApis.length" class="api-grid">
+          <ApiCard
+            v-for="api in openApis"
+            :key="api.id"
+            :api="api"
+            @select="goToApiDetail"
+          />
+        </div>
+        <div v-else class="empty-state">
+          暂无接口
+        </div>
+      </div>
+    </section>
+
+    <!-- 精选笔记 模块 -->
+    <section class="notes-section">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title">精选笔记</h2>
+          <a href="#" class="more-btn" @click.prevent="goToNotes">
+            查看更多
+          </a>
+        </div>
+        <!-- 笔记卡片网格（模仿 NotesPage） -->
+        <div v-if="featuredNotes.length" class="notes-grid">
+          <a
+            v-for="note in featuredNotes"
+            :key="note.id"
+            :href="getNoteHref(note)"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="note-card"
+          >
+            <!-- 章节统计：固定在卡片左上角 -->
+            <div v-if="hasStats(note)" class="card-stats">
+              <span class="stats-badge">共计:{{ note.chapterNum }}章{{ note.sectionNum }}节</span>
             </div>
-            <span class="dt-title">Network</span>
-            <div class="dt-filters">
-              <span class="dt-filter">XHR</span>
+            <div class="card-body">
+              <h3 class="note-name">{{ note.name }}</h3>
+              <p class="note-preface">{{ note.preface || '暂无简介' }}</p>
             </div>
-          </div>
-          <div class="devtools-table">
-            <div class="dt-header">
-              <span class="dt-col-name">Name</span>
-              <span class="dt-col-time">Time</span>
-              <span class="dt-col-type">Type</span>
+            <div class="card-progress">
+              <div class="progress-track">
+                <div class="progress-fill" :style="{ width: clampProcess(note.process) + '%' }"></div>
+              </div>
+              <span class="progress-text">{{ clampProcess(note.process) }}%</span>
             </div>
-            <div 
-              v-for="(api, idx) in openApis" 
-              :key="api.id" 
-              class="dt-row"
-              :class="{ 'dt-row-odd': idx % 2 === 1 }"
-              :style="{ '--row-delay': idx * 0.06 + 's', '--bar-color': methodColors[api.method] || '#6366f1' }"
-              @click="goToApiDetail(api)"
-            >
-              <span class="dt-col-name">
-                <span class="dt-method" :style="{ background: methodColors[api.method] || '#6366f1' }">{{ api.method }}</span>
-                <span class="dt-desc">{{ api.name }}</span>
-                <span class="dt-path">{{ api.description }}</span>
-              </span>
-              <span class="dt-col-time">
-                <span class="dt-time-val" :style="{ color: api.responseTime < 100 ? '#10b981' : api.responseTime < 300 ? '#f59e0b' : '#ef4444' }">{{ api.responseTime }} ms</span>
-              </span>
-              <span class="dt-col-type">
-                <span class="dt-tag-chip" v-for="t in api.tags.slice(0, 2)" :key="t.value" :style="{ background: t.color + '28', color: t.color }">{{ t.text }}</span>
-                <span v-if="!api.isFree" class="dt-tag-chip dt-tag-paid">付费</span>
-              </span>
+            <div class="card-foot">
+              <span class="note-author">{{ note.author || '未知作者' }}</span>
+              <span class="note-time">{{ formatTime(note.createTime) }}</span>
             </div>
-          </div>
-          <div class="devtools-footer">
-            <span class="dt-footer-text">{{ openApis.length }} requests</span>
-          </div>
+          </a>
+        </div>
+        <div v-else class="empty-state">
+          暂无笔记
         </div>
       </div>
     </section>
@@ -265,14 +270,17 @@
 import { ref, onMounted, onUnmounted, computed, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { api } from '../api/article'
-import { methodColors, getHomeApis } from '../api/modules'
+import { getHomeApis } from '../api/modules'
 import Navbar from './Navbar.vue'
+import BgScenery from './BgScenery.vue'
 import Footer from './Footer.vue'
+import ApiCard from './ApiCard.vue'
 
 const router = useRouter()
 
 const articles = ref([])
 const openApis = ref([])
+const featuredNotes = ref([])
 const showBackTop = ref(false)
 const loading = ref(true)
 const tags = ref([])
@@ -298,12 +306,34 @@ const handleNavigate = (path) => {
 }
 
 const goToApis = () => {
-  router.push('/api')
+  router.push('/apis')
 }
 
 const goToApiDetail = (api) => {
-  router.push(`/api/${api.id}`)
+  router.push(`/apis/${api.id}`)
 }
+
+const goToNotes = () => {
+  router.push('/notes')
+}
+
+const getNoteHref = (note) =>
+  router.resolve({ path: `/notes/${note.id}` }).href
+
+const formatTime = (value) => {
+  if (!value) return ''
+  return String(value).slice(0, 10)
+}
+
+const clampProcess = (v) => {
+  const n = Number(v)
+  if (Number.isNaN(n)) return 0
+  return Math.min(100, Math.max(0, n))
+}
+
+// 章节统计是否存在（至少一个字段大于 0 才展示，避免出现 0章0节）
+const hasStats = (note) =>
+  Number(note.chapterNum ?? 0) > 0 || Number(note.sectionNum ?? 0) > 0
 
 // 获取技术标签及统计数据
 const fetchTags = async () => {
@@ -495,6 +525,7 @@ onMounted(async () => {
   fetchArticles()
   fetchStats()
   fetchApis()
+  fetchNotes()
   await fetchTags()
   await nextTick()
   initStarCanvas()
@@ -515,6 +546,18 @@ const fetchApis = async () => {
     }
   } catch (error) {
     console.error('获取 API 列表失败:', error)
+  }
+}
+
+// 获取首页精选笔记（取前 4 条已发布笔记）
+const fetchNotes = async () => {
+  try {
+    const res = await api.getPublishedNotes()
+    if (res.success || res.code === 200 || res.code === 0) {
+      featuredNotes.value = (res.data || []).slice(0, 4)
+    }
+  } catch (error) {
+    console.error('获取精选笔记失败:', error)
   }
 }
 
@@ -909,231 +952,224 @@ const getTagGradient = (tag) => {
 }
 
 
-/* 开放 API - DevTools Network 面板 */
+/* 开放 API 模块 */
 .api-section {
   position: relative;
   padding: 100px 0;
   z-index: 1;
 }
 
-.api-section .section-header {
-  margin-bottom: 32px;
-}
-
-.api-section .section-title {
+.api-section .section-header,
+.notes-section .section-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
+  margin-bottom: 14px;
 }
 
-.api-section .section-title svg {
+.api-section .section-title,
+.notes-section .section-title {
+  margin: 0;
+}
+
+/* 查看更多按钮（模仿 ApiPage） */
+.api-section .more-btn,
+.notes-section .more-btn {
+  padding: 4px 14px;
+  font-size: 13px;
   color: var(--accent-primary);
-}
-
-/* DevTools 面板容器 */
-.devtools-panel {
-  background: #1e1e2e;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.25);
-  font-family: 'JetBrains Mono', 'Consolas', 'Menlo', monospace;
-}
-
-/* 顶部工具栏 */
-.devtools-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 10px 16px;
-  background: #16162a;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  user-select: none;
-}
-
-.dt-dots {
-  display: flex;
-  gap: 6px;
-}
-
-.dt-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-}
-
-.dt-dot-red { background: #ff5f56; }
-.dt-dot-yellow { background: #ffbd2e; }
-.dt-dot-green { background: #27c93f; }
-
-.dt-title {
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.4);
-  letter-spacing: 0.5px;
-}
-
-.dt-filters {
-  display: flex;
-  gap: 4px;
-  margin-left: auto;
-}
-
-.dt-filter {
-  padding: 3px 10px;
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.35);
-  border-radius: 4px;
-  cursor: default;
-  transition: all 0.2s ease;
-}
-
-.dt-filter.active {
-  background: rgba(99, 102, 241, 0.3);
-  color: #a5b4fc;
-}
-
-/* 表头 */
-.dt-header {
-  display: flex;
-  align-items: center;
-  padding: 8px 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.3);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  user-select: none;
-}
-
-/* 表格行 */
-.dt-row {
-  display: flex;
-  align-items: center;
-  padding: 11px 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
   cursor: pointer;
-  transition: background 0.15s ease;
-  animation: dtRowSlide 0.35s ease both;
-  animation-delay: var(--row-delay, 0s);
+  transition: all 0.3s;
+  white-space: nowrap;
+  text-decoration: none;
 }
 
-@keyframes dtRowSlide {
-  from { opacity: 0; transform: translateX(-8px); }
-  to { opacity: 1; transform: translateX(0); }
+.api-section .more-btn:hover,
+.notes-section .more-btn:hover {
+  color: #fff;
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
 }
 
-.dt-row-odd {
-  background: rgba(255, 255, 255, 0.015);
+/* 接口卡片网格（模仿 ApiPage） */
+.api-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  column-gap: 14px;
+  row-gap: 20px;
 }
 
-.dt-row:hover {
-  background: rgba(99, 102, 241, 0.08);
+/* 精选笔记（模仿 NotesPage 笔记本卡片） */
+.notes-section {
+  position: relative;
+  padding: 0 0 100px;
+  z-index: 1;
 }
 
-.dt-row:last-child {
-  border-bottom: none;
+/* 笔记卡片网格：与精选接口一致的列数 */
+.notes-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  column-gap: 14px;
+  row-gap: 20px;
 }
 
-/* 各列 */
-.dt-col-name {
-  flex: 2;
+.note-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 240px;
+  padding: 28px 24px 20px;
+  border-radius: 16px;
+  box-sizing: border-box;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+  overflow: hidden;
+  text-decoration: none;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+/* 右上角书页折角 */
+.note-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, transparent 0 50%, var(--bg-secondary) 50% 100%);
+  border-bottom-left-radius: 12px;
+  box-shadow: -3px 3px 6px -2px rgba(0, 0, 0, 0.15);
+  pointer-events: none;
+}
+
+.note-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--accent-primary);
+  box-shadow: 0 12px 28px -8px var(--accent-glow);
+}
+
+/* 章节统计：固定在卡片最左上角 */
+.note-card .card-stats {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 1;
+}
+
+.note-card .stats-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--accent-primary);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.note-card .card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 22px 4px;
+}
+
+.note-card .note-name {
+  margin: 0 0 12px;
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.5;
+  color: var(--text-primary);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.note-card .note-preface {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+.note-card .card-progress {
   display: flex;
   align-items: center;
   gap: 10px;
-  min-width: 0;
+  padding: 0 4px 14px;
 }
 
-.dt-col-type {
-  flex: 0 0 160px;
-  display: flex;
-  align-items: center;
-  gap: 5px;
+.note-card .progress-track {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  overflow: hidden;
 }
 
-.dt-col-time {
-  flex: 0 0 80px;
+.note-card .progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+  transition: width 0.3s ease;
 }
 
-/* Method 标签 */
-.dt-method {
-  display: inline-block;
-  padding: 2px 7px;
-  font-size: 10px;
-  font-weight: 700;
-  color: #fff;
-  border-radius: 3px;
+.note-card .progress-text {
   flex-shrink: 0;
-  min-width: 40px;
-  text-align: center;
-}
-
-/* 路径 */
-.dt-path {
-  font-size: 10px;
-  color: rgba(255, 255, 255, 0.35);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  flex-shrink: 1;
-  min-width: 0;
-}
-
-.dt-row:hover .dt-path {
-  color: rgba(255, 255, 255, 0.55);
-}
-
-/* 描述（作为标题显示） */
-.dt-desc {
-  font-size: 12px;
-  color: #c9d1d9;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.dt-row:hover .dt-desc {
-  color: #e6edf3;
-}
-
-/* 类型标签 */
-.dt-tag-chip {
-  padding: 1px 7px;
-  font-size: 10px;
-  font-weight: 500;
-  border-radius: 3px;
-  white-space: nowrap;
-}
-
-.dt-tag-paid {
-  background: rgba(245, 158, 11, 0.15);
-  color: #f59e0b;
-}
-
-/* 响应时间 */
-.dt-time-val {
+  min-width: 32px;
   font-size: 11px;
-  font-weight: 500;
-  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-align: right;
 }
 
-/* 底部状态栏 */
-.devtools-footer {
+.note-card .card-foot {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  background: #16162a;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-color);
 }
 
-.dt-footer-text {
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.3);
+.note-card .note-author {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.dt-footer-divider {
-  color: rgba(255, 255, 255, 0.1);
-  font-size: 11px;
+.note-card .note-time {
+  font-size: 12px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+/* 空状态 */
+.empty-state {
+  padding: 40px 20px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-tertiary);
 }
 
 /* 最新文章 */
@@ -1151,7 +1187,7 @@ const getTagGradient = (tag) => {
 }
 
 .section-title {
-  font-size: 2rem;
+  font-size: 1.4rem;
   font-weight: 700;
 }
 
@@ -1623,14 +1659,19 @@ const getTagGradient = (tag) => {
   .articles-grid {
     grid-template-columns: repeat(3, 1fr);
   }
+  .api-grid,
+  .notes-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 992px) {
   .articles-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  .dt-col-type {
-    display: none;
+  .api-grid,
+  .notes-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -1671,45 +1712,22 @@ const getTagGradient = (tag) => {
     grid-template-columns: 1fr;
   }
 
-  .devtools-panel {
-    border-radius: 8px;
-  }
-
-  .dt-header {
-    font-size: 10px;
-    padding: 8px 10px;
-  }
-
-  .dt-row {
-    padding: 10px 10px;
-    flex-wrap: wrap;
-    gap: 4px;
-  }
-
-  .dt-col-name {
-    flex: 1 1 100%;
-    order: 1;
-  }
-
-  .dt-col-time {
-    flex: 0 0 auto;
-    order: 3;
-  }
-
-  .dt-col-type {
-    display: none;
-  }
-
-  .dt-filters {
-    display: none;
+  .api-grid,
+  .notes-grid {
+    grid-template-columns: 1fr;
   }
   
   .api-section {
     padding: 60px 0;
   }
+
+  .notes-section {
+    padding: 0 0 60px;
+  }
   
-  .api-section .section-title {
-    font-size: 1.5rem;
+  .api-section .section-title,
+  .notes-section .section-title {
+    font-size: 1.3rem;
   }
 }
 

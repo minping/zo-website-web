@@ -4,6 +4,8 @@
     <div v-if="!isResumeMode" class="bg-grid"></div>
     <div v-if="!isResumeMode" class="bg-glow bg-glow-1"></div>
     <div v-if="!isResumeMode" class="bg-glow bg-glow-2"></div>
+    <!-- 主题背景装饰（随主题切换树木/风车等元素） -->
+    <BgScenery v-if="!isResumeMode" />
 
     <!-- 导航栏 -->
     <Navbar v-if="!isResumeMode" activeMenu="关于" @navigate="handleNavigate" />
@@ -286,6 +288,7 @@
 
 <script setup>
 import Navbar from './Navbar.vue'
+import BgScenery from './BgScenery.vue'
 import Footer from './Footer.vue'
 import { ref, computed, onMounted } from 'vue'
 import { api } from '../api/article'
