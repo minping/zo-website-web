@@ -139,6 +139,115 @@
         </div>
       </section>
 
+      <!-- 笔记模块 -->
+      <section class="module-section">
+        <div class="module-header">
+          <div class="module-title">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+            </svg>
+            <h2>笔记</h2>
+          </div>
+          <button class="btn btn-secondary" @click="goToNotes()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12"/>
+              <polyline points="12 5 19 12 12 19"/>
+            </svg>
+            管理笔记
+          </button>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon notes">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+              </svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-value">{{ noteStats.totalNotes }}</span>
+              <span class="stat-label">笔记总数</span>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon learning">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="9"/>
+                <polyline points="12 7 12 12 15.5 14"/>
+              </svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-value">{{ noteStats.learningNotes }}</span>
+              <span class="stat-label">学习中</span>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon finished">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="9"/>
+                <path d="M8.5 12.5 11 15l4.5-5"/>
+              </svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-value">{{ noteStats.completedNotes }}</span>
+              <span class="stat-label">已完成</span>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon study-days">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-value">{{ noteStats.monthStudyDays }}</span>
+              <span class="stat-label">本月学习天数</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 学习日历（笔记打卡统计，可切换月份，扁平化展示） -->
+        <div class="calendar-container calendar-flat">
+          <div class="calendar-header">
+            <h3>学习日历</h3>
+            <div class="calendar-nav">
+              <button class="calendar-nav-btn" @click="shiftNoteMonth(-1)" :disabled="noteCalendarLoading">&lt;</button>
+              <span class="calendar-year">{{ noteMonthLabel }}</span>
+              <button class="calendar-nav-btn" @click="shiftNoteMonth(1)" :disabled="noteCalendarLoading">&gt;</button>
+            </div>
+          </div>
+          <div class="calendar-body">
+            <div v-if="noteCalendarLoading" class="calendar-loading">加载中...</div>
+            <template v-else>
+              <div class="note-calendar-grid">
+                <div
+                  v-for="cell in noteCalendarDays"
+                  :key="cell.date"
+                  class="note-calendar-cell"
+                  :class="{
+                    'today': cell.date === todayStr,
+                    'active': cell.num > 0
+                  }"
+                  :data-tooltip="cell.date + '：' + cell.num + ' 条'"
+                >
+                  <span class="note-cal-week">{{ cell.week }}</span>
+                  <span class="note-cal-date">{{ cell.day }}</span>
+                  <span class="note-cal-count">{{ cell.num > 0 ? cell.num : '' }}</span>
+                </div>
+              </div>
+            </template>
+          </div>
+        </div>
+      </section>
+
       <!-- API 模块 -->
       <section class="module-section">
         <div class="module-header">
@@ -240,6 +349,14 @@ const apiStats = ref({
   avgSuccessRate: 0
 })
 
+// 笔记统计数据
+const noteStats = ref({
+  totalNotes: 0,
+  learningNotes: 0,
+  completedNotes: 0,
+  monthStudyDays: 0
+})
+
 // 格式化数字
 const formatNumber = (num) => {
   if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M'
@@ -263,6 +380,10 @@ const isLeapYear = (y) => (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0
 // 格式化为 yyyy-MM-dd
 const fmtDate = (year, month, day) =>
   `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+
+// 格式化为 yyyy-MM
+const fmtMonth = (date) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
 
 // 计算开头需要填充的空格数（让第一列是周一）
 const calcStartPad = (year) => {
@@ -341,34 +462,23 @@ const getLevel = (count) => {
   return 4
 }
 
-// 翻年
-const prevYear = () => { calendarYear.value--; fetchCalendarData() }
-const nextYear = () => { calendarYear.value++; fetchCalendarData() }
+// 翻年（days 数据已包含全年份，切换年份无需重新请求）
+const prevYear = () => { calendarYear.value-- }
+const nextYear = () => { calendarYear.value++ }
 
-// 获取日历数据
-const fetchCalendarData = async () => {
-  calendarLoading.value = true
-  try {
-    const res = await api.getArticleDayStatics()
-    if (res.success && res.data) {
-      calendarData.value = res.data
-    }
-  } catch (error) {
-    console.error('获取文章日历数据失败:', error)
-  } finally {
-    calendarLoading.value = false
-  }
-}
-
-// 获取文章统计数据
+// 获取文章统计数据（一次请求同时更新统计卡片与日历，days 取自 queryArticleStatics）
 const fetchArticleStatics = async () => {
+  calendarLoading.value = true
   try {
     const res = await api.getArticleStatics()
     if (res.success && res.data) {
       articleStats.value = res.data
+      calendarData.value = res.data.days || {}
     }
   } catch (error) {
     console.error('获取文章统计数据失败:', error)
+  } finally {
+    calendarLoading.value = false
   }
 }
 
@@ -411,10 +521,89 @@ const goToApis = () => {
   router.push('/admin/apis')
 }
 
+const goToNotes = () => {
+  router.push('/admin/notes')
+}
+
+// ========== 学习日历（笔记打卡统计） ==========
+const noteCalendarLoading = ref(false)
+const noteMonth = ref(fmtMonth(new Date()))   // 当前月份 'yyyy-MM'
+const noteDays = ref({})                       // { 'yyyy-MM-dd': num }
+
+// 月份标题
+const noteMonthLabel = computed(() => {
+  const [y, m] = noteMonth.value.split('-')
+  return `${y}年${Number(m)}月`
+})
+
+// 生成当月日期（平铺成一行，每个格子带星期几）
+const noteCalendarDays = computed(() => {
+  const [y, m] = noteMonth.value.split('-').map(Number)
+  const total = new Date(y, m, 0).getDate()
+  const weekNames = ['日', '一', '二', '三', '四', '五', '六']
+  const cells = []
+
+  for (let d = 1; d <= total; d++) {
+    const dateStr = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+    cells.push({
+      day: d,
+      date: dateStr,
+      week: weekNames[new Date(y, m - 1, d).getDay()],
+      num: noteDays.value[dateStr] || 0
+    })
+  }
+
+  return cells
+})
+
+// 切换月份
+const shiftNoteMonth = (delta) => {
+  const [y, m] = noteMonth.value.split('-').map(Number)
+  noteMonth.value = fmtMonth(new Date(y, m - 1 + delta, 1))
+  fetchNoteStatics()
+}
+
+// 获取笔记统计数据：请求 queryNoteStatics?month=yyyy-MM
+// 返回 total(总数)、studying(学习中)、finish(已完成)、monthStudy(本月学习天数)、days([{ day, num }])
+const fetchNoteStatics = async () => {
+  noteCalendarLoading.value = true
+  try {
+    const res = await api.getNoteStatics(noteMonth.value)
+    const data = (res && res.data) || {}
+    noteStats.value = {
+      totalNotes: data.total || 0,
+      learningNotes: data.studying || 0,
+      completedNotes: data.finish || 0,
+      monthStudyDays: data.monthStudy || 0
+    }
+    const map = {}
+    if (Array.isArray(data.days)) {
+      data.days.forEach((item) => {
+        if (!item) return
+        const raw = String(item.day ?? '').trim()
+        if (!raw) return
+        // 兼容完整日期(yyyy-MM-dd)或仅日号(如 "5")两种返回
+        let key = raw.slice(0, 10)
+        if (!key.includes('-')) {
+          const d = Number(raw)
+          if (!d) return
+          key = `${noteMonth.value}-${String(d).padStart(2, '0')}`
+        }
+        map[key] = Number(item.num) || 0
+      })
+    }
+    noteDays.value = map
+  } catch (error) {
+    console.error('获取笔记统计数据失败:', error)
+  } finally {
+    noteCalendarLoading.value = false
+  }
+}
+
 onMounted(() => {
   fetchArticleStatics()
   fetchApis()
-  fetchCalendarData()
+  fetchNoteStatics()
 })
 </script>
 

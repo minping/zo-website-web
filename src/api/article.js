@@ -545,12 +545,7 @@ export const api = {
     return await request(API_PATHS.dealArticle(id, 'delete'))
   },
 
-  // 获取文章每日发布统计
-  async getArticleDayStatics() {
-    return await request(API_PATHS.queryArticleDayStatics)
-  },
-
-  // 获取文章统计数据
+  // 获取文章统计数据（含 days 每日发布统计数据）
   async getArticleStatics() {
     const res = await request(API_PATHS.queryArticleStatics)
     // 适配新接口字段
@@ -560,10 +555,17 @@ export const api = {
         publishedArticles: res.data.publish_num || 0,
         draftArticles: res.data.un_publish_num || 0,
         totalViews: res.data.view_count || 0,
-        totalLikes: res.data.like_count || 0
+        totalLikes: res.data.like_count || 0,
+        days: res.data.days || {}
       }
     }
     return res
+  },
+
+  // 获取笔记统计数据（month 格式 yyyy-MM）
+  // 返回 data: { total 总数, studying 学习中, finish 已完成, monthStudy 本月学习天数, days: [{ day, num }] }
+  async getNoteStatics(month) {
+    return await request(API_PATHS.queryNoteStatics(month))
   },
 
   // ========== 个人信息 ==========

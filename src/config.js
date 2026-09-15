@@ -32,8 +32,9 @@ export const API_PATHS = {
   dealArticle: (id, type) => `/admin/article/dealArticle?id=${id}&type=${type}`,
   queryArticleList: (searchValue, tag, status) => `/admin/article/queryArticle?searchValue=${encodeURIComponent(searchValue || '')}&tag=${encodeURIComponent(tag || '')}&status=${encodeURIComponent(status || '')}`,
   queryArticleDetail: (id) => `/admin/article/queryArticleDetail?id=${id}`,
-  queryArticleStatics: '/admin/article/queryArticleStatics',
-  queryArticleDayStatics: '/admin/article/queryArticleDayStatics',
+  queryArticleStatics: '/admin/dashboard/queryArticleStatics',
+  // 笔记统计（month 格式 yyyy-MM），返回 total/studying/finish/monthStudy/days
+  queryNoteStatics: (month) => `/admin/dashboard/queryNoteStatics?month=${encodeURIComponent(month || '')}`,
 
   // ========== Admin 端 API 管理（后台） ==========
   openApis: '/admin/api/queryApiList',
