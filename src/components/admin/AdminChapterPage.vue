@@ -576,7 +576,35 @@ watch([chapterContent, editingTitle], () => {
   dirty.value =
     chapterContent.value !== (cur.content || '') ||
     editingTitle.value !== (cur.title || '')
+  if (dirty.value) {
+    scheduleAutoSave()
+  } else {
+    clearAutoSaveTimer()
+  }
 })
+
+// 自动保存：内容变化 5 秒后自动静默保存
+const AUTO_SAVE_DELAY = 5000
+let autoSaveTimer = null
+
+const clearAutoSaveTimer = () => {
+  if (autoSaveTimer) {
+    clearTimeout(autoSaveTimer)
+    autoSaveTimer = null
+  }
+}
+
+const scheduleAutoSave = () => {
+  clearAutoSaveTimer()
+  autoSaveTimer = setTimeout(async () => {
+    autoSaveTimer = null
+    // 到期仍有未保存修改才执行（可能已被手动/切换保存）
+    if (dirty.value && !savingContent.value) {
+      const ok = await saveCurrentChapter(true)
+      if (!ok) scheduleAutoSave()
+    }
+  }, AUTO_SAVE_DELAY)
+}
 
 // 保存当前章节（silent 为 true 时不弹提示，用于切换章节前静默保存）
 const saveCurrentChapter = async (silent = false) => {
@@ -591,6 +619,8 @@ const saveCurrentChapter = async (silent = false) => {
     return false
   }
   if (savingContent.value) return false
+  // 手动/切换/自动保存前，取消尚在等待的自动保存任务
+  clearAutoSaveTimer()
   savingContent.value = true
   try {
     const res = await api.saveChapter({
@@ -700,6 +730,8 @@ onMounted(() => {
 onUnmounted(() => {
   document.removeEventListener('click', closeChapterMenu)
   document.removeEventListener('scroll', closeChapterMenu, true)
+  // 离开页面时取消待执行的自动保存，避免误存到其他章节
+  clearAutoSaveTimer()
 })
 </script>
 
