@@ -60,6 +60,10 @@
             <div class="card-body">
               <h3 class="note-name">{{ note.name }}</h3>
               <p class="note-preface">{{ note.preface || '暂无简介' }}</p>
+              <!-- 单篇字数 / 代码行数：位于序言下方，右对齐，"/" 拼接 -->
+              <div v-if="hasCardStats(note)" class="card-meta">
+                <span class="meta-stat" :title="cardStatsTitle(note)">{{ formatCardStats(note) }}</span>
+              </div>
             </div>
             <div class="card-progress">
               <div class="progress-track">
@@ -104,6 +108,13 @@ const formatTime = (value) => {
   return String(value).slice(0, 10)
 }
 
+// 千分位格式化：1234567 → 1,234,567；缺省为 0
+const formatNumber = (n) => {
+  const num = Number(n)
+  if (!Number.isFinite(num)) return '0'
+  return num.toLocaleString('en-US')
+}
+
 // 拉取已发布笔记列表
 const loadNotes = async () => {
   loading.value = true
@@ -135,6 +146,26 @@ const clampProcess = (v) => {
 // 章节统计是否存在（至少一个字段大于 0 才展示，避免出现 0章0节）
 const hasStats = (note) =>
   Number(note.chapterNum ?? 0) > 0 || Number(note.sectionNum ?? 0) > 0
+
+// 字数 / 代码行数是否存在（任一字段大于 0 才展示该行）
+const hasCardStats = (note) =>
+  Number(note.text_char_count ?? 0) > 0 || Number(note.code_line_count ?? 0) > 0
+
+// 拼出 "1,234 字 / 56 行代码"，0 字段自动忽略
+const formatCardStats = (note) => {
+  const parts = []
+  if (Number(note.text_char_count) > 0) parts.push(`${formatNumber(note.text_char_count)} 字`)
+  if (Number(note.code_line_count) > 0) parts.push(`${formatNumber(note.code_line_count)} 行代码`)
+  return parts.join(' / ')
+}
+
+// 鼠标悬停提示，同步隐藏为 0 的字段
+const cardStatsTitle = (note) => {
+  const parts = []
+  if (Number(note.text_char_count) > 0) parts.push('字数')
+  if (Number(note.code_line_count) > 0) parts.push('代码行数')
+  return parts.join(' / ')
+}
 
 // 点击笔记卡片：新标签页打开只读阅读页（仅传 id）
 const getNoteHref = (note) =>
@@ -424,6 +455,24 @@ const handleNavigate = (menu) => {
   font-weight: 600;
   color: var(--text-muted);
   text-align: right;
+}
+
+/* 卡片字数 / 代码行数：序言下方，右对齐 */
+.card-meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  align-self: flex-end;
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.meta-stat {
+  white-space: nowrap;
 }
 
 /* 卡片底部 */

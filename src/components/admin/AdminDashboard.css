@@ -395,10 +395,21 @@
 }
 
 .note-cal-count {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 2px;
   font-size: 12px;
   font-weight: 700;
   line-height: 1;
+  white-space: nowrap;
   color: #16a34a;
+}
+
+/* 数量单位：比数字小一号，跟随数字字号缩放 */
+.note-cal-unit {
+  font-size: 0.55em;
+  font-weight: 600;
+  opacity: 0.85;
 }
 
 /* 有数量的格子：数量为主体，日期/星期缩小到角落 */

@@ -181,6 +181,16 @@
 .md-preview th { 
   background: rgba(0, 0, 0, 0.04); 
 }
+/* ==高亮== 语法：显眼的高亮样式 */
+.md-preview mark.md-highlight {
+  background: linear-gradient(180deg, rgba(255, 214, 0, 0.35) 0%, #ffd600 100%);
+  color: #5a3d00;
+  font-weight: 600;
+  padding: 1px 4px;
+  border-radius: 3px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
 
 .mode-btn {
   gap: 4px;

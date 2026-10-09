@@ -169,10 +169,16 @@ const routes = [
     component: AdminChapterPage,
     meta: { requiresAuth: true }
   },
+  // 兜底路由：未匹配的路径（如直接访问 /index.html）重定向回首页，避免 router-view 空渲染导致白屏
+  {
+    path: '/:pathMatch(.*)*',
+    redirect: '/'
+  },
   ]
 
 const router = createRouter({
-  history: createWebHistory(),
+  // 部署在 /website 上下文时自动带上前缀（vite base），开发期为 '/'
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes,
   scrollBehavior(to, from, savedPosition) {
     if (savedPosition) {

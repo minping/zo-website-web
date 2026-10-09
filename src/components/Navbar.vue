@@ -18,14 +18,20 @@
         </a>
       </nav>
       <div class="nav-right">
-        <a href="/admin/login" target="_blank" class="admin-link" title="管理后台">
+        <!--
+          必须用 router-link，不能用 <a href="/admin/login">：
+          1. href 是相对域名根的绝对路径，会绕过 vue-router 和 router base，
+             直接跳到 http://host/admin/login，把 /website 上下文前缀吞掉；
+          2. router-link 会自动拼上 vite base（/website/），同时不触发整页刷新。
+        -->
+        <router-link to="/admin/login" target="_blank" class="admin-link" title="管理后台">
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="3" width="7" height="7"/>
             <rect x="14" y="3" width="7" height="7"/>
             <rect x="14" y="14" width="7" height="7"/>
             <rect x="3" y="14" width="7" height="7"/>
           </svg>
-        </a>
+        </router-link>
         <button class="theme-toggle" @click="toggleTheme" :title="themeTitle">
           <!-- 深色 → 太阳 -->
           <svg v-if="theme === 'dark'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -277,6 +283,12 @@ const handleNavClick = (link) => {
     display: none;
   }
 
+  /* 导航栏整体只响应左右拖拽：纵向拖拽不再带动导航栏/页面滚动 */
+  .navbar {
+    touch-action: pan-x pinch-zoom;
+    overscroll-behavior: contain;
+  }
+
   /* 菜单占满剩余空间并支持横向滑动，禁止换行 */
   .nav-links {
     flex: 1;
@@ -284,6 +296,9 @@ const handleNavClick = (link) => {
     justify-content: flex-start;
     gap: 2px;
     overflow-x: auto;
+    overflow-y: hidden;            /* 关闭纵向滚动容器，避免上下拖拽 */
+    touch-action: pan-x pinch-zoom; /* 手势仅允许横向拖拽 */
+    overscroll-behavior: contain;  /* 阻止滚动链传到页面 */
     white-space: nowrap;
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;

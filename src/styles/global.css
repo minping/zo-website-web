@@ -1,3 +1,6 @@
+/* 本地字体（自托管，避免 Google Fonts CDN 在国内访问超时） */
+@import url('/fonts/fonts.css');
+
 /* 全局样式重置与基础设置 */
 *, *::before, *::after {
   margin: 0;

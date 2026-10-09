@@ -38,15 +38,6 @@
         </div>
 
         <article v-else class="article-container">
-          <!-- 返回按钮 -->
-          <button class="back-btn" @click="goBack">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="19" y1="12" x2="5" y2="12"/>
-              <polyline points="12 19 5 12 12 5"/>
-            </svg>
-            返回
-          </button>
-
           <!-- 文章头部 -->
           <header class="article-header">
             <h1 class="article-title">{{ article.title }}</h1>
@@ -347,6 +338,35 @@ renderer.code = function({ text, lang }) {
   `
 }
 marked.use({ renderer })
+
+// 高亮语法扩展：==文本== → <mark class="md-highlight">
+const highlightExtension = {
+  name: 'highlight',
+  level: 'inline',
+  start(src) {
+    return src.indexOf('==')
+  },
+  tokenizer(src) {
+    const match = /^==([^=\n]+)==/.exec(src)
+    if (match) {
+      const token = {
+        type: 'highlight',
+        raw: match[0],
+        text: match[1],
+        tokens: []
+      }
+      // 内部文本继续按行内语法解析（支持加粗、链接等嵌套）
+      const childTokens = this.lexer.inlineTokens(token.text, token.tokens)
+      if (childTokens) token.tokens = childTokens
+      return token
+    }
+  },
+  renderer(token) {
+    return `<mark class="md-highlight">${this.parser.parseInline(token.tokens)}</mark>`
+  }
+}
+
+marked.use({ extensions: [highlightExtension] })
 
 const router = useRouter()
 const route = useRoute()
@@ -1125,6 +1145,17 @@ onUnmounted(() => {
 .article-content :deep(a:hover) {
   border-bottom-style: solid;
   opacity: 0.8;
+}
+
+/* ==高亮== 语法：显眼的高亮样式 */
+.article-content :deep(mark.md-highlight) {
+  background: linear-gradient(180deg, rgba(255, 214, 0, 0.35) 0%, #ffd600 100%);
+  color: #5a3d00;
+  font-weight: 600;
+  padding: 1px 4px;
+  border-radius: 3px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
 }
 
 .article-content :deep(img) {
@@ -1917,8 +1948,9 @@ onUnmounted(() => {
     padding: 0;
   }
 
+  /* 顶部固定导航栏高 64px，额外留出间距，避免遮挡文章标题 */
   .article-main {
-    padding-top: 64px;
+    padding-top: 84px;
   }
 
   .article-container {
@@ -1942,23 +1974,44 @@ onUnmounted(() => {
     margin-top: 10px;
   }
 
+  /* 标签 + 元信息始终保持一行：空间不足时元信息横向滚动而非换行 */
   .article-info-row {
-    flex-direction: column;
-    align-items: flex-start;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    flex-wrap: nowrap;
     gap: 10px;
     margin-top: 14px;
+    min-width: 0;
+  }
+
+  .article-tag {
+    flex: 0 0 auto;
+    padding: 5px 12px;
+    font-size: 0.78rem;
   }
 
   .article-meta {
-    flex-wrap: wrap;
+    flex: 1 1 auto;
+    min-width: 0;
+    flex-wrap: nowrap;
     gap: 10px;
     font-size: 0.82rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .article-meta::-webkit-scrollbar {
+    display: none;
   }
 
   .article-meta span {
     display: inline-flex;
     align-items: center;
     gap: 4px;
+    flex: 0 0 auto;
+    white-space: nowrap;
   }
 
   /* === 封面 === */
@@ -2198,8 +2251,9 @@ onUnmounted(() => {
     padding: 0;
   }
 
+  /* 顶部固定导航栏高 64px，额外留出间距，避免遮挡文章标题 */
   .article-main {
-    padding-top: 56px;
+    padding-top: 76px;
   }
 
   .article-container {
@@ -2222,12 +2276,19 @@ onUnmounted(() => {
     margin-top: 8px;
   }
 
+  /* 维持单行显示：进一步压缩间距与字号 */
   .article-info-row {
     gap: 8px;
     margin-top: 12px;
   }
 
+  .article-tag {
+    padding: 4px 10px;
+    font-size: 0.75rem;
+  }
+
   .article-meta {
+    min-width: 0;
     gap: 8px;
     font-size: 0.78rem;
   }

@@ -20,6 +20,34 @@
 
         <!-- 摇一摇主区 -->
         <section class="shake-zone">
+          <!-- 学习范围：选择某一篇笔记后，只在该笔记范围内随机抽取 -->
+          <div class="scope-bar">
+            <span class="scope-label">学习范围</span>
+            <div class="scope-select-wrap">
+              <select
+                v-model="selectedNoteId"
+                class="scope-select"
+                :disabled="notesLoading || rolling"
+                :title="selectedNoteName ? `当前范围：${selectedNoteName}` : '当前范围：全部笔记'"
+              >
+                <option value="">{{ notesLoading ? '笔记加载中…' : '全部笔记（全库随机）' }}</option>
+                <option v-for="n in noteOptions" :key="n.id" :value="n.id">{{ n.name }}</option>
+              </select>
+              <svg class="scope-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M6 9l6 6 6-6"/>
+              </svg>
+            </div>
+            <button
+              v-if="selectedNoteId"
+              class="scope-clear"
+              type="button"
+              title="清除选择，恢复全库随机"
+              @click="clearNoteScope"
+            >
+              清除
+            </button>
+          </div>
+
           <!-- 圆形摇一摇按钮：柔和光晕呼吸 + 图标摇摆 -->
           <button
             ref="shakeBtnEl"
@@ -44,7 +72,7 @@
             <span class="shake-btn-sub">{{ rolling ? '正在为你随机挑一篇' : '随机学习一个知识点' }}</span>
           </button>
 
-          <p class="shake-tip">{{ rolling ? '已抓住命运的节拍…' : '点击按钮，随机抽取笔记中的一个小节' }}</p>
+          <p class="shake-tip">{{ shakeTip }}</p>
 
           <!-- 抽取失败提示 -->
           <transition name="shake-fade">
@@ -313,6 +341,49 @@ const resultEl = ref(null)
 const toast = ref('')
 let toastTimer = null
 
+// ========== 学习范围（笔记下拉框） ==========
+// 选项来自 queryNoteListPublished，显示 name，值为 id；选中后 getRandomContent 传 noteId
+const noteOptions = ref([])
+const notesLoading = ref(false)
+const selectedNoteId = ref('')
+
+const selectedNoteName = computed(() => {
+  const hit = noteOptions.value.find((n) => n.id === selectedNoteId.value)
+  return hit ? hit.name : ''
+})
+
+const shakeTip = computed(() => {
+  if (rolling.value) return '已抓住命运的节拍…'
+  if (selectedNoteName.value) return `只从《${selectedNoteName.value}》中随机抽取一个小节`
+  return '点击按钮，随机抽取笔记中的一个小节'
+})
+
+// 加载已发布笔记，作为下拉选项
+const loadNoteOptions = async () => {
+  notesLoading.value = true
+  try {
+    const res = await api.getPublishedNotes()
+    const ok = !!(res && (res.success === true || res.code === 200 || res.code === 0))
+    const list = ok && Array.isArray(res.data) ? res.data : []
+    noteOptions.value = list
+      .map((n) => ({ id: String(n.id ?? ''), name: n.name || '未命名笔记' }))
+      .filter((n) => n.id)
+    // 之前选中的笔记若已不存在（被下架），自动回到全库随机
+    if (selectedNoteId.value && !noteOptions.value.some((n) => n.id === selectedNoteId.value)) {
+      selectedNoteId.value = ''
+    }
+  } catch (e) {
+    console.error('加载笔记列表失败', e)
+    noteOptions.value = []
+  } finally {
+    notesLoading.value = false
+  }
+}
+
+const clearNoteScope = () => {
+  selectedNoteId.value = ''
+}
+
 // 斩杀知识：banned 内容已移除、banAnimating 动画播放中、banLock 请求中
 const banned = ref(false)
 const banAnimating = ref(false)
@@ -338,11 +409,16 @@ const handleShake = async () => {
   errorText.value = ''
   const startedAt = Date.now()
   try {
-    const res = await api.getRandomNoteContent()
+    // 指定了学习范围则只在对应笔记内随机（noteId 为空 = 全库随机）
+    const res = await api.getRandomNoteContent(selectedNoteId.value)
     const ok = !!(res && (res.success === true || res.code === 200 || res.code === 0))
     if (!ok) throw new Error(res.message || res.msg || '抽取失败，请稍后重试')
     const data = res.data && typeof res.data === 'object' ? res.data : {}
-    if (!data.content) throw new Error('这次抽到的是空内容，再摇一次试试吧')
+    if (!data.content) {
+      throw new Error(selectedNoteName.value
+        ? `《${selectedNoteName.value}》暂时没有可学习的小节，换一篇试试吧`
+        : '这次抽到的是空内容，再摇一次试试吧')
+    }
     result.value = {
       id: data.id ?? '',
       name: data.name || '未命名笔记',
@@ -634,6 +710,8 @@ onMounted(() => {
   onScroll()
   startCheckinTimer()
   window.addEventListener('keydown', handleKeyDown)
+  // 拉取已发布笔记，填充“学习范围”下拉框
+  loadNoteOptions()
 })
 onUnmounted(() => {
   window.removeEventListener('scroll', onScroll)
@@ -722,6 +800,112 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   margin-top: 34px;
+}
+
+/* ========== 学习范围选择（笔记下拉框） ========== */
+.scope-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto 30px;
+  padding: 7px 10px 7px 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  background: var(--bg-card);
+  box-shadow: 0 2px 12px -6px rgba(0, 0, 0, 0.25);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.scope-bar:hover {
+  border-color: var(--accent-glow);
+}
+
+.scope-label {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+}
+
+.scope-select-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+.scope-select {
+  width: 100%;
+  padding: 8px 30px 8px 12px;
+  border: none;
+  border-radius: 999px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  text-overflow: ellipsis;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.scope-select:hover:not(:disabled) {
+  background: var(--accent-glow);
+}
+
+.scope-select:focus-visible {
+  box-shadow: 0 0 0 2px var(--accent-primary);
+}
+
+.scope-select:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* 原生下拉选项：跟随主题配色（暗色下避免白底白字） */
+.scope-select option {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+.scope-caret {
+  position: absolute;
+  right: 10px;
+  width: 14px;
+  height: 14px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.scope-select:focus-visible + .scope-caret {
+  color: var(--accent-primary);
+}
+
+/* 清除选择：回到全库随机 */
+.scope-clear {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.scope-clear:hover {
+  color: var(--accent-primary);
+  border-color: var(--accent-primary);
+  background: var(--accent-glow);
 }
 
 .shake-btn {
@@ -1286,6 +1470,10 @@ onUnmounted(() => {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  /* 固定定位下 left: 50% 会把可用宽度压成半屏而触发换行；
+     用 max-content 按内容撑开（单行），仅在超出屏宽时才收缩 */
+  width: max-content;
+  max-width: calc(100vw - 32px);
   padding: 10px 18px;
   font-size: 13px;
   color: #fff;
@@ -1323,15 +1511,16 @@ onUnmounted(() => {
   font-size: 15px;
   font-weight: 600;
   color: #fff;
-  background: linear-gradient(135deg, #f43f5e, #f97316);
-  box-shadow: 0 10px 24px -10px rgba(244, 63, 94, 0.75);
+  /* 跟随主题配色（渐变与光晕均由主题变量驱动） */
+  background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+  box-shadow: 0 10px 24px -12px var(--accent-primary), 0 0 0 1px var(--accent-glow);
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
 }
 
 .ban-btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 14px 30px -10px rgba(244, 63, 94, 0.85);
+  box-shadow: 0 14px 30px -12px var(--accent-primary), 0 0 0 1px var(--accent-primary);
 }
 
 .ban-btn:active:not(:disabled) {
@@ -1348,9 +1537,11 @@ onUnmounted(() => {
   height: 18px;
 }
 
+/* 已斩杀（禁用态）同样跟随主题：弱化为卡片底色 + 主题描边 */
 .ban-btn-done {
-  background: linear-gradient(135deg, #64748b, #334155);
-  box-shadow: none;
+  color: var(--text-muted);
+  background: var(--bg-card);
+  box-shadow: inset 0 0 0 1px var(--border-color);
 }
 
 .ban-tip {
@@ -1776,6 +1967,28 @@ onUnmounted(() => {
     margin-top: 20px;
   }
 
+  /* 学习范围：移动端收窄内边距，给下拉留足空间 */
+  .scope-bar {
+    gap: 8px;
+    padding: 6px 8px 6px 12px;
+    margin-bottom: 24px;
+  }
+
+  .scope-label {
+    font-size: 11px;
+    letter-spacing: 0;
+  }
+
+  .scope-select {
+    padding: 8px 26px 8px 10px;
+    font-size: 12px;
+  }
+
+  .scope-clear {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+
   .shake-btn {
     width: 152px;
     height: 152px;
@@ -1790,9 +2003,14 @@ onUnmounted(() => {
     font-size: 20px;
   }
 
+  /* 结果卡片占屏宽 98%：抵消 .container 左右内边距并保持居中，同时收窄内边距让正文更宽 */
   .result-card {
+    width: 98vw;
+    max-width: 98vw;
     margin-top: 30px;
-    padding: 28px 20px;
+    margin-left: calc((100% - 98vw) / 2);
+    margin-right: calc((100% - 98vw) / 2);
+    padding: 26px 14px;
   }
 
   .result-card .page-title {

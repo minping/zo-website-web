@@ -79,31 +79,43 @@
 }
 
 /* ========== 左侧目录 ========== */
-.toc-panel {
-  width: 260px;
-  flex-shrink: 0;
+/* 外层：负责吸顶定位与宽度；目录很长时只有它内部的 panel 滚动，按钮始终停在左侧中部 */
+.toc-wrap {
   position: sticky;
   top: 80px;
+  flex-shrink: 0;
+  width: 260px;
   max-height: calc(100vh - 140px);
+  transition: width 0.3s ease;
+}
+
+/* 折叠状态 */
+.toc-wrap.collapsed {
+  width: 56px;
+}
+
+/* 目录本体：只负责内容滚动 */
+.toc-panel {
+  width: 100%;
+  max-height: inherit;
   overflow-y: auto;
   background: var(--admin-bg-secondary);
   border: 1px solid var(--admin-border-color);
   border-radius: 14px;
   padding: 22px 16px;
-  transition: width 0.3s ease, padding 0.3s ease;
+  transition: padding 0.3s ease;
 }
 
-/* 折叠状态 */
-.toc-panel.collapsed {
-  width: 56px;
+.toc-wrap.collapsed .toc-panel {
   padding: 16px 10px;
 }
 
-/* 折叠/展开按钮 */
+/* 折叠/展开按钮：贴在目录左边缘中部，半个身位悬在目录外 */
 .toc-toggle {
   position: absolute;
-  top: 12px;
-  right: 12px;
+  top: 50%;
+  left: 0;
+  transform: translate(-50%, -50%);
   width: 26px;
   height: 26px;
   display: flex;
@@ -111,24 +123,18 @@
   justify-content: center;
   border: 1px solid var(--admin-border-color);
   border-radius: 8px;
-  background: transparent;
+  /* 用与目录一致的底色，避免目录内容滚动到按钮下方时透出来 */
+  background: var(--admin-bg-secondary);
   color: var(--admin-text-muted);
   cursor: pointer;
   transition: all 0.25s;
-  z-index: 2;
+  z-index: 3;
 }
 
 .toc-toggle:hover {
   border-color: var(--admin-accent-primary);
   color: var(--admin-accent-primary);
   background: var(--admin-accent-glow);
-}
-
-.toc-panel.collapsed .toc-toggle {
-  top: 50%;
-  right: auto;
-  left: 50%;
-  transform: translate(-50%, -50%);
 }
 
 /* 折叠状态的竖排「目录」提示 */
@@ -610,9 +616,41 @@
 }
 
 .editor-body {
+  position: relative;
   flex: 1;
   padding: 18px 20px 8px;
   min-height: 0;
+}
+
+/* 正文加载中 / 加载失败：盖住编辑器 */
+.editor-body.is-loading .milkdown-editor {
+  visibility: hidden;
+}
+
+.editor-mask {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 24px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--admin-text-secondary);
+  background: var(--admin-bg-card);
+  z-index: 2;
+}
+
+.editor-mask .loading-spinner {
+  width: 28px;
+  height: 28px;
+  border-width: 2px;
+}
+
+.editor-mask.error {
+  color: #ef4444;
 }
 
 .editor-footer {
@@ -654,9 +692,15 @@
     flex-direction: column;
   }
 
-  .toc-panel {
-    position: static;
+  /* 窄屏：目录不再吸顶、不内部滚动 */
+  .toc-wrap {
+    position: relative;
+    top: auto;
     width: 100%;
+    max-height: none;
+  }
+
+  .toc-panel {
     max-height: none;
     overflow: visible;
   }
@@ -671,12 +715,16 @@
   }
 
   /* 窄屏下目录强制展开，折叠样式复位 */
-  .toc-panel.collapsed {
+  .toc-wrap.collapsed {
     width: 100%;
+  }
+
+  .toc-wrap.collapsed .toc-panel {
     padding: 22px 16px;
   }
 
-  .toc-panel.collapsed .toc-toggle {
+  /* 窄屏空间受限，按钮回到目录内右上角 */
+  .toc-toggle {
     top: 12px;
     right: 12px;
     left: auto;
@@ -1000,6 +1048,11 @@
   background: #ef4444;
 }
 
+/* 普通提示（非成功/失败，如快捷键无改动可存） */
+.chapter-toast.info {
+  background: #64748b;
+}
+
 .toast-fade-enter-active,
 .toast-fade-leave-active {
   transition: opacity 0.25s ease, transform 0.25s ease;
@@ -1009,4 +1062,60 @@
 .toast-fade-leave-to {
   opacity: 0;
   transform: translateX(-50%) translateY(-8px);
+}
+
+/* ===========================================================
+ * 光标：去掉装饰性图像，箭头与文本输入均用放大加粗的原生外形
+ *  - 默认：原生 auto
+ *  - 文字输入：I 形 加大加粗版
+ *  - 可点：原生箭头 加大加粗版
+ *  - 禁用：原生 not-allowed
+ *  - 拖拽：原生 grab / grabbing
+ * =========================================================== */
+
+/* 1. 默认光标：原生 */
+.chapter-page,
+.chapter-page * {
+  cursor: auto;
+}
+
+/* 2. 文字输入 / 可编辑区：I 形 加大加粗（32×32，黑线 + 白描边） */
+.chapter-page input,
+.chapter-page textarea,
+.chapter-page select,
+.chapter-page [contenteditable="true"],
+.chapter-page .cm-content,
+.chapter-page .cm-line {
+  cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24'><g stroke-linecap='round' fill='none'><path d='M9 5 H15 M12 5 V19 M9 19 H15' stroke='%23ffffff' stroke-width='4.6'/><path d='M9 5 H15 M12 5 V19 M9 19 H15' stroke='%23000000' stroke-width='2.4'/></g></svg>") 16 16, text;
+}
+
+/* 3. 可点击元素：原生箭头 加大加粗（32×32，黑底 + 白描边） */
+.chapter-page button:not(:disabled),
+.chapter-page a,
+.chapter-page .toc-item,
+.chapter-page .chapter-card,
+.chapter-page .menu-item,
+.chapter-page [role="button"],
+.chapter-page .context-menu-item {
+  cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24'><path d='M5 3 L5 21 L10 17 L13 22 L16 21 L13 16 L19 14 Z' fill='%23000' stroke='%23ffffff' stroke-width='1.2' stroke-linejoin='round'/></svg>") 4 4, pointer;
+}
+
+/* 4. 禁用态：原生 not-allowed */
+.chapter-page button:disabled,
+.chapter-page input:disabled,
+.chapter-page textarea:disabled,
+.chapter-page select:disabled,
+.chapter-page .disabled,
+.chapter-page [aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+/* 5. 拖拽 */
+.chapter-page [draggable="true"],
+.chapter-page .draggable {
+  cursor: grab;
+}
+.chapter-page [draggable="true"]:active,
+.chapter-page .draggable:active {
+  cursor: grabbing;
 }

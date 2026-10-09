@@ -85,6 +85,8 @@ export const API_PATHS = {
   updateNoteStatus: '/admin/notes/updateStatus',
   deleteNoteInfo: (id) => `/admin/notes/deleteNote?id=${id}`,
   queryChapterList: (noteId) => `/admin/notes/queryChapterList?noteId=${noteId}`,
+  // 章节详情（后台，id 为章节 id；返回 { id, title, orders, content }，正文在此接口）
+  queryChapterAdmin: (id) => `/admin/notes/queryChapter?id=${encodeURIComponent(id)}`,
   saveChapter: '/admin/notes/saveChapter',
   deleteChapter: (id) => `/admin/notes/deleteChapter?id=${id}`,
   completeChapter: (id) => `/admin/notes/completeChapter?id=${id}`,
@@ -93,13 +95,20 @@ export const API_PATHS = {
   // 前台公开接口（只读预览）
   queryNoteDetailPublic: (id) => `/index/notes/queryNoteDetail?id=${id}`,
   queryChapterListPublic: (noteId) => `/index/notes/queryChapterList?noteId=${noteId}`,
+  // 章节详情（前台公开，id 为章节 id；返回 { id, title, orders, content }，正文在此接口）
+  queryChapterPublic: (id) => `/index/notes/queryChapter?id=${encodeURIComponent(id)}`,
   // 随机获取一篇笔记中的小节（前台公开，GET）
   // 返回 data: { name 笔记名称, title 小节标题, content 小节内容(markdown) }
-  getRandomContent: '/index/notes/getRandomContent',
+  // 传 noteId 时只在指定笔记内随机，不传则全库随机
+  getRandomContent: (noteId) => (noteId
+    ? `/index/notes/getRandomContent?noteId=${encodeURIComponent(noteId)}`
+    : '/index/notes/getRandomContent'),
   // 学习打卡记录保存（前台公开，POST）
   saveStudyRecord: '/index/notes/saveStudyRecord',
   // 学习打卡历史记录查询（前台公开，GET，relationId 为小节 id）
   queryStudyRecord: (relationId) => `/index/notes/queryStudyRecord?relationId=${encodeURIComponent(relationId)}`,
+  // 笔记生命线查询（前台公开，GET，noteId 为笔记 id）
+  getNoteLine: (noteId) => `/index/notes/getNoteLine?noteId=${encodeURIComponent(noteId)}`,
   // 斩杀知识点（前台公开，POST）
   saveStudyBan: '/index/notes/saveStudyBan',
 
