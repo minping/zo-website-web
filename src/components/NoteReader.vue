@@ -34,7 +34,7 @@
               <ul class="toc-list">
                 <li
                   class="toc-item"
-                  :class="{ active: currentIndex === -1 }"
+                  :class="{ active: currentIndex === -1 && !showLifeline }"
                   @click="selectChapter(-1)"
                   title="序言"
                 >
@@ -46,7 +46,7 @@
                   class="toc-item"
                   :class="[
                     'toc-level-' + chapter.level,
-                    { active: currentIndex === chapter.rawIndex, expanded: expandedIds.has(chapter.id) }
+                    { active: currentIndex === chapter.rawIndex && !showLifeline, expanded: expandedIds.has(chapter.id) }
                   ]"
                   @click="onTocClick(chapter)"
                   :title="chapter.title"
@@ -60,12 +60,91 @@
                 </li>
               </ul>
               <p v-if="!chapters.length" class="toc-empty">暂无章节</p>
+
+              <!-- 生命线：固定在目录最下方，如同序言一样只读查看（无任何编辑入口） -->
+              <div
+                class="toc-item toc-lifeline"
+                :class="{ active: showLifeline }"
+                @click="selectLifeline"
+                title="生命线"
+              >
+                <span class="toc-index lifeline-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 12h4l3-8 4 16 3-8h4"/>
+                  </svg>
+                </span>
+                <span class="toc-name">生命线</span>
+              </div>
             </aside>
 
             <!-- 右侧内容列：正文与打卡学习各自独立卡片 -->
             <div class="reader-main-col">
+              <!-- 生命线模块：独立卡片，查看学习轨迹时隐藏正文与打卡 -->
+              <section v-if="showLifeline" class="lifeline-wrap">
+                <div class="page-header">
+                  <span class="page-label">生命线</span>
+                  <h2 class="page-title">{{ noteName || '未命名笔记' }}</h2>
+                </div>
+
+                <p v-if="lifelineLoading" class="lifeline-empty">生命线加载中…</p>
+                <template v-else>
+                  <!-- 时间线：按天分组，一天可含多个小节 -->
+                  <div v-if="lifelineDays.length" class="lifeline-timeline">
+                    <!-- 起始节点：主轴起点，指向创建时间 -->
+                    <div class="lifeline-start">
+                      <span class="lifeline-month"></span>
+                      <div class="lifeline-day-marker">
+                        <span class="lifeline-start-dot"></span>
+                      </div>
+                      <div class="lifeline-start-body">
+                        <span class="lifeline-start-text">
+                          创建于 <span class="lifeline-start-date">{{ lifelineStart || '—' }}</span>
+                        </span>
+                      </div>
+                    </div>
+                    <div v-for="(day, dayIndex) in lifelineDays" :key="day.date" class="lifeline-day">
+                      <!-- 月份归属：换月时在时间线左侧展示一次 -->
+                      <span class="lifeline-month" :title="monthLabel(day.date)">
+                        {{ isMonthStart(dayIndex) ? monthLabel(day.date) : '' }}
+                      </span>
+                      <div class="lifeline-day-marker">
+                        <span class="lifeline-day-dot"></span>
+                        <span class="lifeline-day-line"></span>
+                      </div>
+                      <div class="lifeline-day-body">
+                        <div class="lifeline-day-date">{{ formatDay(day.date) }}</div>
+                        <div
+                          v-for="(ch, idx) in day.chapters"
+                          :key="ch.id"
+                          class="lifeline-chapter"
+                          :class="[Number(ch.complete) === 1 ? 'is-done' : 'is-studying', idx === 0 ? 'is-first' : '']"
+                        >
+                          <span class="lifeline-chapter-label">{{ ch.label }}</span>
+                          <span class="lifeline-chapter-title">{{ ch.title }}</span>
+                          <span class="lifeline-chapter-status">{{ Number(ch.complete) === 1 ? '已完成' : '学习中' }}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <!-- 结束节点：主轴收尾，指向完结时间 -->
+                    <div class="lifeline-end">
+                      <span class="lifeline-month"></span>
+                      <div class="lifeline-day-marker">
+                        <span class="lifeline-end-dot"></span>
+                      </div>
+                      <div class="lifeline-end-body">
+                        <span v-if="lifelineEndTime" class="lifeline-end-text">
+                          完结于 <span class="lifeline-end-date">{{ lifelineEndTime }}</span>
+                        </span>
+                        <span v-else class="lifeline-end-text">待续...</span>
+                      </div>
+                    </div>
+                  </div>
+                  <p v-else class="lifeline-empty">还没有学习记录，读完小节并打卡后，这里会生成你的生命线～</p>
+                </template>
+              </section>
+
               <!-- 正文卡片 -->
-              <section class="reader-content">
+              <section v-else class="reader-content">
                 <!-- 序言 -->
                 <div v-if="currentIndex === -1" class="page-body">
                   <div class="page-header">
@@ -82,12 +161,59 @@
                     <span class="page-label">{{ currentChapter.label }}</span>
                     <h2 class="page-title">{{ currentChapter.title }}</h2>
                   </div>
-                  <div class="md-body" v-html="renderedContent"></div>
+
+                  <!-- 正文来自 queryChapter?id=：加载中 / 失败 / 渲染三态 -->
+                  <p v-if="contentLoading" class="md-empty">章节内容加载中…</p>
+                  <p v-else-if="contentError" class="md-empty">
+                    {{ contentError }}
+                    <button class="md-retry" type="button" @click="retryChapterContent">重新加载</button>
+                  </p>
+                  <template v-else>
+                    <div class="md-body" v-html="renderedContent"></div>
+                    <p v-if="!currentContent" class="md-empty">本节暂无内容</p>
+                  </template>
+
+                  <!-- 上一节 / 下一节：按目录顺序跨章节连续跳转，到尽头时给出提示 -->
+                  <nav class="chapter-nav">
+                    <button
+                      type="button"
+                      class="chapter-nav-btn prev"
+                      :class="{ 'is-end': !prevChapter }"
+                      :aria-disabled="!prevChapter"
+                      :title="prevChapter ? `上一节：${prevChapter.title}` : '已经是第一节了'"
+                      @click="goSiblingChapter(-1)"
+                    >
+                      <svg class="chapter-nav-arrow" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M15 18l-6-6 6-6"/>
+                      </svg>
+                      <span class="chapter-nav-text">
+                        <span class="chapter-nav-label">上一节</span>
+                        <span class="chapter-nav-title">{{ prevChapter ? prevChapter.title : '已经是第一节了' }}</span>
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      class="chapter-nav-btn next"
+                      :class="{ 'is-end': !nextChapter }"
+                      :aria-disabled="!nextChapter"
+                      :title="nextChapter ? `下一节：${nextChapter.title}` : '已经是最后一节了'"
+                      @click="goSiblingChapter(1)"
+                    >
+                      <span class="chapter-nav-text">
+                        <span class="chapter-nav-label">下一节</span>
+                        <span class="chapter-nav-title">{{ nextChapter ? nextChapter.title : '已经是最后一节了' }}</span>
+                      </span>
+                      <svg class="chapter-nav-arrow" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 18l6-6-6-6"/>
+                      </svg>
+                    </button>
+                  </nav>
                 </div>
               </section>
 
-              <!-- 打卡学习（独立卡片，仅二级小节展示） -->
-              <section v-if="showCheckin" class="checkin-wrap">
+              <!-- 打卡学习（独立卡片，仅二级小节展示；生命线视图下隐藏） -->
+              <section v-if="showCheckin && !showLifeline" class="checkin-wrap">
                 <div class="checkin-head">
                   <div class="checkin-title">打卡学习</div>
                   <span class="checkin-sub">{{ studyStats.totalStatus ? '该小节今日已打卡' : '今日还未打卡' }}</span>
@@ -173,11 +299,16 @@
       </button>
     </transition>
 
-    <!-- 打卡成功提示 -->
+    <!-- 打卡成功 / 通用提示 -->
     <transition name="toast-pop">
       <div v-if="checkinToast" class="checkin-toast">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+        <svg v-if="toastKind === 'success'" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
           <path d="M20 6L9 17l-5-5"/>
+        </svg>
+        <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="9"/>
+          <path d="M12 8h.01"/>
+          <path d="M11 12h1v4h1"/>
         </svg>
         {{ checkinToast }}
       </div>
@@ -236,7 +367,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { marked } from 'marked'
+import { Marked } from 'marked'
 import hljs from 'highlight.js'
 import api from '../api/article.js'
 import { useTheme } from '../composables/useTheme.js'
@@ -250,7 +381,7 @@ const route = useRoute()
 const noteId = route.params.id || route.query.id || ''
 
 // 自定义 marked 渲染器：标题生成锚点 id + 代码块高亮
-const renderer = new marked.Renderer()
+const renderer = {}
 
 renderer.heading = function ({ text, depth }) {
   const id = text.toLowerCase().replace(/[^\w\u4e00-\u9fa5]+/g, '-')
@@ -282,7 +413,39 @@ renderer.code = function ({ text, lang }) {
   `
 }
 
-const renderMarkdown = (text) => (text ? marked.parse(text, { renderer }) : '')
+// 高亮语法扩展：==文本== → <mark class="md-highlight">
+const highlightExtension = {
+  name: 'highlight',
+  level: 'inline',
+  start(src) {
+    return src.indexOf('==')
+  },
+  tokenizer(src) {
+    const match = /^==([^=\n]+)==/.exec(src)
+    if (match) {
+      const token = {
+        type: 'highlight',
+        raw: match[0],
+        text: match[1],
+        tokens: []
+      }
+      // 内部文本继续按行内语法解析（支持加粗、链接等嵌套）
+      const childTokens = this.lexer.inlineTokens(token.text, token.tokens)
+      if (childTokens) token.tokens = childTokens
+      return token
+    }
+  },
+  renderer(token) {
+    return `<mark class="md-highlight">${this.parser.parseInline(token.tokens)}</mark>`
+  }
+}
+
+// 页面独立 marked 实例：仅本页注册高亮扩展，避免影响其他页面共用的全局配置
+const md = new Marked()
+md.use({ renderer })
+md.use({ extensions: [highlightExtension] })
+
+const renderMarkdown = (text) => (text ? md.parse(text) : '')
 
 const loading = ref(false)
 const loadError = ref('')
@@ -292,6 +455,8 @@ const notePreface = ref('')
 const chapters = ref([])
 // -1 表示序言（默认）
 const currentIndex = ref(-1)
+// 是否展示「生命线」固定模块（仅查看，无任何编辑入口）
+const showLifeline = ref(false)
 
 // 将树形章节拍平为目录列表（支持二级：一级「第 X 章」，二级「X.Y」）
 const flatChapters = computed(() => {
@@ -350,19 +515,212 @@ const onTocClick = (chapter) => {
 
 const currentChapter = computed(() => flatChapters.value[currentIndex.value] || {})
 const renderedPreface = computed(() => renderMarkdown(notePreface.value))
-const renderedContent = computed(() => renderMarkdown(currentChapter.value.content))
+
+// ========== 章节正文（列表接口不返回 content，正文单独走 queryChapter?id= 拉取） ==========
+// 缓存：章节 id -> markdown 原文（已缓存则直接复用，不重复请求）
+const chapterContent = ref({})
+const contentLoadingId = ref('')
+const contentError = ref('')
+let contentRequestSeq = 0
+
+const currentChapterId = computed(() => (currentChapter.value.id ? String(currentChapter.value.id) : ''))
+
+// 当前展示的正文：序言不取章节正文；章节取缓存（未加载时为空串，由加载态占位）
+const currentContent = computed(() => {
+  if (currentIndex.value === -1) return ''
+  const id = currentChapterId.value
+  return id ? chapterContent.value[id] ?? '' : ''
+})
+
+const contentLoading = computed(() => !!currentChapterId.value && contentLoadingId.value === currentChapterId.value)
+const renderedContent = computed(() => renderMarkdown(currentContent.value))
+
+// 按需加载章节正文（带缓存；失败不写缓存，便于重试）
+const loadChapterContent = async (id) => {
+  const key = String(id ?? '')
+  if (!key) return
+  if (chapterContent.value[key] !== undefined) return // 已缓存
+  const seq = ++contentRequestSeq
+  contentLoadingId.value = key
+  contentError.value = ''
+  try {
+    const res = await api.getPublicChapterDetail(key)
+    const ok = !!(res && (res.success === true || res.code === 200 || res.code === 0))
+    if (!ok) throw new Error((res && (res.message || res.msg)) || '章节内容加载失败')
+    const content = (res.data && res.data.content) || ''
+    // 空内容也写入缓存，避免每次切换都重新请求
+    chapterContent.value = { ...chapterContent.value, [key]: content }
+  } catch (e) {
+    console.error('加载章节内容失败', e)
+    if (seq === contentRequestSeq) contentError.value = '章节内容加载失败，请稍后重试'
+  } finally {
+    if (seq === contentRequestSeq) contentLoadingId.value = ''
+  }
+}
+
+// 重试按钮：清掉错误态后重新拉取当前章节
+const retryChapterContent = () => {
+  contentError.value = ''
+  const id = currentChapterId.value
+  if (id) loadChapterContent(id)
+}
 
 // 切换章节（只读，无保存逻辑）
 // 打卡针对二级小节统计：每次切换到二级小节都重置本次学习计时
 const selectChapter = (index) => {
-  if (index === currentIndex.value) return
+  // 点击序言/章节时退出生命线视图（即使回到同一章节也要退出）
+  showLifeline.value = false
+  const changed = index !== currentIndex.value
   currentIndex.value = index
   const target = flatChapters.value[index]
-  if (target && target.level === 1) {
+  if (!target) return
+  if (changed && target.level === 1) {
     sessionStartAt.value = Date.now()
     elapsedSec.value = 0
     // 切换到二级小节：重置计时并加载该小节的历史打卡记录
     loadStudyRecords(String(target.id ?? ''))
+  }
+  // 章节正文按需拉取（命中缓存则不发请求；重新点击可在失败后重试）
+  loadChapterContent(target.id)
+}
+
+// ========== 上一节 / 下一节 ==========
+// 相邻项取 flatChapters 的前后一项（拍平后的目录顺序），因此可以自然跨章节连续跳转
+const prevChapter = computed(() => (currentIndex.value > 0 ? flatChapters.value[currentIndex.value - 1] : null))
+const nextChapter = computed(() => {
+  const i = currentIndex.value
+  if (i < 0 || i >= flatChapters.value.length - 1) return null
+  return flatChapters.value[i + 1]
+})
+
+// step = -1 上一节，1 下一节
+const goSiblingChapter = (step) => {
+  const target = step < 0 ? prevChapter.value : nextChapter.value
+  if (!target) {
+    showCheckinToast(step < 0 ? '已经是第一节了，没有上一节' : '已经是最后一节了，没有下一节', 'info')
+    return
+  }
+  const index = flatChapters.value.indexOf(target)
+  if (index < 0) return
+  // 目标若为二级小节，自动展开其所属章节，保证左侧目录能定位到高亮项
+  if (target.level === 1 && target.pid && !expandedIds.value.has(target.pid)) {
+    const next = new Set(expandedIds.value)
+    next.add(target.pid)
+    expandedIds.value = next
+  }
+  selectChapter(index)
+  // 跳到新内容时回到顶部，避免停留在上一节的底部
+  scrollToTop()
+}
+
+// ========== 生命线（固定只读模块） ==========
+// 数据源 = 后端聚合接口 getNoteLine?noteId=（按天分组返回学习记录）
+const lifelineLoading = ref(false)
+const lifelineDays = ref([])
+
+// 2026-09-18 → 2026年9月18日
+const formatDay = (date) => {
+  if (!date) return ''
+  const d = new Date(`${date}T00:00:00`)
+  if (Number.isNaN(d.getTime())) return date
+  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`
+}
+
+// 该时间点是否为新月份的首个时间点（换月时左侧才展示月份，其余留空保持对齐）
+const isMonthStart = (i) => {
+  if (i <= 0) return true
+  const prev = lifelineDays.value[i - 1].date
+  const cur = lifelineDays.value[i].date
+  return prev.slice(0, 7) !== cur.slice(0, 7)
+}
+
+// 月份标签：与首条同年只显示「X月」，跨年显示「YYYY年X月」
+const monthLabel = (date) => {
+  const y = Number(date.slice(0, 4))
+  const m = Number(date.slice(5, 7))
+  const firstYear = Number((lifelineDays.value[0]?.date || date).slice(0, 4))
+  return y === firstYear ? `${m}月` : `${y}年${m}月`
+}
+
+// 起始/完结时间：直接取接口返回的 startTime / endTime
+// endTime 为空代表该笔记未完结，显示「待续...」
+const lifelineMeta = ref({ startTime: '', endTime: '' })
+const lifelineStart = computed(() => lifelineMeta.value.startTime)
+const lifelineEndTime = computed(() => lifelineMeta.value.endTime)
+
+// 点击目录「生命线」：隐藏右侧正文/打卡，展示时间线模块
+const selectLifeline = () => {
+  showLifeline.value = true
+  loadLifeline()
+}
+
+const loadLifeline = async () => {
+  if (!noteId) {
+    lifelineDays.value = []
+    return
+  }
+  if (lifelineLoading.value) return
+  lifelineLoading.value = true
+  try {
+    const res = await api.getNoteLine(noteId)
+    const ok = !!(res && (res.success === true || res.state === 20000 || res.code === 200 || res.code === 0))
+    const raw = ok ? res.data : null
+    // 真实结构：data: { name, startTime, endTime, lineList: [{ lineTime, lineMonth, contentList: [...] }] }
+    const list = Array.isArray(raw) ? raw : Array.isArray(raw?.lineList) ? raw.lineList : []
+
+    // 起始/完结时间取接口返回值（endTime 为空 = 未完结）
+    lifelineMeta.value = {
+      startTime: String(raw?.startTime ?? '').trim(),
+      endTime: String(raw?.endTime ?? '').trim()
+    }
+
+    // 日期归一化：后端返回中文日期 "2026年09月15日" → "2026-09-15"（兼容 YYYY-MM-DD / YYYY/MM/DD）
+    const normalizeDate = (value) => {
+      const s = String(value ?? '').trim()
+      const cn = s.match(/^(\d{4})年(\d{1,2})月(\d{1,2})日/)
+      if (cn) return `${cn[1]}-${String(cn[2]).padStart(2, '0')}-${String(cn[3]).padStart(2, '0')}`
+      return s.slice(0, 10).replace(/\//g, '-')
+    }
+
+    // 小节映射：title 自带序号（如 "3.1 数字"），拆成 label（序号）+ title（正文）
+    const mapChapter = (ch) => {
+      const fullTitle = String(ch.title ?? ch.name ?? '').trim()
+      const m = fullTitle.match(/^(\d+(?:\.\d+)*)\s+(.+)$/)
+      return {
+        id: ch.id ?? ch.chapterId ?? ch.relationId ?? '',
+        label: m ? m[1] : '',
+        title: m ? m[2] : fullTitle,
+        complete: Number(ch.complete ?? ch.isComplete ?? 0)
+      }
+    }
+
+    const dayMap = new Map()
+    list.forEach((item) => {
+      const date = normalizeDate(item.lineTime ?? item.date ?? item.day ?? item.study_time)
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return
+      if (!dayMap.has(date)) dayMap.set(date, [])
+      const bucket = dayMap.get(date)
+      const records = Array.isArray(item.contentList)
+        ? item.contentList
+        : Array.isArray(item.chapters)
+          ? item.chapters
+          : [item]
+      records
+        .map(mapChapter)
+        .filter((ch) => ch.title)
+        .forEach((ch) => {
+          if (!bucket.some((c) => c.id && c.id === ch.id)) bucket.push(ch)
+        })
+    })
+
+    lifelineDays.value = [...dayMap.entries()]
+      .map(([date, chapters]) => ({ date, chapters }))
+      .filter((day) => day.chapters.length)
+      .sort((a, b) => a.date.localeCompare(b.date))
+  } catch (e) {
+    lifelineDays.value = []
+  } finally {
+    lifelineLoading.value = false
   }
 }
 
@@ -440,6 +798,8 @@ const sessionStartAt = ref(Date.now())
 const elapsedSec = ref(0)
 const checkinLock = ref(false)
 const checkinToast = ref('')
+// toast 类型：success 打卡成功（对勾图标）/ info 普通提示（信息图标）
+const toastKind = ref('success')
 let checkinRequestSeq = 0
 let checkinTimer = null
 let checkinToastTimer = null
@@ -507,8 +867,9 @@ const loadStudyRecords = async (relationId) => {
   }
 }
 
-const showCheckinToast = (msg) => {
+const showCheckinToast = (msg, kind = 'success') => {
   checkinToast.value = msg
+  toastKind.value = kind
   clearTimeout(checkinToastTimer)
   checkinToastTimer = setTimeout(() => {
     checkinToast.value = ''
@@ -930,6 +1291,117 @@ onMounted(loadAll)
   font-size: 14px;
 }
 
+/* 章节正文加载失败时的重试按钮 */
+.md-retry {
+  display: inline-block;
+  margin-left: 10px;
+  padding: 4px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  background: var(--bg-secondary);
+  color: var(--accent-primary);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.md-retry:hover {
+  border-color: var(--accent-primary);
+  background: var(--accent-glow);
+}
+
+/* ========== 上一节 / 下一节 ========== */
+.chapter-nav {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+  margin-top: 38px;
+  padding-top: 22px;
+  border-top: 1px dashed var(--border-color);
+}
+
+.chapter-nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 50%;
+  padding: 10px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease, transform 0.15s ease;
+}
+
+.chapter-nav-btn.next {
+  margin-left: auto;
+  text-align: right;
+  justify-content: flex-end;
+}
+
+.chapter-nav-btn:hover:not(.is-end) {
+  border-color: var(--accent-primary);
+  background: var(--accent-glow);
+  transform: translateY(-1px);
+}
+
+.chapter-nav-btn:active:not(.is-end) {
+  transform: translateY(0);
+}
+
+/* 到尽头：置灰但仍可点击，点击后给出提示 */
+.chapter-nav-btn.is-end {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.chapter-nav-arrow {
+  flex-shrink: 0;
+  color: var(--accent-primary);
+}
+
+.chapter-nav-btn.is-end .chapter-nav-arrow {
+  color: var(--text-muted);
+}
+
+.chapter-nav-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.chapter-nav-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--accent-primary);
+}
+
+.chapter-nav-btn.is-end .chapter-nav-label {
+  color: var(--text-muted);
+}
+
+.chapter-nav-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chapter-nav-btn.is-end .chapter-nav-title {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
 /* ========== Markdown 正文样式 ========== */
 .md-body {
   font-size: 15px;
@@ -977,6 +1449,17 @@ onMounted(loadAll)
 
 .md-body :deep(a):hover {
   text-decoration: underline;
+}
+
+/* ==高亮== 语法：显眼的高亮样式 */
+.md-body :deep(mark.md-highlight) {
+  background: linear-gradient(180deg, rgba(255, 214, 0, 0.35) 0%, #ffd600 100%);
+  color: #5a3d00;
+  font-weight: 600;
+  padding: 1px 4px;
+  border-radius: 3px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
 }
 
 .md-body :deep(blockquote) {
@@ -1199,6 +1682,27 @@ onMounted(loadAll)
 
   .page-title {
     font-size: 18px;
+  }
+
+  /* 上一节 / 下一节：窄屏缩小内边距与字号 */
+  .chapter-nav {
+    gap: 8px;
+    margin-top: 28px;
+    padding-top: 18px;
+  }
+
+  .chapter-nav-btn {
+    padding: 9px 10px;
+    gap: 4px;
+  }
+
+  .chapter-nav-label {
+    font-size: 10px;
+    letter-spacing: 0;
+  }
+
+  .chapter-nav-title {
+    font-size: 12px;
   }
 
   .md-body {
@@ -1789,6 +2293,316 @@ onMounted(loadAll)
   .checkin-stat-num,
   .checkin-stat-time {
     font-size: 18px;
+  }
+}
+
+/* ========== 生命线（固定只读模块） ========== */
+/* 目录入口：固定在目录最底部 */
+.toc-lifeline {
+  margin-top: 8px;
+  border-top: 1px dashed var(--border-color);
+}
+
+.lifeline-icon {
+  display: flex;
+  align-items: center;
+}
+
+/* 生命线独立卡片 */
+.lifeline-wrap {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  padding: 44px 56px;
+}
+
+/* 创建 / 完结时间：已移到时间线首尾节点（见 .lifeline-start / .lifeline-end） */
+
+/* 时间线（按天，竖向） */
+.lifeline-timeline {
+  display: flex;
+  flex-direction: column;
+}
+
+.lifeline-day {
+  display: flex;
+  gap: 16px;
+}
+
+/* 月份归属（时间线左侧，换月展示一次） */
+.lifeline-month {
+  flex-shrink: 0;
+  width: 52px;
+  padding-top: 2px;
+  text-align: right;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent-primary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.lifeline-day-marker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 12px;
+  flex-shrink: 0;
+}
+
+.lifeline-day-dot {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  box-shadow: 0 0 0 4px var(--accent-glow);
+  margin-top: 4px;
+}
+
+.lifeline-day-line {
+  flex: 1;
+  width: 2px;
+  min-height: 14px;
+  margin-top: 6px;
+  border-radius: 2px;
+  background: var(--border-color);
+}
+
+/* 最后一天：保留底部留白，让主轴自然延伸到结束节点 */
+.lifeline-day-body {
+  flex: 1;
+  min-width: 0;
+  padding: 0 0 26px 2px;
+}
+
+.lifeline-day-date {
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 小节条目：线分支样式（从主轴横向引出，不用卡片） */
+.lifeline-chapter {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0 6px 16px;
+  margin-bottom: 2px;
+}
+
+/* 分支曲线：从主轴平滑弯出指向小节（1/4 椭圆弧，与主轴同宽同色）
+ * 注意：描边用整数 2px（亚像素 1.5px + 大圆角在部分浏览器会被光栅化丢弃），
+ * 圆角用显式 px（百分比在大圆角下有缩放兼容问题） */
+.lifeline-chapter::before {
+  content: '';
+  position: absolute;
+  left: -24px;
+  bottom: 50%;
+  width: 24px;
+  height: 16px;
+  border-left: 2px solid var(--border-color);
+  border-bottom: 2px solid var(--border-color);
+  border-bottom-left-radius: 24px 16px;
+  box-sizing: content-box;
+  pointer-events: none;
+}
+
+/* 当天第一条分支：从更高处大幅弯出（视觉上从节点出发） */
+.lifeline-chapter.is-first::before {
+  height: 30px;
+  border-bottom-left-radius: 24px 30px;
+}
+
+/* 分支端点圆点 */
+.lifeline-chapter::after {
+  content: '';
+  position: absolute;
+  left: 1px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--border-color);
+}
+
+/* 学习中：主题色端点 */
+.lifeline-chapter.is-studying::after {
+  background: var(--accent-primary);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+/* 已完成：绿色端点 */
+.lifeline-chapter.is-done::after {
+  background: #22c55e;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
+}
+
+.lifeline-chapter-label {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.lifeline-chapter-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 状态：纯色文字，不做胶囊 */
+.lifeline-chapter-status {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.lifeline-chapter.is-studying .lifeline-chapter-status {
+  color: var(--accent-primary);
+}
+
+.lifeline-chapter.is-done .lifeline-chapter-status {
+  color: #22c55e;
+}
+
+.lifeline-empty {
+  margin: 0;
+  padding: 36px 0;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+/* ========== 起始节点：主轴起点，指向创建时间 ========== */
+.lifeline-start {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+/* 起点圆环：主题色空心，与日期实心渐变点区分 */
+.lifeline-start-dot {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 3px solid var(--accent-primary);
+  background: var(--bg-card);
+  box-sizing: border-box;
+}
+
+/* 起始节点文案：垂直居中对准起点圆心 */
+.lifeline-start-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  height: 12px;
+  padding-left: 2px;
+}
+
+.lifeline-start-text {
+  font-size: 14px;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lifeline-start-date {
+  font-weight: 700;
+  color: var(--accent-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ========== 结束节点：主轴收尾，指向完结时间 ========== */
+.lifeline-end {
+  display: flex;
+  gap: 16px;
+}
+
+/* 终点圆环：空心，与日期实心渐变点区分 */
+.lifeline-end-dot {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 3px solid #22c55e;
+  background: var(--bg-card);
+  box-sizing: border-box;
+}
+
+/* 结束节点文案：垂直居中对准终点圆心 */
+.lifeline-end-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  height: 12px;
+  padding-left: 2px;
+}
+
+.lifeline-end-text {
+  font-size: 14px;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lifeline-end-date {
+  font-weight: 700;
+  color: #22c55e;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 生命线移动端适配 */
+@media (max-width: 900px) {
+  .lifeline-wrap {
+    padding: 32px 24px;
+  }
+}
+
+@media (max-width: 600px) {
+  .lifeline-wrap {
+    padding: 24px 16px;
+  }
+
+  .lifeline-day {
+    gap: 12px;
+  }
+
+  .lifeline-month {
+    width: 36px;
+    font-size: 11px;
+  }
+
+  .lifeline-day-body {
+    padding-left: 0;
+  }
+
+  /* 分支曲线随间距缩短，起点仍接在主轴上（content-box，外沿 = 宽 + 2px 描边） */
+  .lifeline-chapter::before {
+    left: -18px;
+    width: 22px;
+    border-bottom-left-radius: 22px 16px;
+  }
+
+  .lifeline-chapter.is-first::before {
+    height: 24px;
+    border-bottom-left-radius: 22px 24px;
   }
 }
 </style>

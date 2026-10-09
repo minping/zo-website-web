@@ -786,7 +786,10 @@ export const api = {
       chapterNum: Number(item.chapter_num ?? item.chapterNum ?? 0),
       sectionNum: Number(item.section_num ?? item.sectionNum ?? 0),
       createTime: item.created_time || item.createdTime || '',
-      updateTime: item.updated_time || item.updatedTime || ''
+      updateTime: item.updated_time || item.updatedTime || '',
+      // 字数 / 代码行数：用于笔记卡片展示，缺省 0
+      text_char_count: Number(item.text_char_count ?? item.textCharCount ?? 0),
+      code_line_count: Number(item.code_line_count ?? item.codeLineCount ?? 0)
     })
     if (res.data && Array.isArray(res.data)) {
       res.data = res.data.map(mapItem)
@@ -825,7 +828,8 @@ export const api = {
     return await request(API_PATHS.deleteNoteInfo(id))
   },
 
-  // 查询笔记章节列表（title 为标题，orders 为排序，content 为 markdown 文本）
+  // 查询笔记章节列表（只负责目录结构：title 标题、orders 排序、pid 父级、complete 完成状态）
+  // 不返回 content：章节正文统一由 getChapterDetail（/admin/notes/queryChapter）按需拉取
   async getChapterList(noteId) {
     const res = await request(API_PATHS.queryChapterList(noteId))
     const mapItem = (item) => ({
@@ -834,13 +838,26 @@ export const api = {
       orders: Number(item.orders ?? item.order_num ?? item.sort ?? 0),
       pid: item.tree_pid || item.pid || null,
       complete: Number(item.complete ?? item.isComplete ?? 0),
-      content: typeof item.content === 'string'
-        ? item.content
-        : Array.isArray(item.content) ? item.content.join('\n\n') : '',
       children: Array.isArray(item.children) ? item.children.map(mapItem) : []
     })
     const list = Array.isArray(res.data) ? res.data : res.data?.rows || []
     res.data = list.map(mapItem).filter(item => item.title)
+    return res
+  },
+
+  // 查询章节详情（后台，id 为章节 id）
+  // 返回 data: { id, title, orders, content(markdown) }
+  async getChapterDetail(id) {
+    const res = await request(API_PATHS.queryChapterAdmin(id))
+    if (res.data) {
+      const item = res.data
+      res.data = {
+        id: item.id ?? item.chapter_id ?? '',
+        title: item.title || '',
+        orders: Number(item.orders ?? 0),
+        content: typeof item.content === 'string' ? item.content : ''
+      }
+    }
     return res
   },
 
@@ -882,7 +899,24 @@ export const api = {
     return res
   },
 
-  // 查询章节列表（前台公开，title 为标题，orders 为排序，content 为 markdown 文本）
+  // 查询章节详情（前台公开，id 为章节 id）
+  // 返回 data: { id, title, orders, content(markdown) }；正文只走这个接口，列表接口不返回 content
+  async getPublicChapterDetail(id) {
+    const res = await request(API_PATHS.queryChapterPublic(id))
+    if (res.data) {
+      const item = res.data
+      res.data = {
+        id: item.id ?? item.chapter_id ?? '',
+        title: item.title || '',
+        orders: Number(item.orders ?? 0),
+        content: typeof item.content === 'string' ? item.content : ''
+      }
+    }
+    return res
+  },
+
+  // 查询章节列表（前台公开，只负责目录结构：title 标题、orders 排序、pid 父级、complete 完成状态）
+  // 不返回 content：正文统一由 getPublicChapterDetail（queryChapter）按需拉取
   async getPublicChapterList(noteId) {
     const res = await request(API_PATHS.queryChapterListPublic(noteId))
     const mapItem = (item) => ({
@@ -890,9 +924,7 @@ export const api = {
       title: item.title || item.name || '',
       orders: Number(item.orders ?? item.order_num ?? item.sort ?? 0),
       pid: item.tree_pid || item.pid || null,
-      content: typeof item.content === 'string'
-        ? item.content
-        : Array.isArray(item.content) ? item.content.join('\n\n') : '',
+      complete: Number(item.complete ?? item.isComplete ?? 0),
       children: Array.isArray(item.children) ? item.children.map(mapItem) : []
     })
     const list = Array.isArray(res.data) ? res.data : res.data?.rows || []
@@ -902,8 +934,9 @@ export const api = {
 
   // 随机获取一篇笔记中的小节（前台公开，GET）
   // 返回 data: { name 笔记名称, title 小节标题, content 小节内容(markdown) }
-  async getRandomNoteContent() {
-    return await request(API_PATHS.getRandomContent)
+  // noteId 为空则全库随机；传入则只在指定笔记内随机
+  async getRandomNoteContent(noteId) {
+    return await request(API_PATHS.getRandomContent(noteId))
   },
 
   // 保存学习打卡记录（前台公开，POST）
@@ -919,6 +952,12 @@ export const api = {
   // 返回 data: [{ study_time: 'YYYY-MM-DD HH:mm', timing: 秒数 }, ...]（按学习时间倒序）
   async queryStudyRecord(relationId) {
     return await request(API_PATHS.queryStudyRecord(relationId))
+  },
+
+  // 查询笔记生命线（前台公开，GET，noteId 为笔记 id）
+  // 返回 data: { name, startTime, endTime, lineList: [{ lineTime: 'YYYY年MM月DD日', lineMonth, contentList: [{ id, title, complete }] }] }
+  async getNoteLine(noteId) {
+    return await request(API_PATHS.getNoteLine(noteId))
   },
 
   // 斩杀知识点（前台公开，POST）

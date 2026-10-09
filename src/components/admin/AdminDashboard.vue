@@ -240,7 +240,11 @@
                 >
                   <span class="note-cal-week">{{ cell.week }}</span>
                   <span class="note-cal-date">{{ cell.day }}</span>
-                  <span class="note-cal-count">{{ cell.num > 0 ? cell.num : '' }}</span>
+                  <span class="note-cal-count">
+                    <template v-if="cell.num > 0">
+                      <span class="note-cal-num">{{ cell.num }}</span><span class="note-cal-unit">篇</span>
+                    </template>
+                  </span>
                 </div>
               </div>
             </template>
