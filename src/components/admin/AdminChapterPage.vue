@@ -64,7 +64,7 @@
                 v-for="(chapter, index) in flatChapters"
                 :key="chapter.id"
                 class="toc-item"
-                :class="['toc-level-' + chapter.level, { active: currentIndex === index }]"
+                :class="['toc-level-' + chapter.level, { active: currentIndex === index, done: Number(chapter.complete) === 1 }]"
                 @click="selectChapter(index)"
                 @dblclick="openEditDialog(index)"
                 @contextmenu.prevent.stop="openChapterMenu($event, index)"
@@ -73,6 +73,18 @@
                 <span class="toc-index">{{ chapter.label }}</span>
                 <span class="toc-name">{{ chapter.title }}</span>
                 <span class="toc-dot"></span>
+                <!-- 父级章节专属：悬停浮现 + 号，点击直接在下方新建小节 -->
+                <button
+                  v-if="chapter.level === 0"
+                  type="button"
+                  class="toc-add-child-btn"
+                  title="添加小节"
+                  @click.stop.prevent="openAddChildDialog(index)"
+                  @dblclick.stop.prevent
+                  @contextmenu.stop.prevent
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                </button>
               </li>
             </ul>
             <p v-if="loading" class="toc-empty">章节加载中…</p>
@@ -206,20 +218,6 @@
       </div>
     </div>
 
-    <!-- 完成章节确认弹窗 -->
-    <div v-if="completeConfirmVisible" class="modal-overlay" @click.self="closeCompleteConfirm">
-      <div class="modal complete-modal">
-        <h3>确认完成章节</h3>
-        <p>确定将当前笔记标记为「已完成」吗？完成后将展示「✓ 已完成」标记。</p>
-        <div class="modal-actions">
-          <button class="btn btn-secondary complete-cancel" :disabled="completing" @click="closeCompleteConfirm">取消</button>
-          <button class="btn complete-confirm" :disabled="completing" @click="confirmCompleteChapter">
-            {{ completing ? '完成中…' : '确认完成' }}
-          </button>
-        </div>
-      </div>
-    </div>
-
     <!-- 删除章节确认弹窗 -->
     <div v-if="deleteConfirmVisible" class="modal-overlay" @click.self="closeDeleteConfirm">
       <div class="modal delete-modal">
@@ -297,24 +295,47 @@ const dialogMode = ref('add') // 'add' | 'edit' | 'child'
 const editingChapterId = ref(null)
 const chapterForm = ref({ title: '', orders: 0, pid: null, pidTitle: '' })
 
+// 计算同级章节的下一个排序值：取同一层级（顶级或同一父章节下）已有章节的最大 orders + 1
+const nextOrders = (siblings) => {
+  const list = Array.isArray(siblings) ? siblings : []
+  const max = list.reduce((m, c) => Math.max(m, Number(c.orders ?? 0) || 0), 0)
+  return max + 1
+}
+
 const openAddDialog = () => {
   dialogMode.value = 'add'
   editingChapterId.value = null
-  chapterForm.value = { title: '', orders: 0, pid: null, pidTitle: '' }
+  // 新建章节：排在所有顶级章节的最后（顶级最大 orders + 1）
+  chapterForm.value = { title: '', orders: nextOrders(book.value.chapters), pid: null, pidTitle: '' }
   dialogVisible.value = true
 }
 
 const openAddChildDialog = (index) => {
   const chapter = flatChapters.value[index]
   if (!chapter) return
-  // 只支持二级目录：二级章节不能再建子级
+  // 右键的是小节：新增的小节与它同属一个父章节（追加为兄弟，而不是再嵌套一层）
+  let parentId = chapter.id
+  let parentTitle = chapter.title || ''
+  let siblings = chapter.children
   if (chapter.level >= 1) {
-    showToast('最多支持二级目录', 'error')
-    return
+    if (!chapter.pid) {
+      showToast('无法确定所属章节', 'error')
+      return
+    }
+    // 从拍平列表中找回父章节，用它的标题和 children 计算排序
+    const parent = flatChapters.value.find((c) => c.id === chapter.pid)
+    if (!parent) {
+      showToast('未找到所属章节', 'error')
+      return
+    }
+    parentId = parent.id
+    parentTitle = parent.title || ''
+    siblings = parent.children
   }
   dialogMode.value = 'child'
   editingChapterId.value = null
-  chapterForm.value = { title: '', orders: 0, pid: chapter.id, pidTitle: chapter.title || '' }
+  // 新建小节：排在该父章节下所有小节的最后（同级最大 orders + 1）
+  chapterForm.value = { title: '', orders: nextOrders(siblings), pid: parentId, pidTitle: parentTitle }
   dialogVisible.value = true
 }
 
@@ -466,37 +487,21 @@ const goBack = () => {
   }
 }
 
-// 完成章节：调接口标记章节为完成状态（GET /admin/notes/completeChapter?id=<章节id>）
+// 完成章节：点击按钮直接调接口标记完成（GET /admin/notes/completeChapter?id=<章节id>），无二次确认
 const completing = ref(false)
-const completeConfirmVisible = ref(false)
 
-// 点击「完成章节」按钮：打开二次确认弹窗
-const handleCompleteChapter = () => {
+const handleCompleteChapter = async () => {
   const chapter = currentChapter.value
   if (!chapter || !chapter.id) {
     showToast('请先选择章节', 'error')
     return
   }
   if (completing.value) return
-  completeConfirmVisible.value = true
-}
-
-const closeCompleteConfirm = () => {
-  if (completing.value) return
-  completeConfirmVisible.value = false
-}
-
-// 弹窗确认后真正执行
-const confirmCompleteChapter = async () => {
-  const chapter = currentChapter.value
-  if (!chapter || !chapter.id) return
-  if (completing.value) return
   completing.value = true
   try {
     const res = await api.completeChapter(chapter.id)
     if (res.success || res.code === 200 || res.code === 0) {
       showToast('章节已标记为完成')
-      completeConfirmVisible.value = false
       // 本地乐观更新：立即把当前章节标记为已完成（无论接口刷新时序）
       chapter.complete = 1
       // 刷新章节列表（静默刷新，保留当前章节位置）
@@ -856,7 +861,7 @@ const handleSaveShortcut = (e) => {
     return
   }
   // 其它确认弹窗打开时不做保存
-  if (completeConfirmVisible.value || deleteConfirmVisible.value) return
+  if (deleteConfirmVisible.value) return
   if (savingContent.value) return
   if (!dirty.value) {
     showToast('当前没有未保存的修改', 'info')

@@ -94,35 +94,30 @@
             </div>
           </aside>
 
-          <!-- 右侧主内容 -->
+          <!-- 右侧主内容：单一列表，不再按分组分块展示，同分组的文章保持相邻 -->
           <div class="article-main">
-            <!-- 文章分组列表 -->
             <div class="article-groups">
-              <div v-for="group in filteredGroups" :key="group.tag" :id="'group-' + group.tag" class="article-group">
-                <div class="group-header">
-                  <div class="group-title-wrapper">
-                    <span class="group-tag-dot" :style="{ background: group.tagColor }"></span>
-                    <h2 class="group-title">{{ group.tag }}</h2>
-                  </div>
-                </div>
-                <div class="group-articles">
-                  <article 
-                    v-for="article in group.articles" 
-                    :key="article.id" 
-                    class="article-list-item"
-                    @click="goToArticle(article)"
-                  >
-                    <div class="article-list-main">
-                      <h3 class="article-list-title">{{ article.title }}</h3>
-                      <div class="article-list-meta">
-                        <span class="article-list-date">发布于: {{ article.date }}</span>
-                        <span class="article-list-read">推荐阅读时长: {{ article.readTime }} 分钟</span>
-                      </div>
+              <template v-for="group in filteredGroups" :key="group.tag">
+                <!-- 分组锚点：不渲染可见内容，仅用于左侧导航的滚动定位/高亮 -->
+                <span :id="'group-' + group.tag" class="group-anchor"></span>
+                <article
+                  v-for="article in group.articles"
+                  :key="article.id"
+                  class="article-list-item"
+                  @click="goToArticle(article)"
+                >
+                  <div class="article-list-main">
+                    <h3 class="article-list-title">{{ article.title }}</h3>
+                    <div class="article-list-meta">
+                      <span class="article-list-date">发布于: {{ article.date }}</span>
+                      <span class="article-list-read">推荐阅读时长: {{ article.readTime }} 分钟</span>
                     </div>
-                    <span class="article-list-arrow">›</span>
-                  </article>
-                </div>
-              </div>
+                  </div>
+                  <!-- 该条所属标签：小字常规样式，固定在横条右下角 -->
+                  <span class="article-list-tag" :style="{ color: article.tagColor }">{{ article.tag }}</span>
+                  <span class="article-list-arrow">›</span>
+                </article>
+              </template>
             </div>
           </div>
         </div>
@@ -158,7 +153,7 @@ const availableTags = ref([])
 // 侧边栏当前激活的标签
 const activeTag = ref('')
 
-// 滚动到指定标签分组
+// 滚动到指定标签分组（点击左侧导航时）
 const scrollToGroup = (tag) => {
   activeTag.value = tag
   const el = document.getElementById('group-' + tag)
@@ -169,29 +164,23 @@ const scrollToGroup = (tag) => {
   }
 }
 
-// 滚动监听，自动高亮当前可见分组
+// 滚动监听：按各分组锚点的位置，计算当前浏览到哪个分组，用于左侧导航高亮
 let scrollTimer = null
 const handleScroll = () => {
   if (scrollTimer) return
   scrollTimer = requestAnimationFrame(() => {
+    scrollTimer = null
     const groups = filteredGroups.value
-    if (groups.length === 0) {
-      scrollTimer = null
-      return
-    }
-    const navbarHeight = 90
+    if (!groups.length) return
+    const threshold = 130
     let currentTag = groups[0].tag
     for (const group of groups) {
       const el = document.getElementById('group-' + group.tag)
-      if (el) {
-        const rect = el.getBoundingClientRect()
-        if (rect.top <= navbarHeight + 100) {
-          currentTag = group.tag
-        }
+      if (el && el.getBoundingClientRect().top <= threshold) {
+        currentTag = group.tag
       }
     }
     activeTag.value = currentTag
-    scrollTimer = null
   })
 }
 
@@ -543,6 +532,40 @@ const fetchTags = async () => {
   min-width: 0;
 }
 
+/* ========== 横条右下角标签：常规小字，跟随条目底部 ========== */
+.article-list-tag {
+  flex-shrink: 0;
+  align-self: flex-end;
+  max-width: 150px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-secondary);
+  opacity: 0.85;
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+}
+
+/* 悬停该条时标签略微加深 */
+.article-list-item:hover .article-list-tag {
+  opacity: 1;
+}
+
+/* 分组锚点：不可见，只用于滚动定位；上下留白让同分组在视觉上成块 */
+.group-anchor {
+  display: block;
+  height: 0;
+  margin: 14px 0 2px;
+}
+
+.group-anchor:first-child {
+  margin-top: 0;
+}
+
 /* 加载状态 */
 .loading-state {
   display: flex;
@@ -582,71 +605,14 @@ const fetchTags = async () => {
   opacity: 0.5;
 }
 
-/* 文章分组 */
+/* 单一文章列表：一张卡片从头列到尾，分组之间只靠锚点的留白做轻微区隔 */
 .article-groups {
   display: flex;
   flex-direction: column;
-  gap: 24px;
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: 16px;
-  padding: 20px 24px;
-}
-
-.article-group {
-  background: transparent;
-  border: none;
-  border-radius: 0;
-  padding: 0;
-  position: relative;
-}
-
-/* 移除 ::after */
-
-.group-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 14px;
-  padding-bottom: 10px;
-  border-bottom: 2px solid var(--border-color);
-  position: relative;
-}
-
-.group-header::after {
-  content: '';
-  position: absolute;
-  bottom: -2px;
-  left: 0;
-  width: 48px;
-  height: 2px;
-  background: var(--accent-primary);
-  border-radius: 1px;
-}
-
-.group-title-wrapper {
-  display: flex;
-  align-items: center;
-}
-
-.group-tag-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-}
-
-.group-title {
-  font-size: 20px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-
-
-/* 列表式文章列表 */
-.group-articles {
-  display: flex;
-  flex-direction: column;
+  padding: 10px 24px 14px;
 }
 
 /* 文章条目：列表式 */
@@ -812,6 +778,13 @@ const fetchTags = async () => {
   .sidebar-tag-count {
     display: none;
   }
+
+  /* 窄屏横条空间有限，右侧标签再小一号 */
+  .article-list-tag {
+    font-size: 11px;
+    letter-spacing: 0;
+    max-width: 90px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -852,6 +825,10 @@ const fetchTags = async () => {
 
   .article-main {
     width: 100%;
+  }
+
+  .article-list-tag {
+    display: none;
   }
 
   .container {
