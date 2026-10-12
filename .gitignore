@@ -38,3 +38,6 @@ coverage/
 # 临时文件
 *.tmp
 *.temp
+
+# 浏览器调试工具会话数据（playwright-cli）
+.playwright-cli/

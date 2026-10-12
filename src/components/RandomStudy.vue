@@ -327,6 +327,27 @@ renderer.code = function ({ text, lang }) {
   `
 }
 
+// ==内容== 高亮语法（Obsidian 风格）：非标准 Markdown，注册行内扩展转成 mark 标签
+const highlightMark = {
+  name: 'highlightMark',
+  level: 'inline',
+  start(src) { return src.indexOf('==') },
+  tokenizer(src) {
+    const match = /^==(?=\S)([\s\S]*?\S)==/.exec(src)
+    if (match) {
+      return {
+        type: 'highlightMark',
+        raw: match[0],
+        tokens: this.lexer.inlineTokens(match[1])
+      }
+    }
+  },
+  renderer(token) {
+    return `<mark class="hl-mark">${this.parser.parseInline(token.tokens)}</mark>`
+  }
+}
+marked.use({ extensions: [highlightMark] })
+
 const renderMarkdown = (text) => (text ? marked.parse(text, { renderer }) : '')
 
 const handleNavigate = () => {
@@ -1352,6 +1373,17 @@ onUnmounted(() => {
   color: var(--accent-primary);
   font-size: 13px;
   font-family: 'Consolas', 'Courier New', monospace;
+}
+
+/* ==高亮==：荧光笔效果 */
+.md-body :deep(mark.hl-mark) {
+  padding: 1px 3px;
+  border-radius: 4px;
+  background: rgba(250, 204, 21, 0.38);
+  color: inherit;
+  font-weight: 600;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
 }
 
 /* 代码块 */

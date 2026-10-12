@@ -133,8 +133,8 @@ const previewRef = ref(null)
 const uploading = ref(false)
 const programmaticUpdate = ref(false)
 
-// 视图模式：split（分屏实时预览）| edit（纯编辑）| preview（纯预览）
-const viewMode = ref('split')
+// 视图模式：split（分屏实时预览）| edit（纯编辑）| preview（纯预览）；默认纯编辑
+const viewMode = ref('edit')
 const viewModes = ['split', 'edit', 'preview']
 const viewModeLabels = { split: '分屏', edit: '编辑', preview: '预览' }
 
