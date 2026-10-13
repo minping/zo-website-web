@@ -337,9 +337,84 @@
 /* ============================================
    学习日历（笔记打卡统计）
    ============================================ */
+/* 学习 + 复习 双日历并排 */
+.note-calendars-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 18px 0 10px;
+}
+
+.note-calendars-title h3 {
+  margin: 0 0 2px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--admin-text-primary);
+}
+
+.note-calendars-title p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--admin-text-secondary);
+}
+
+.note-calendars {
+  display: grid;
+  grid-template-columns: 1fr 1px 1fr;
+  gap: 18px;
+}
+
+/* 两个日历之间的 1px 竖向分隔线（占独立列，由 .note-calendars-divider 渲染） */
+.note-calendars-divider {
+  background: var(--admin-border-color);
+  width: 1px;
+  align-self: stretch;
+  border-radius: 1px;
+}
+
+@media (max-width: 900px) {
+  .note-calendars {
+    grid-template-columns: 1fr;
+  }
+  .note-calendars-divider {
+    display: none;
+  }
+}
+
+/* 双日历小标题：色点 + 名称，用于区分两个日历 */
+.note-calendar-subhead {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 7px;
+  margin-bottom: 6px;
+}
+
+.note-calendar-subhead h4 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--admin-text-primary);
+}
+
+.note-calendar-subhead .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.dot-study {
+  background: #22c55e;
+}
+
+.dot-review {
+  background: #3b82f6;
+}
+
 /* 扁平化：去掉卡片容器外观，仅保留内容 */
 .calendar-flat {
-  margin-top: 18px;
+  margin-top: 0;
   background: transparent;
   border: none;
   border-radius: 0;
@@ -347,27 +422,56 @@
   padding: 0;
 }
 
-/* 日期格子平铺成一行，横向滚动 */
+/* 月历容器：表头 + 7 列网格 */
+.note-calendar {
+  margin-top: 4px;
+}
+
+/* 周几表头：7 列等宽，与日期网格列对齐 */
+.note-calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom: 6px;
+}
+
+.note-calendar-weekdays span {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--admin-text-secondary);
+  letter-spacing: 1px;
+  padding: 4px 0;
+}
+
+/* 日期网格：7 列，一行一周；限宽让大屏下格子也不会被撑得过大 */
 .note-calendar-grid {
-  display: flex;
-  gap: 6px;
-  overflow-x: auto;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 3px;
+  max-width: 420px;
+  margin: 0 auto;
   padding-bottom: 4px;
 }
 
 .note-calendar-cell {
   position: relative;
-  flex: 0 0 auto;
-  width: 46px;
-  height: 56px;
-  border-radius: 8px;
+  aspect-ratio: 1 / 1;
+  border-radius: 5px;
   border: 1px solid var(--admin-border-color);
+  background: var(--admin-bg-card);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  transition: background 0.2s, border-color 0.2s;
+  gap: 1px;
+  transition: background 0.2s, border-color 0.2s, transform 0.15s ease;
+}
+
+/* 月初月末的补空格：完全透明，不响应交互 */
+.note-calendar-cell.blank {
+  border: none;
+  background: transparent;
+  pointer-events: none;
 }
 
 /* 今天 */
@@ -381,14 +485,28 @@
   border-color: #22c55e;
 }
 
+/* 复习日历：用蓝色与学习绿区分 */
+.note-calendar-cell.review {
+  border-color: rgba(59, 130, 246, 0.35);
+}
+
+.note-calendar-cell.review.active {
+  background: #3b82f6;
+  border-color: #3b82f6;
+}
+
+.note-calendar-cell.review .note-cal-count {
+  color: #2563eb;
+}
+
 .note-cal-week {
-  font-size: 10px;
+  font-size: 8px;
   line-height: 1;
   color: var(--admin-text-secondary);
 }
 
 .note-cal-date {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   line-height: 1;
   color: var(--admin-text-primary);
@@ -397,8 +515,8 @@
 .note-cal-count {
   display: inline-flex;
   align-items: baseline;
-  gap: 2px;
-  font-size: 12px;
+  gap: 1px;
+  font-size: 11px;
   font-weight: 700;
   line-height: 1;
   white-space: nowrap;
@@ -415,17 +533,17 @@
 /* 有数量的格子：数量为主体，日期/星期缩小到角落 */
 .note-calendar-cell.active .note-cal-week {
   position: absolute;
-  top: 4px;
-  left: 5px;
-  font-size: 9px;
+  top: 2px;
+  left: 3px;
+  font-size: 7px;
   color: rgba(255, 255, 255, 0.85);
 }
 
 .note-calendar-cell.active .note-cal-date {
   position: absolute;
-  top: 4px;
-  right: 5px;
-  font-size: 9px;
+  top: 2px;
+  right: 3px;
+  font-size: 7px;
   color: rgba(255, 255, 255, 0.85);
 }
 
