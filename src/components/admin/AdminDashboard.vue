@@ -214,40 +214,103 @@
           </div>
         </div>
 
-        <!-- 学习日历（笔记打卡统计，可切换月份，扁平化展示） -->
-        <div class="calendar-container calendar-flat">
-          <div class="calendar-header">
-            <h3>学习日历</h3>
-            <div class="calendar-nav">
-              <button class="calendar-nav-btn" @click="shiftNoteMonth(-1)" :disabled="noteCalendarLoading">&lt;</button>
-              <span class="calendar-year">{{ noteMonthLabel }}</span>
-              <button class="calendar-nav-btn" @click="shiftNoteMonth(1)" :disabled="noteCalendarLoading">&gt;</button>
+        <!-- 学习日历 + 复习日历（左右并排，共用月份切换） -->
+        <div class="note-calendars-head">
+          <div class="note-calendars-title">
+            <h3>学习情况</h3>
+          </div>
+          <div class="calendar-nav">
+            <button class="calendar-nav-btn" @click="shiftNoteMonth(-1)" :disabled="noteCalendarLoading">&lt;</button>
+            <span class="calendar-year">{{ noteMonthLabel }}</span>
+            <button class="calendar-nav-btn" @click="shiftNoteMonth(1)" :disabled="noteCalendarLoading">&gt;</button>
+          </div>
+        </div>
+        <div class="note-calendars">
+          <!-- 学习日历（笔记打卡统计，7 列月历网格，一行一周） -->
+          <div class="calendar-container calendar-flat note-calendar-col">
+            <div class="note-calendar-subhead">
+              <span class="dot dot-study"></span>
+              <h4>学习日历</h4>
+            </div>
+            <div class="calendar-body">
+              <div v-if="noteCalendarLoading" class="calendar-loading">加载中...</div>
+              <template v-else>
+                <div class="note-calendar">
+                  <!-- 周几表头（周一在前） -->
+                  <div class="note-calendar-weekdays">
+                    <span v-for="d in noteWeekdays" :key="d">{{ d }}</span>
+                  </div>
+                  <!-- 日期网格：7 列、每行一周，月初月末补空格 -->
+                  <div class="note-calendar-grid">
+                    <div
+                      v-for="(cell, idx) in noteCalendarDays"
+                      :key="idx"
+                      class="note-calendar-cell"
+                      :class="{
+                        'today': !cell.blank && cell.date === todayStr,
+                        'active': !cell.blank && cell.num > 0,
+                        'blank': cell.blank
+                      }"
+                      :data-tooltip="cell.blank ? '' : (cell.date + '：' + cell.num + ' 篇')"
+                    >
+                      <template v-if="!cell.blank">
+                        <span class="note-cal-week">{{ cell.week }}</span>
+                        <span class="note-cal-date">{{ cell.day }}</span>
+                        <span class="note-cal-count">
+                          <template v-if="cell.num > 0">
+                            <span class="note-cal-num">{{ cell.num }}</span><span class="note-cal-unit">篇</span>
+                          </template>
+                        </span>
+                      </template>
+                    </div>
+                  </div>
+                </div>
+              </template>
             </div>
           </div>
-          <div class="calendar-body">
-            <div v-if="noteCalendarLoading" class="calendar-loading">加载中...</div>
-            <template v-else>
-              <div class="note-calendar-grid">
-                <div
-                  v-for="cell in noteCalendarDays"
-                  :key="cell.date"
-                  class="note-calendar-cell"
-                  :class="{
-                    'today': cell.date === todayStr,
-                    'active': cell.num > 0
-                  }"
-                  :data-tooltip="cell.date + '：' + cell.num + ' 条'"
-                >
-                  <span class="note-cal-week">{{ cell.week }}</span>
-                  <span class="note-cal-date">{{ cell.day }}</span>
-                  <span class="note-cal-count">
-                    <template v-if="cell.num > 0">
-                      <span class="note-cal-num">{{ cell.num }}</span><span class="note-cal-unit">篇</span>
-                    </template>
-                  </span>
+
+          <!-- 两个日历之间的竖向分隔线 -->
+          <div class="note-calendars-divider" aria-hidden="true"></div>
+
+          <!-- 复习日历（reviewDays，蓝色调与学习区分，共用月份） -->
+          <div class="calendar-container calendar-flat note-calendar-col">
+            <div class="note-calendar-subhead">
+              <span class="dot dot-review"></span>
+              <h4>复习日历</h4>
+            </div>
+            <div class="calendar-body">
+              <div v-if="noteCalendarLoading" class="calendar-loading">加载中...</div>
+              <template v-else>
+                <div class="note-calendar">
+                  <div class="note-calendar-weekdays">
+                    <span v-for="d in noteWeekdays" :key="d">{{ d }}</span>
+                  </div>
+                  <div class="note-calendar-grid">
+                    <div
+                      v-for="(cell, idx) in noteReviewCalendarDays"
+                      :key="idx"
+                      class="note-calendar-cell review"
+                      :class="{
+                        'today': !cell.blank && cell.date === todayStr,
+                        'active': !cell.blank && cell.num > 0,
+                        'blank': cell.blank
+                      }"
+                      :data-tooltip="cell.blank ? '' : (cell.date + '：' + cell.num + ' 篇')"
+                    >
+                      <template v-if="!cell.blank">
+                        <span class="note-cal-week">{{ cell.week }}</span>
+                        <span class="note-cal-date">{{ cell.day }}</span>
+                        <span class="note-cal-count">
+                          <template v-if="cell.num > 0">
+                            <span class="note-cal-num">{{ cell.num }}</span><span class="note-cal-unit">篇</span>
+                          </template>
+                        </span>
+                      </template>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </template>
+              </template>
+            </div>
           </div>
         </div>
       </section>
@@ -532,7 +595,10 @@ const goToNotes = () => {
 // ========== 学习日历（笔记打卡统计） ==========
 const noteCalendarLoading = ref(false)
 const noteMonth = ref(fmtMonth(new Date()))   // 当前月份 'yyyy-MM'
-const noteDays = ref({})                       // { 'yyyy-MM-dd': num }
+const noteDays = ref({})                       // { 'yyyy-MM-dd': num } 学习打卡
+const noteReviewDays = ref({})                 // { 'yyyy-MM-dd': num } 复习
+// 周几表头（与创作日历一致：周一在前）
+const noteWeekdays = ['一', '二', '三', '四', '五', '六', '日']
 
 // 月份标题
 const noteMonthLabel = computed(() => {
@@ -540,25 +606,59 @@ const noteMonthLabel = computed(() => {
   return `${y}年${Number(m)}月`
 })
 
-// 生成当月日期（平铺成一行，每个格子带星期几）
-const noteCalendarDays = computed(() => {
+// 把后端 days 数组 [{ day, num }] 转成 { 'yyyy-MM-dd': num }
+// 兼容 day 为完整日期(yyyy-MM-dd)或纯日号(1-31) 两种返回
+const parseMonthDays = (arr, monthKey) => {
+  const map = {}
+  if (!Array.isArray(arr)) return map
+  arr.forEach((item) => {
+    if (!item) return
+    const raw = String(item.day ?? '').trim()
+    if (!raw) return
+    let key = raw.slice(0, 10)
+    if (!key.includes('-')) {
+      const d = Number(raw)
+      if (!d) return
+      key = `${monthKey}-${String(d).padStart(2, '0')}`
+    }
+    map[key] = Number(item.num) || 0
+  })
+  return map
+}
+
+// 给定数据源，生成当月 7 列月历网格（月初月末补空格）
+const buildNoteMonthCells = (dataMap) => {
   const [y, m] = noteMonth.value.split('-').map(Number)
   const total = new Date(y, m, 0).getDate()
   const weekNames = ['日', '一', '二', '三', '四', '五', '六']
+  // getDay: 0=Sun, 1=Mon, ..., 6=Sat；转成「周一在前」偏移：Mon=0, ..., Sat=5, Sun=6
+  const firstWeek = (new Date(y, m - 1, 1).getDay() + 6) % 7
   const cells = []
+
+  for (let i = 0; i < firstWeek; i++) cells.push({ blank: true })
 
   for (let d = 1; d <= total; d++) {
     const dateStr = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`
     cells.push({
+      blank: false,
       day: d,
       date: dateStr,
       week: weekNames[new Date(y, m - 1, d).getDay()],
-      num: noteDays.value[dateStr] || 0
+      num: dataMap[dateStr] || 0
     })
   }
 
+  const tail = (7 - (cells.length % 7)) % 7
+  for (let i = 0; i < tail; i++) cells.push({ blank: true })
+
   return cells
-})
+}
+
+// 学习日历格子
+const noteCalendarDays = computed(() => buildNoteMonthCells(noteDays.value))
+
+// 复习日历格子（数据源换成 reviewDays）
+const noteReviewCalendarDays = computed(() => buildNoteMonthCells(noteReviewDays.value))
 
 // 切换月份
 const shiftNoteMonth = (delta) => {
@@ -568,7 +668,8 @@ const shiftNoteMonth = (delta) => {
 }
 
 // 获取笔记统计数据：请求 queryNoteStatics?month=yyyy-MM
-// 返回 total(总数)、studying(学习中)、finish(已完成)、monthStudy(本月学习天数)、days([{ day, num }])
+// 返回 total(总数)、studying(学习中)、finish(已完成)、monthStudy(本月学习天数)、
+// days([{ day, num }]) 学习打卡分布、reviewDays([{ day, num }]) 复习分布
 const fetchNoteStatics = async () => {
   noteCalendarLoading.value = true
   try {
@@ -580,23 +681,8 @@ const fetchNoteStatics = async () => {
       completedNotes: data.finish || 0,
       monthStudyDays: data.monthStudy || 0
     }
-    const map = {}
-    if (Array.isArray(data.days)) {
-      data.days.forEach((item) => {
-        if (!item) return
-        const raw = String(item.day ?? '').trim()
-        if (!raw) return
-        // 兼容完整日期(yyyy-MM-dd)或仅日号(如 "5")两种返回
-        let key = raw.slice(0, 10)
-        if (!key.includes('-')) {
-          const d = Number(raw)
-          if (!d) return
-          key = `${noteMonth.value}-${String(d).padStart(2, '0')}`
-        }
-        map[key] = Number(item.num) || 0
-      })
-    }
-    noteDays.value = map
+    noteDays.value = parseMonthDays(data.days, noteMonth.value)
+    noteReviewDays.value = parseMonthDays(data.reviewDays, noteMonth.value)
   } catch (error) {
     console.error('获取笔记统计数据失败:', error)
   } finally {
