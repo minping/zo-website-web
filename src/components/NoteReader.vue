@@ -216,66 +216,101 @@
               <section v-if="showCheckin && !showLifeline" class="checkin-wrap">
                 <div class="checkin-head">
                   <div class="checkin-title">打卡学习</div>
-                  <span class="checkin-sub">{{ studyStats.totalStatus ? '该小节今日已打卡' : '今日还未打卡' }}</span>
+                </div>
+
+                <!-- 本次学习时长：移出按钮，独立展示在打卡按钮上方 -->
+                <div class="checkin-clock">
+                  <span class="checkin-clock-label">本次学习时长</span>
+                  <span class="checkin-clock-time">{{ sessionClock }}</span>
                 </div>
 
                 <div class="checkin-panel">
+                  <!-- 四档评分：点任意一个即完成打卡（1/2/3/4 → Again/Hard/Good/Easy） -->
                   <button
-                    ref="checkinBtnEl"
-                    class="checkin-btn"
-                    :class="{ 'checkin-done': studyStats.totalStatus }"
-                    :disabled="checkinLock || studyStats.totalStatus"
-                    @click="handleCheckin"
+                    v-for="opt in ratingOptions"
+                    :key="opt.value"
+                    type="button"
+                    class="rating-btn"
+                    :class="'rating-' + opt.key"
+                    :disabled="checkinLock"
+                    :title="`打卡并标记为 ${opt.text}`"
+                    @click="handleCheckin(opt, $event)"
                   >
-                    <template v-if="!studyStats.totalStatus">
-                      <span class="checkin-btn-label">本次学习时长</span>
-                      <span class="checkin-btn-time">{{ sessionClock }}</span>
-                      <span class="checkin-btn-tip">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                          <path d="M20 6L9 17l-5-5"/>
-                        </svg>
-                        点击打卡
-                      </span>
-                    </template>
-                    <template v-else>
-                      <svg class="checkin-done-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M20 6L9 17l-5-5"/>
-                      </svg>
-                      <span class="checkin-btn-done-text">今日已打卡</span>
-                    </template>
+                    <span class="rating-btn-text">{{ opt.text }}</span>
+                    <span class="rating-btn-sub">{{ opt.sub }}</span>
                   </button>
                 </div>
 
                 <div class="checkin-stats">
                   <div class="checkin-stat">
                     <span class="checkin-stat-num">{{ studyStats.totalCount }}</span>
-                    <span class="checkin-stat-label">累计打卡</span>
+                    <span class="checkin-stat-label">累计学习次数</span>
                   </div>
                   <div class="checkin-stat">
                     <span class="checkin-stat-time">{{ studyStats.totalTiming }}</span>
                     <span class="checkin-stat-label">累计学习时长</span>
                   </div>
-                  <div class="checkin-stat">
-                    <span class="checkin-stat-num">{{ studyStats.todayCount }}</span>
-                    <span class="checkin-stat-label">今日打卡</span>
+                  <div class="checkin-stat checkin-stat-next">
+                    <span class="checkin-stat-time">{{ nextReviewText }}</span>
+                    <span class="checkin-stat-label">推荐下次复习时间</span>
                   </div>
                 </div>
 
-                <div class="checkin-history">
-                  <div class="checkin-history-head">
-                    <span class="checkin-history-title">历史学习记录</span>
-                    <span v-if="studyRecords.length" class="checkin-history-count">共 {{ studyRecords.length }} 条</span>
+                <!-- 基于 FSRS 算法的记忆留存率曲线 -->
+                <div class="retention-wrap">
+                  <div class="retention-head">
+                    <span class="retention-title">基于FSRS算法的记忆留存率曲线</span>
+                    <span v-if="retentionChart" class="retention-sub">未来 {{ retentionChart.days }} 天</span>
                   </div>
-                  <p v-if="studyRecordsLoading" class="checkin-empty">历史记录加载中…</p>
-                  <div v-else-if="studyRecords.length" class="checkin-list">
-                    <div v-for="r in studyRecords" :key="r.id" class="checkin-item">
-                      <div class="checkin-item-main">
-                        <span class="checkin-item-date">{{ r.date }}</span>
-                      </div>
-                      <span class="checkin-item-duration">{{ formatDuration(r.sec) }}</span>
+                  <p v-if="studyRecordsLoading" class="checkin-empty">曲线加载中…</p>
+                  <template v-else-if="retentionChart">
+                    <svg
+                      class="retention-chart"
+                      viewBox="0 0 560 220"
+                      preserveAspectRatio="xMidYMid meet"
+                      role="img"
+                      aria-label="记忆留存率曲线"
+                    >
+                      <!-- 横向网格 -->
+                      <g class="retention-grid">
+                        <line
+                          v-for="t in retentionChart.yTicks"
+                          :key="'g' + t.v"
+                          :x1="retentionChart.pad.l"
+                          :x2="retentionChart.w - retentionChart.pad.r"
+                          :y1="t.y"
+                          :y2="t.y"
+                        />
+                      </g>
+                      <!-- 坐标轴刻度文字 -->
+                      <g class="retention-axis-text">
+                        <text
+                          v-for="t in retentionChart.yTicks"
+                          :key="'y' + t.v"
+                          :x="retentionChart.pad.l - 6"
+                          :y="t.y + 4"
+                          text-anchor="end"
+                        >{{ t.label }}</text>
+                        <text
+                          v-for="t in retentionChart.xTicks"
+                          :key="'x' + t.v"
+                          :x="t.x"
+                          :y="retentionChart.h - 8"
+                          text-anchor="middle"
+                        >{{ t.label }}</text>
+                      </g>
+                      <!-- 无复习（自然遗忘） -->
+                      <polyline class="retention-line line-no" :points="retentionChart.noPoints" />
+                      <!-- 按计划复习（FSRS）：面积 + 实线 -->
+                      <path v-if="retentionChart.withArea" class="retention-area" :d="retentionChart.withArea" />
+                      <polyline class="retention-line line-with" :points="retentionChart.withPoints" />
+                    </svg>
+                    <div class="retention-legend">
+                      <span class="legend-item"><i class="legend-swatch legend-no"></i>无复习（自然遗忘）</span>
+                      <span class="legend-item"><i class="legend-swatch legend-with"></i>按计划复习（FSRS）</span>
                     </div>
-                  </div>
-                  <p v-else class="checkin-empty">还没有打卡记录，读完内容后点一下「打卡」吧～</p>
+                  </template>
+                  <p v-else class="checkin-empty">还没有学习记录，打卡后即可看到记忆留存率曲线～</p>
                 </div>
 
                 <!-- 打卡成功礼花（fixed 层，定位到按钮中心） -->
@@ -791,9 +826,11 @@ const showCheckin = computed(() => currentChapter.value.level === 1)
 // 当前小节的打卡历史（来自后端 queryStudyRecord.history，按学习时间倒序）
 const studyRecords = ref([])
 const studyRecordsLoading = ref(false)
-// 后端字段：todayCount 今日打卡数、totalCount 累计打卡、totalTiming 累计学习时长(HH:mm:ss)、
-// totalStatus 该小节今日是否已打卡（true 后不可再打卡）
-const studyStats = ref({ todayCount: 0, totalCount: 0, totalTiming: '00:00:00', totalStatus: false })
+// 后端字段：totalCount 累计学习、totalTiming 累计学习时长(HH:mm:ss)、
+// nextReviewTime 推荐下次复习时间(yyyy-MM-dd HH:mm)
+const studyStats = ref({ totalCount: 0, totalTiming: '00:00:00', nextReviewTime: '' })
+// 记忆留存率曲线：{ noReviewSeries: [{x,y}], withReviewSeries: [{x,y}] }（x=天数，y=留存率）
+const retentionLine = ref({ noReviewSeries: [], withReviewSeries: [] })
 const sessionStartAt = ref(Date.now())
 const elapsedSec = ref(0)
 const checkinLock = ref(false)
@@ -803,8 +840,7 @@ const toastKind = ref('success')
 let checkinRequestSeq = 0
 let checkinTimer = null
 let checkinToastTimer = null
-// 圆形打卡按钮与礼花覆盖层（fixed 定位到按钮中心）
-const checkinBtnEl = ref(null)
+// 礼花覆盖层（fixed 定位到被点击按钮的中心）
 const burstRoot = ref(null)
 const CONFETTI_COLORS = ['#f43f5e', '#f97316', '#facc15', '#22c55e', '#06b6d4', '#8b5cf6', '#ec4899', '#fb7185']
 
@@ -821,6 +857,76 @@ const formatDuration = (sec) => {
   const mm = m % 60
   return mm ? `${h}小时${mm}分` : `${h}小时`
 }
+
+// 推荐下次复习时间：后端返回 'yyyy-MM-dd HH:mm'，这里省略年份显示为 'MM-dd HH:mm'
+const nextReviewText = computed(() => {
+  const v = studyStats.value.nextReviewTime
+  if (!v) return '暂无'
+  return v.length >= 16 ? v.slice(5) : v
+})
+
+// ========== 记忆留存率曲线（手写 SVG，无额外依赖） ==========
+const CHART_W = 560
+const CHART_H = 220
+const CHART_PAD = { l: 42, r: 14, t: 14, b: 30 }
+
+const retentionChart = computed(() => {
+  const norm = (arr) => (Array.isArray(arr) ? arr : [])
+    .map((p) => ({ x: Number(p && p.x), y: Number(p && p.y) }))
+    .filter((p) => Number.isFinite(p.x) && Number.isFinite(p.y))
+  const noPts = norm(retentionLine.value.noReviewSeries)
+  const wiPts = norm(retentionLine.value.withReviewSeries)
+  const all = [...noPts, ...wiPts]
+  if (!all.length) return null
+
+  const xMin = Math.min(...all.map((p) => p.x))
+  const xMax = Math.max(...all.map((p) => p.x))
+  // 后端 forgettingCurve 返回 0~1 的留存率；若已是百分比(>1.5)则按原样展示
+  const rawMax = Math.max(...all.map((p) => p.y))
+  const isPct = rawMax > 1.5
+  const yMax = isPct ? Math.max(100, rawMax) : 1
+
+  const plotW = CHART_W - CHART_PAD.l - CHART_PAD.r
+  const plotH = CHART_H - CHART_PAD.t - CHART_PAD.b
+  const sx = (x) => CHART_PAD.l + ((x - xMin) / (xMax - xMin || 1)) * plotW
+  const sy = (y) => CHART_PAD.t + plotH - (Math.min(Math.max(y, 0), yMax) / yMax) * plotH
+  const toPoints = (arr) => arr
+    .map((p) => `${sx(p.x).toFixed(1)},${sy(p.y).toFixed(1)}`)
+    .join(' ')
+
+  // y 轴刻度：0% / 25% / 50% / 75% / 100%
+  const yTicks = [0, 0.25, 0.5, 0.75, 1].map((r) => ({
+    v: r,
+    y: +sy(r * yMax).toFixed(1),
+    label: `${Math.round(r * 100)}%`
+  }))
+  // x 轴刻度：起点 / 中点 / 终点
+  const xTicks = [xMin, (xMin + xMax) / 2, xMax].map((v) => ({
+    v,
+    x: +sx(v).toFixed(1),
+    label: `${Math.round(v)}天`
+  }))
+
+  // 带复习曲线下方的面积
+  const baseY = CHART_PAD.t + plotH
+  const withArea = wiPts.length > 1
+    ? `M ${sx(wiPts[0].x).toFixed(1)},${baseY} L ${wiPts
+      .map((p) => `${sx(p.x).toFixed(1)},${sy(p.y).toFixed(1)}`)
+      .join(' L ')} L ${sx(wiPts[wiPts.length - 1].x).toFixed(1)},${baseY} Z`
+    : ''
+
+  return {
+    w: CHART_W,
+    h: CHART_H,
+    pad: CHART_PAD,
+    noPoints: toPoints(noPts),
+    withPoints: toPoints(wiPts),
+    withArea,
+    yTicks,
+    xTicks,
+    days: Math.round(xMax - xMin)
+  }
+})
 
 // 本次学习实时计时（HH:MM:SS）
 const sessionClock = computed(() => {
@@ -854,10 +960,15 @@ const loadStudyRecords = async (relationId) => {
         sec: Number(item.timing) || 0
       }))
     studyStats.value = {
-      todayCount: Number(data.todayCount) || 0,
       totalCount: Number(data.totalCount) || 0,
       totalTiming: typeof data.totalTiming === 'string' && data.totalTiming ? data.totalTiming : '00:00:00',
-      totalStatus: data.totalStatus === true
+      nextReviewTime: typeof data.nextReviewTime === 'string' ? data.nextReviewTime : ''
+    }
+    // 记忆留存率曲线：line.noReviewSeries 无复习、line.withReviewSeries 按计划复习
+    const line = data.line && typeof data.line === 'object' ? data.line : {}
+    retentionLine.value = {
+      noReviewSeries: Array.isArray(line.noReviewSeries) ? line.noReviewSeries : [],
+      withReviewSeries: Array.isArray(line.withReviewSeries) ? line.withReviewSeries : []
     }
   } catch (e) {
     console.error('查询打卡历史失败', e)
@@ -876,12 +987,11 @@ const showCheckinToast = (msg, kind = 'success') => {
   }, 3000)
 }
 
-// 打卡成功彩带礼花：在按钮圆心一次性绽放粒子
-const triggerConfetti = () => {
-  const btn = checkinBtnEl.value
+// 打卡成功彩带礼花：在指定元素（被点击的评分按钮）圆心一次性绽放粒子
+const triggerConfetti = (targetEl) => {
   const root = burstRoot.value
-  if (!btn || !root) return
-  const rect = btn.getBoundingClientRect()
+  if (!targetEl || !root) return
+  const rect = targetEl.getBoundingClientRect()
   root.style.left = `${rect.left + rect.width / 2}px`
   root.style.top = `${rect.top + rect.height / 2}px`
   root.innerHTML = ''
@@ -907,13 +1017,26 @@ const triggerConfetti = () => {
   }, 1800)
 }
 
-const handleCheckin = async () => {
-  if (checkinLock.value || studyStats.value.totalStatus) return
+// 四档评分：Again / Hard / Good / Easy，分别对应 1 / 2 / 3 / 4
+const ratingOptions = [
+  { key: 'again', text: 'Again', sub: '重来', value: 1 },
+  { key: 'hard', text: 'Hard', sub: '困难', value: 2 },
+  { key: 'good', text: 'Good', sub: '良好', value: 3 },
+  { key: 'easy', text: 'Easy', sub: '简单', value: 4 }
+]
+
+const handleCheckin = async (option, event) => {
+  if (checkinLock.value) return
   checkinLock.value = true
   const now = Date.now()
   const sec = Math.max(1, Math.round((now - sessionStartAt.value) / 1000))
   // 当前所在二级小节的 id，作为关联对象
   const relationId = currentChapter.value.id
+  // 评分：ratingValue=1/2/3/4，ratingText=Again/Hard/Good/Easy
+  const ratingValue = option ? option.value : 3
+  const ratingText = option ? option.text : 'Good'
+  // 是否首次打卡：依据已加载的历史打卡记录判断（历史列表为空即为首次）
+  const isFirst = studyRecords.value.length === 0
 
   // 1. 学习记录通过后端接口持久化
   let ok = false
@@ -922,7 +1045,10 @@ const handleCheckin = async () => {
       relationId: String(relationId ?? ''),
       timing: String(sec),
       relationTypeText: '笔记',
-      relationTypeValue: '2'
+      relationTypeValue: '2',
+      ratingValue,
+      ratingText,
+      isFirst
     })
     ok = !!(res && (res.success === true || res.code === 200 || res.code === 0))
   } catch (e) {
@@ -940,8 +1066,9 @@ const handleCheckin = async () => {
   // 2. 打卡成功：重新拉取历史记录，并开启新一轮计时
   sessionStartAt.value = now
   elapsedSec.value = 0
-  showCheckinToast(`打卡成功，本次学习 ${formatDuration(sec)}`)
-  triggerConfetti()
+  showCheckinToast(`打卡成功（${ratingText}），本次学习 ${formatDuration(sec)}`)
+  // 礼花从被点击的那个按钮中心绽放
+  triggerConfetti(event && event.currentTarget)
   loadStudyRecords(String(relationId ?? ''))
   setTimeout(() => {
     checkinLock.value = false
@@ -1989,99 +2116,109 @@ onMounted(loadAll)
   background: linear-gradient(180deg, var(--accent-primary), var(--accent-secondary));
 }
 
-.checkin-sub {
+/* 本次学习时长：独立展示在打卡按钮上方 */
+.checkin-clock {
+  margin-top: 16px;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 10px;
+}
+
+.checkin-clock-label {
   font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 1px;
   color: var(--text-muted);
 }
 
-.checkin-panel {
-  margin-top: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 26px 24px;
+.checkin-clock-time {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 1.5px;
+  color: var(--accent-primary);
+  font-variant-numeric: tabular-nums;
 }
 
-/* 圆形打卡按钮：内部集成本次学习主计时器 */
-.checkin-btn {
+.checkin-panel {
+  margin-top: 14px;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* 四档评分按钮：Again / Hard / Good / Easy，点任意一个即打卡 */
+.rating-btn {
+  flex: 1 1 0;
+  min-width: 84px;
+  max-width: 132px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  width: 148px;
-  height: 148px;
-  padding: 0;
-  border: none;
-  border-radius: 50%;
-  color: #fff;
-  background:
-    radial-gradient(circle at 32% 26%, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0) 55%),
-    linear-gradient(150deg, var(--accent-primary), var(--accent-secondary));
-  box-shadow: 0 10px 24px -8px var(--accent-glow);
+  gap: 3px;
+  padding: 12px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: var(--bg-secondary);
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease, border-color 0.18s ease;
 }
 
-.checkin-btn:hover:not(:disabled) {
-  transform: scale(1.05);
-  box-shadow: 0 13px 30px -8px var(--accent-glow);
-}
-
-.checkin-btn:active:not(:disabled) {
-  transform: scale(0.97);
-}
-
-.checkin-btn:disabled {
-  cursor: not-allowed;
-}
-
-.checkin-btn-label {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 1.5px;
-  color: rgba(255, 255, 255, 0.78);
-}
-
-.checkin-btn-time {
-  font-family: 'Consolas', 'Courier New', monospace;
-  font-size: 27px;
-  font-weight: 800;
+.rating-btn-text {
+  font-size: 14px;
+  font-weight: 700;
   line-height: 1;
-  letter-spacing: 1.5px;
-  color: #fff;
-  font-variant-numeric: tabular-nums;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+  letter-spacing: 0.5px;
 }
 
-.checkin-btn-tip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
+.rating-btn-sub {
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.92);
+  line-height: 1;
+  opacity: 0.78;
 }
 
-.checkin-done-icon {
-  width: 32px;
-  height: 32px;
-  color: #fff;
+/* 四档配色：红 / 橙 / 绿 / 蓝 */
+.rating-again {
+  color: #e11d48;
+  border-color: rgba(225, 29, 72, 0.35);
+  background: rgba(225, 29, 72, 0.08);
 }
 
-.checkin-btn-done-text {
-  font-size: 13px;
-  font-weight: 600;
-  color: #fff;
+.rating-hard {
+  color: #ea580c;
+  border-color: rgba(234, 88, 12, 0.35);
+  background: rgba(234, 88, 12, 0.08);
 }
 
-/* 今日已打卡：置灰呈现不可再次打卡 */
-.checkin-btn.checkin-done {
-  background:
-    radial-gradient(circle at 32% 26%, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0) 55%),
-    linear-gradient(150deg, #b7c0ca, #8d98a5);
-  box-shadow: 0 10px 24px -8px rgba(0, 0, 0, 0.25);
+.rating-good {
+  color: #16a34a;
+  border-color: rgba(22, 163, 74, 0.35);
+  background: rgba(22, 163, 74, 0.08);
+}
+
+.rating-easy {
+  color: #0284c7;
+  border-color: rgba(2, 132, 199, 0.35);
+  background: rgba(2, 132, 199, 0.08);
+}
+
+.rating-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  border-color: currentColor;
+  box-shadow: 0 8px 18px -8px currentColor;
+}
+
+.rating-btn:active:not(:disabled) {
+  transform: translateY(0) scale(0.97);
+}
+
+.rating-btn:disabled {
   cursor: not-allowed;
-  transform: none;
 }
 
 /* 打卡礼花层（fixed 覆盖，由 JS 定位到按钮中心） */
@@ -2140,6 +2277,15 @@ onMounted(loadAll)
   border-right: none;
 }
 
+/* 推荐下次复习时间：文案与时间都较长，缩小一档避免溢出 */
+.checkin-stat-next .checkin-stat-time {
+  font-size: 17px;
+}
+
+.checkin-stat-next .checkin-stat-label {
+  font-size: 11px;
+}
+
 .checkin-stat-num,
 .checkin-stat-time {
   font-size: 22px;
@@ -2155,79 +2301,107 @@ onMounted(loadAll)
   color: var(--text-muted);
 }
 
-.checkin-history {
+/* ========== 基于 FSRS 的记忆留存率曲线 ========== */
+.retention-wrap {
   margin-top: 24px;
 }
 
-.checkin-history-head {
+.retention-head {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
-.checkin-history-title {
+.retention-title {
   font-size: 14px;
   font-weight: 600;
   color: var(--text-secondary);
 }
 
-.checkin-history-count {
+.retention-sub {
   font-size: 12px;
   color: var(--text-muted);
 }
 
-.checkin-list {
-  display: flex;
-  flex-direction: column;
-  max-height: 320px;
-  overflow-y: auto;
+.retention-chart {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
 }
 
-.checkin-item {
+/* 横向网格线 */
+.retention-grid line {
+  stroke: var(--border-color);
+  stroke-width: 1;
+  stroke-dasharray: 3 5;
+  opacity: 0.75;
+}
+
+/* 坐标轴刻度文字 */
+.retention-axis-text text {
+  fill: var(--text-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.retention-line {
+  fill: none;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* 无复习：灰色虚线（自然遗忘） */
+.retention-line.line-no {
+  stroke: #94a3b8;
+  stroke-dasharray: 6 4;
+}
+
+/* 按计划复习：主题色实线 */
+.retention-line.line-with {
+  stroke: var(--accent-primary);
+}
+
+/* 复习曲线下方的填充面积 */
+.retention-area {
+  fill: var(--accent-primary);
+  opacity: 0.12;
+  stroke: none;
+}
+
+.retention-legend {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  padding: 11px 12px;
-  border-radius: 10px;
-  transition: background 0.2s ease;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 8px;
 }
 
-.checkin-item:hover {
-  background: var(--accent-glow);
-}
-
-.checkin-item-main {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  min-width: 0;
-}
-
-.checkin-item-date {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-primary);
-  font-variant-numeric: tabular-nums;
-}
-
-.checkin-item-chapter {
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: 12px;
-  color: var(--text-muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 280px;
+  color: var(--text-secondary);
 }
 
-.checkin-item-duration {
-  flex-shrink: 0;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--accent-primary);
-  font-variant-numeric: tabular-nums;
+.legend-swatch {
+  width: 18px;
+  height: 0;
+  border-top-width: 2.5px;
+  border-top-style: solid;
+}
+
+.legend-swatch.legend-no {
+  border-top-color: #94a3b8;
+  border-top-style: dashed;
+}
+
+.legend-swatch.legend-with {
+  border-top-color: var(--accent-primary);
 }
 
 .checkin-empty {
@@ -2278,16 +2452,16 @@ onMounted(loadAll)
   }
 
   .checkin-panel {
-    padding: 22px 16px;
+    gap: 8px;
   }
 
-  .checkin-btn {
-    width: 128px;
-    height: 128px;
+  .rating-btn {
+    min-width: 68px;
+    padding: 10px 6px;
   }
 
-  .checkin-btn-time {
-    font-size: 23px;
+  .checkin-clock-time {
+    font-size: 20px;
   }
 
   .checkin-stat-num,
