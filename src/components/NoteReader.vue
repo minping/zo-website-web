@@ -5,6 +5,9 @@
     <div class="bg-glow bg-glow-1"></div>
     <div class="bg-glow bg-glow-2"></div>
 
+    <!-- 导航栏 -->
+    <Navbar activeMenu="笔记" @navigate="handleNavigate" />
+
     <!-- 主体 -->
     <main class="reader-main">
       <div class="container">
@@ -30,7 +33,7 @@
               <div class="toc-note-title">
                 <h1 class="toc-note-name">{{ noteName || '未命名笔记' }}</h1>
               </div>
-              <div class="toc-title">章节目录</div>
+              <div class="toc-title">章节目录</div> 
               <ul class="toc-list">
                 <li
                   class="toc-item"
@@ -231,7 +234,7 @@
                     :key="opt.value"
                     type="button"
                     class="rating-btn"
-                    :class="'rating-' + opt.key"
+                    :class="['rating-' + opt.key, { 'is-pressed': pressedRating === opt.value }]"
                     :disabled="checkinLock"
                     :title="`打卡并标记为 ${opt.text}`"
                     @click="handleCheckin(opt, $event)"
@@ -406,6 +409,7 @@ import { Marked } from 'marked'
 import hljs from 'highlight.js'
 import api from '../api/article.js'
 import { useTheme } from '../composables/useTheme.js'
+import Navbar from './Navbar.vue'
 
 // 接入网站主题体系（服务端主题 + 全局切换），与其他页面保持一致
 useTheme()
@@ -937,10 +941,14 @@ const sessionClock = computed(() => {
   return `${pad2(h)}:${pad2(m)}:${pad2(sec)}`
 })
 
+// 当前小节是否首次学习：取 queryStudyRecord 接口返回的 isFirst（由后端按历史记录判断）
+const studyIsFirst = ref(false)
+
 // 加载当前小节历史记录与后端统计字段
 const loadStudyRecords = async (relationId) => {
   if (!relationId) {
     studyRecords.value = []
+    studyIsFirst.value = false
     studyRecordsLoading.value = false
     return
   }
@@ -964,6 +972,8 @@ const loadStudyRecords = async (relationId) => {
       totalTiming: typeof data.totalTiming === 'string' && data.totalTiming ? data.totalTiming : '00:00:00',
       nextReviewTime: typeof data.nextReviewTime === 'string' ? data.nextReviewTime : ''
     }
+    // isFirst 由后端给出（历史记录为空即为首次学习），不再用前端过滤后的列表长度推断
+    studyIsFirst.value = data.isFirst === true || data.isFirst === 'true'
     // 记忆留存率曲线：line.noReviewSeries 无复习、line.withReviewSeries 按计划复习
     const line = data.line && typeof data.line === 'object' ? data.line : {}
     retentionLine.value = {
@@ -1025,6 +1035,10 @@ const ratingOptions = [
   { key: 'easy', text: 'Easy', sub: '简单', value: 4 }
 ]
 
+// 点击反馈：被点中的按钮播放一次按压动画，动画结束后清空
+const pressedRating = ref(null)
+let pressedTimer = null
+
 const handleCheckin = async (option, event) => {
   if (checkinLock.value) return
   checkinLock.value = true
@@ -1035,8 +1049,14 @@ const handleCheckin = async (option, event) => {
   // 评分：ratingValue=1/2/3/4，ratingText=Again/Hard/Good/Easy
   const ratingValue = option ? option.value : 3
   const ratingText = option ? option.text : 'Good'
-  // 是否首次打卡：依据已加载的历史打卡记录判断（历史列表为空即为首次）
-  const isFirst = studyRecords.value.length === 0
+  // 是否首次打卡：直接取 queryStudyRecord 接口返回的 isFirst
+  const isFirst = studyIsFirst.value
+  // 礼花锚点元素：必须在 await 之前取，事件派发结束后 event.currentTarget 会被置空
+  const burstEl = event && event.currentTarget
+  // 点击反馈：标记被点中的按钮，播放一次按压动画
+  pressedRating.value = option ? option.value : null
+  if (pressedTimer) clearTimeout(pressedTimer)
+  pressedTimer = setTimeout(() => { pressedRating.value = null }, 360)
 
   // 1. 学习记录通过后端接口持久化
   let ok = false
@@ -1068,7 +1088,7 @@ const handleCheckin = async (option, event) => {
   elapsedSec.value = 0
   showCheckinToast(`打卡成功（${ratingText}），本次学习 ${formatDuration(sec)}`)
   // 礼花从被点击的那个按钮中心绽放
-  triggerConfetti(event && event.currentTarget)
+  triggerConfetti(burstEl)
   loadStudyRecords(String(relationId ?? ''))
   setTimeout(() => {
     checkinLock.value = false
@@ -1175,7 +1195,8 @@ onMounted(loadAll)
 .reader-main {
   position: relative;
   z-index: 1;
-  padding: 56px 0 80px;
+  /* 顶部留出 fixed 导航栏的高度（64px）+ 24px 呼吸空间，避免内容被压在导航栏下 */
+  padding: 88px 0 80px;
 }
 
 /* ========== 加载 / 错误状态 ========== */
@@ -1253,8 +1274,9 @@ onMounted(loadAll)
   padding: 20px 12px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
   position: sticky;
-  top: 24px;
-  max-height: calc(100vh - 48px);
+  /* 吸顶位置同样避开 fixed 导航栏（64px），与主体顶部间距保持一致 */
+  top: 88px;
+  max-height: calc(100vh - 112px);
   overflow-y: auto;
 }
 
@@ -1786,7 +1808,8 @@ onMounted(loadAll)
 /* ========== 小屏（手机） ========== */
 @media (max-width: 600px) {
   .reader-main {
-    padding: 32px 0 56px;
+    /* 小屏同样避开 64px 导航栏，仅呼吸空间收窄到 16px */
+    padding: 80px 0 56px;
   }
 
   .reader-toc {
@@ -2208,17 +2231,28 @@ onMounted(loadAll)
 }
 
 .rating-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
   border-color: currentColor;
-  box-shadow: 0 8px 18px -8px currentColor;
+  box-shadow: 0 6px 16px -10px currentColor;
 }
 
 .rating-btn:active:not(:disabled) {
-  transform: translateY(0) scale(0.97);
+  transform: scale(0.97);
 }
 
 .rating-btn:disabled {
   cursor: not-allowed;
+}
+
+/* 点击反馈：一次轻微按压回弹，不做悬浮位移 */
+.rating-btn.is-pressed {
+  animation: rating-press 0.34s ease;
+}
+
+@keyframes rating-press {
+  0% { transform: scale(1); }
+  35% { transform: scale(0.93); }
+  70% { transform: scale(1.03); }
+  100% { transform: scale(1); }
 }
 
 /* 打卡礼花层（fixed 覆盖，由 JS 定位到按钮中心） */

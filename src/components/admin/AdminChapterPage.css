@@ -58,6 +58,165 @@
   color: var(--admin-text-primary);
 }
 
+/* 顶部菜单按钮：点击展开左侧笔记列表抽屉 */
+.menu-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid var(--admin-border-color);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--admin-text-secondary);
+  cursor: pointer;
+  transition: all 0.25s;
+}
+
+.menu-btn:hover,
+.menu-btn.menu-btn-active {
+  border-color: var(--admin-accent-primary);
+  color: var(--admin-accent-primary);
+  background: var(--admin-accent-glow);
+}
+
+/* ========== 左侧笔记抽屉（默认收起） ========== */
+.note-drawer-mask {
+  position: fixed;
+  top: 60px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.35);
+  z-index: 120;
+}
+
+.note-drawer {
+  position: fixed;
+  top: 60px;
+  left: 0;
+  bottom: 0;
+  width: 300px;
+  max-width: 82vw;
+  display: flex;
+  flex-direction: column;
+  background: var(--admin-bg-card);
+  border-right: 1px solid var(--admin-border-color);
+  box-shadow: 6px 0 24px -12px rgba(15, 23, 42, 0.35);
+  z-index: 130;
+}
+
+.note-drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid var(--admin-border-color);
+}
+
+.note-drawer-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--admin-text-primary);
+}
+
+.note-drawer-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid var(--admin-border-color);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--admin-text-muted);
+  cursor: pointer;
+  transition: all 0.25s;
+}
+
+.note-drawer-close:hover {
+  border-color: var(--admin-accent-primary);
+  color: var(--admin-accent-primary);
+  background: var(--admin-accent-glow);
+}
+
+.note-drawer-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.note-drawer-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.note-drawer-item:hover {
+  background: var(--admin-hover-bg);
+}
+
+.note-drawer-item.active {
+  background: var(--admin-accent-glow);
+}
+
+.note-drawer-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--admin-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.note-drawer-item.active .note-drawer-name {
+  color: var(--admin-accent-primary);
+}
+
+.note-drawer-author {
+  font-size: 12px;
+  color: var(--admin-text-muted);
+}
+
+.note-drawer-tip {
+  margin: 0;
+  padding: 24px 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--admin-text-muted);
+}
+
+/* 抽屉滑入 / 遮罩淡入 */
+.drawer-slide-enter-active,
+.drawer-slide-leave-active {
+  transition: transform 0.25s ease;
+}
+
+.drawer-slide-enter-from,
+.drawer-slide-leave-to {
+  transform: translateX(-100%);
+}
+
+.drawer-mask-enter-active,
+.drawer-mask-leave-active {
+  transition: opacity 0.25s ease;
+}
+
+.drawer-mask-enter-from,
+.drawer-mask-leave-to {
+  opacity: 0;
+}
+
 /* 笔记 id 徽章 */
 .note-id-badge {
   padding: 6px 16px;
@@ -304,27 +463,26 @@
   opacity: 1;
 }
 
-/* 父级行的 + 按钮：常亮显示，点击直接新建小节（复用右键菜单的新建小节流程） */
-.toc-add-child-btn {
+/* 父级章节：展开/收起小节的下拉箭头（类名避开目录面板的折叠按钮 .toc-toggle） */
+.toc-chevron {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
   flex-shrink: 0;
-  padding: 0;
-  border: 1px solid var(--admin-border-color);
-  border-radius: 6px;
-  background: transparent;
+  width: 16px;
+  height: 16px;
   color: var(--admin-text-muted);
-  cursor: pointer;
-  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+  transition: transform 0.2s ease, color 0.2s ease;
 }
 
-.toc-add-child-btn:hover {
+.toc-item:hover .toc-chevron,
+.toc-item.active .toc-chevron {
   color: var(--admin-accent-primary);
-  border-color: var(--admin-accent-primary);
-  background: var(--admin-accent-glow);
+}
+
+/* 展开时箭头翻转朝上，收起时朝下 */
+.toc-chevron.is-open {
+  transform: rotate(180deg);
 }
 
 /* ========== 右侧书本页 ========== */

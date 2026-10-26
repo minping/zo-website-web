@@ -45,12 +45,11 @@
 
         <!-- 笔记网格 -->
         <div v-else class="notes-grid">
-          <a
+          <!-- 点击卡片在当前标签页直接打开阅读页（Ctrl/中键仍可新标签打开） -->
+          <router-link
             v-for="note in notes"
             :key="note.id"
-            :href="getNoteHref(note)"
-            target="_blank"
-            rel="noopener noreferrer"
+            :to="`/notes/${note.id}`"
             class="note-card"
           >
             <!-- 章节统计：固定在卡片最右上角 -->
@@ -78,7 +77,7 @@
               <span class="note-author">{{ note.author || '未知作者' }}</span>
               <span class="note-time">{{ formatTime(note.createTime) }}</span>
             </div>
-          </a>
+          </router-link>
         </div>
       </div>
     </section>
@@ -166,10 +165,6 @@ const cardStatsTitle = (note) => {
   if (Number(note.code_line_count) > 0) parts.push('代码行数')
   return parts.join(' / ')
 }
-
-// 点击笔记卡片：新标签页打开只读阅读页（仅传 id）
-const getNoteHref = (note) =>
-  router.resolve({ path: `/notes/${note.id}` }).href
 
 const handleNavigate = (menu) => {
   if (menu === '首页') {

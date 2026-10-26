@@ -915,6 +915,13 @@ export const api = {
     return res
   },
 
+  // 查询小节详情（前台公开，GET /index/notes/queryChapter?id=）
+  // 与 getPublicChapterDetail 的区别：这里不做字段裁剪，原样返回后端全部字段
+  // data: { id, title, full_title, name 笔记名, author, content, next_review, is_ban, is_like, ... }
+  async queryChapterDetail(id) {
+    return await request(API_PATHS.queryChapterPublic(id))
+  },
+
   // 查询章节列表（前台公开，只负责目录结构：title 标题、orders 排序、pid 父级、complete 完成状态）
   // 不返回 content：正文统一由 getPublicChapterDetail（queryChapter）按需拉取
   async getPublicChapterList(noteId) {
@@ -954,6 +961,20 @@ export const api = {
     return await request(API_PATHS.queryStudyRecord(relationId))
   },
 
+  // 查询学习域数据（前台公开，GET）
+  // 返回 data: { todayStudyCount 今日已学习, todayNeedStudyCount 今日需复习,
+  //              ing 记忆构建, finish 记忆牢固, hard 难标记, easy 易标记 }
+  async queryStudyDomain() {
+    return await request(API_PATHS.queryStudyDomain)
+  },
+
+  // 查询学习域指标对应的列表（前台公开，GET）
+  // type 取值: 0 今日已学习 / 1 今日需复习 / 2 记忆构建 / 3 记忆牢固 / 4 难标记 / 5 易标记
+  // 返回 data: [{ title 小节标题, next_review 复习时间 }, ...]（也兼容 { list: [...] } 结构）
+  async queryStudyDomainNoticeList(type) {
+    return await request(API_PATHS.queryStudyDomainNoticeList(type))
+  },
+
   // 查询笔记生命线（前台公开，GET，noteId 为笔记 id）
   // 返回 data: { name, startTime, endTime, lineList: [{ lineTime: 'YYYY年MM月DD日', lineMonth, contentList: [{ id, title, complete }] }] }
   async getNoteLine(noteId) {
@@ -964,6 +985,15 @@ export const api = {
   // 参数: relationId 小节 id, relationTypeText 关联类型文本(笔记), relationTypeValue 关联类型值(2)
   async saveStudyBan(params) {
     return await request(API_PATHS.saveStudyBan, {
+      method: 'POST',
+      body: JSON.stringify(params)
+    })
+  },
+
+  // 重点关注（前台公开，POST）：relationId 小节 id + followType
+  // 参数: relationId 小节 id, followType 1 点亮（设为重点关注）/ 0 取消点亮（取消重点关注）
+  async saveStudyLike(params) {
+    return await request(API_PATHS.saveStudyLike, {
       method: 'POST',
       body: JSON.stringify(params)
     })

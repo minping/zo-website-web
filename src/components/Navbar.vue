@@ -128,10 +128,11 @@ const themeTitle = computed(() => {
 
 const navLinks = [
   { name: '首页', path: '/', label: '首页' },
-  { name: '接口', path: '/apis', label: '接口' },
   { name: '文章', path: '/articles', label: '文章' },
   { name: '笔记', path: '/notes', label: '笔记' },
   { name: '摇一摇', path: '/random-study', label: '摇一摇' },
+  { name: '学习域', path: '/study-domain', label: '学习域' },
+  { name: '接口', path: '/apis', label: '接口' },
   { name: '关于', path: '/about', label: '关于' }
 ]
 

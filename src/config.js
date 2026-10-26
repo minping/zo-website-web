@@ -104,13 +104,22 @@ export const API_PATHS = {
     ? `/index/notes/getRandomContent?noteId=${encodeURIComponent(noteId)}`
     : '/index/notes/getRandomContent'),
   // 学习打卡记录保存（前台公开，POST）
-  saveStudyRecord: '/index/notes/saveStudyRecord',
+  saveStudyRecord: '/index/study/saveStudyRecord',
   // 学习打卡历史记录查询（前台公开，GET，relationId 为小节 id）
-  queryStudyRecord: (relationId) => `/index/notes/queryStudyRecord?relationId=${encodeURIComponent(relationId)}`,
+  queryStudyRecord: (relationId) => `/index/study/queryStudyRecord?relationId=${encodeURIComponent(relationId)}`,
   // 笔记生命线查询（前台公开，GET，noteId 为笔记 id）
   getNoteLine: (noteId) => `/index/notes/getNoteLine?noteId=${encodeURIComponent(noteId)}`,
-  // 斩杀知识点（前台公开，POST）
-  saveStudyBan: '/index/notes/saveStudyBan',
+  // 斩杀知识点 / 取消关注本节知识（前台公开，POST）
+  saveStudyBan: '/index/study/saveStudyBan',
+  // 重点关注（前台公开，POST）：relationId 小节 id + followType
+  // followType：1 点亮（设为重点关注）/ 0 取消点亮（取消重点关注）
+  saveStudyLike: '/index/study/saveStudyLike',
+  // 学习域数据（前台公开，GET）
+  queryStudyDomain: '/index/study/queryStudyDomain',
+  // 学习域指标对应的列表（前台公开，GET）
+  // type: 0 今日已学习 / 1 今日需复习 / 2 记忆构建 / 3 记忆牢固 / 4 难标记 / 5 易标记
+  //      6 重点关注 / 7 取消关注（暂定，按后端实际取值调整）
+  queryStudyDomainNoticeList: (type) => `/index/study/queryStudyDomainNoticeList?type=${encodeURIComponent(type)}`,
 
 
   // 文章标签

@@ -7,6 +7,7 @@ import About from '../components/About.vue'
 import NotesPage from '../components/NotesPage.vue'
 import NoteReader from '../components/NoteReader.vue'
 import RandomStudy from '../components/RandomStudy.vue'
+import StudyDomain from '../components/StudyDomain.vue'
 import ApiPage from '../components/ApiPage.vue'
 import ApiDetail from '../components/ApiDetail.vue'
 import AdminDashboard from '../components/admin/AdminDashboard.vue'
@@ -75,6 +76,11 @@ const routes = [
     path: '/random-study',
     name: 'RandomStudy',
     component: RandomStudy
+  },
+  {
+    path: '/study-domain',
+    name: 'StudyDomain',
+    component: StudyDomain
   },
   {
     path: '/admin',

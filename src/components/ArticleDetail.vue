@@ -1010,6 +1010,11 @@ onUnmounted(() => {
   min-width: 0;
   overflow-wrap: break-word;
   word-break: break-word;
+  /* 内容模块背景：与右侧推荐栏一致的卡片底色 */
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 28px 32px;
 }
 
 .article-content h2 {
@@ -1194,7 +1199,8 @@ onUnmounted(() => {
 }
 
 .article-content :deep(th) {
-  background: var(--bg-card);
+  /* 正文块底色就是 --bg-card，表头用次级底色才能区分出层次 */
+  background: var(--bg-secondary);
   font-weight: 600;
   color: var(--text-primary);
 }
@@ -2028,25 +2034,26 @@ onUnmounted(() => {
 
   .article-content {
     max-width: 100%;
+    padding: 18px 16px;
   }
 
   .article-content :deep(h1) {
-    font-size: 1.35rem;
+    font-size: 1.22rem;
     margin: 24px 0 12px;
   }
 
   .article-content :deep(h2) {
-    font-size: 1.15rem;
+    font-size: 1.06rem;
     margin: 22px 0 10px;
   }
 
   .article-content :deep(h3) {
-    font-size: 1.05rem;
+    font-size: 0.98rem;
     margin: 18px 0 8px;
   }
 
   .article-content :deep(p) {
-    font-size: 0.93rem;
+    font-size: 0.86rem;
     line-height: 1.85;
     margin: 12px 0;
     overflow-wrap: break-word;
@@ -2054,7 +2061,7 @@ onUnmounted(() => {
   }
 
   .article-content :deep(li) {
-    font-size: 0.93rem;
+    font-size: 0.86rem;
     line-height: 1.8;
     margin: 6px 0;
   }
@@ -2067,7 +2074,7 @@ onUnmounted(() => {
   .article-content :deep(blockquote) {
     padding: 14px 16px;
     margin: 18px 0;
-    font-size: 0.9rem;
+    font-size: 0.83rem;
     border-left-width: 3px;
   }
 
@@ -2097,18 +2104,28 @@ onUnmounted(() => {
   }
 
   /* === 表格 === */
+  /* 窄屏改为横向滚动：取消 fixed 布局，让列宽按内容撑开 */
   .article-content :deep(table) {
     display: block;
+    width: max-content;
+    max-width: 100%;
+    table-layout: auto;
     overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
     touch-action: pan-x;
     border-radius: 6px;
     font-size: 0.82rem;
   }
 
+  /* 解除桌面端的等宽截断，否则单元格被压成省略号、滚动也看不到内容 */
   .article-content :deep(th),
   .article-content :deep(td) {
     padding: 8px 12px;
     white-space: nowrap;
+    max-width: none;
+    overflow: visible;
+    text-overflow: clip;
   }
 
   /* === 图片 === */
@@ -2302,22 +2319,22 @@ onUnmounted(() => {
 
   /* === 正文排版 === */
   .article-content :deep(h1) {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     margin: 20px 0 10px;
   }
 
   .article-content :deep(h2) {
-    font-size: 1.05rem;
+    font-size: 0.97rem;
     margin: 18px 0 8px;
   }
 
   .article-content :deep(h3) {
-    font-size: 0.98rem;
+    font-size: 0.9rem;
     margin: 16px 0 6px;
   }
 
   .article-content :deep(p) {
-    font-size: 0.9rem;
+    font-size: 0.82rem;
     line-height: 1.8;
     margin: 10px 0;
     overflow-wrap: break-word;
@@ -2325,7 +2342,7 @@ onUnmounted(() => {
   }
 
   .article-content :deep(li) {
-    font-size: 0.9rem;
+    font-size: 0.82rem;
     line-height: 1.75;
   }
 
@@ -2333,7 +2350,7 @@ onUnmounted(() => {
   .article-content :deep(blockquote) {
     padding: 12px 14px;
     margin: 16px 0;
-    font-size: 0.85rem;
+    font-size: 0.79rem;
     border-left-width: 3px;
   }
 
@@ -2359,7 +2376,12 @@ onUnmounted(() => {
   /* === 表格 === */
   .article-content :deep(table) {
     display: block;
+    width: max-content;
+    max-width: 100%;
+    table-layout: auto;
     overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
     touch-action: pan-x;
     font-size: 0.78rem;
     border-radius: 6px;
@@ -2368,6 +2390,9 @@ onUnmounted(() => {
   .article-content :deep(th),
   .article-content :deep(td) {
     padding: 6px 10px;
+    max-width: none;
+    overflow: visible;
+    text-overflow: clip;
   }
 
   /* === 图片 === */

@@ -3,6 +3,15 @@
     <!-- 顶部栏 -->
     <header class="chapter-topbar">
       <div class="topbar-left">
+        <!-- 笔记列表菜单：点击从左侧滑出抽屉 -->
+        <button
+          class="menu-btn"
+          :class="{ 'menu-btn-active': noteDrawerOpen }"
+          title="笔记列表"
+          @click="openNoteDrawer"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M3 12h18"/><path d="M3 18h18"/></svg>
+        </button>
         <button class="back-btn" @click="goBack">返回</button>
         <span class="topbar-divider"></span>
         <span class="topbar-title">章节预览</span>
@@ -11,6 +20,36 @@
         {{ noteName || `笔记 #${noteId}` }}
       </span>
     </header>
+
+    <!-- 左侧笔记抽屉：默认收起，点击顶部菜单图标滑出 -->
+    <transition name="drawer-mask">
+      <div v-if="noteDrawerOpen" class="note-drawer-mask" @click="closeNoteDrawer"></div>
+    </transition>
+    <transition name="drawer-slide">
+      <aside v-if="noteDrawerOpen" class="note-drawer">
+        <div class="note-drawer-head">
+          <span class="note-drawer-title">笔记列表</span>
+          <button class="note-drawer-close" title="收起" @click="closeNoteDrawer">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+          </button>
+        </div>
+        <p v-if="noteListLoading" class="note-drawer-tip">加载中…</p>
+        <ul v-else-if="noteList.length" class="note-drawer-list">
+          <li
+            v-for="n in noteList"
+            :key="n.id"
+            class="note-drawer-item"
+            :class="{ active: String(n.id) === noteId }"
+            :title="n.name || '未命名笔记'"
+            @click="switchNote(n)"
+          >
+            <span class="note-drawer-name">{{ n.name || '未命名笔记' }}</span>
+            <span class="note-drawer-author">{{ n.author || '未知作者' }} 著</span>
+          </li>
+        </ul>
+        <p v-else class="note-drawer-tip">暂无笔记</p>
+      </aside>
+    </transition>
 
     <!-- 阅读区：左侧目录 + 右侧书本页 -->
     <div class="reader-container">
@@ -61,30 +100,27 @@
                 <span class="toc-dot"></span>
               </li>
               <li
-                v-for="(chapter, index) in flatChapters"
+                v-for="chapter in visibleChapters"
                 :key="chapter.id"
                 class="toc-item"
-                :class="['toc-level-' + chapter.level, { active: currentIndex === index, done: Number(chapter.complete) === 1 }]"
-                @click="selectChapter(index)"
-                @dblclick="openEditDialog(index)"
-                @contextmenu.prevent.stop="openChapterMenu($event, index)"
+                :class="['toc-level-' + chapter.level, { active: currentIndex === chapter.rawIndex, done: Number(chapter.complete) === 1 }]"
+                @click="onTocClick(chapter)"
+                @dblclick="openEditDialog(chapter.rawIndex)"
+                @contextmenu.prevent.stop="openChapterMenu($event, chapter.rawIndex)"
                 title="双击编辑，右键更多操作"
               >
                 <span class="toc-index">{{ chapter.label }}</span>
                 <span class="toc-name">{{ chapter.title }}</span>
                 <span class="toc-dot"></span>
-                <!-- 父级章节专属：悬停浮现 + 号，点击直接在下方新建小节 -->
-                <button
-                  v-if="chapter.level === 0"
-                  type="button"
-                  class="toc-add-child-btn"
-                  title="添加小节"
-                  @click.stop.prevent="openAddChildDialog(index)"
-                  @dblclick.stop.prevent
-                  @contextmenu.stop.prevent
+                <!-- 父级章节：点击行展开/收起其小节（有小节时才显示下拉箭头） -->
+                <span
+                  v-if="chapter.level === 0 && chapter.children && chapter.children.length"
+                  class="toc-chevron"
+                  :class="{ 'is-open': expandedIds.has(chapter.id) }"
+                  :title="expandedIds.has(chapter.id) ? '收起小节' : '展开小节'"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-                </button>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+                </span>
               </li>
             </ul>
             <p v-if="loading" class="toc-empty">章节加载中…</p>
@@ -275,7 +311,8 @@ const route = useRoute()
 const router = useRouter()
 
 // 从查询参数读取笔记 id（名称、作者等信息由详情接口获取）
-const noteId = route.query.id || ''
+// 用 ref 包装：左侧笔记抽屉切换笔记时要更新它并重新加载详情与章节
+const noteId = ref(route.query.id ? String(route.query.id) : '')
 const noteName = ref('')
 const noteAuthor = ref('')
 // 笔记序言（来自详情接口的 preface 字段，展示在默认的「序言」章节中）
@@ -417,7 +454,7 @@ const handleSaveChapter = async () => {
     }
     const payload = isEdit
       ? {
-          noteId,
+          noteId: noteId.value,
           id: editingChapterId.value,
           pid: chapterForm.value.pid || null,
           title,
@@ -426,7 +463,7 @@ const handleSaveChapter = async () => {
           content: originContent
         }
       : {
-          noteId,
+          noteId: noteId.value,
           pid: chapterForm.value.pid || null,
           title,
           orders: Number(chapterForm.value.orders) || 0,
@@ -450,6 +487,13 @@ const handleSaveChapter = async () => {
       if (targetId) {
         const idx = flatChapters.value.findIndex((c) => c.id === targetId)
         if (idx !== -1) {
+          // 目标是二级小节时自动展开其父章节，保证新建/编辑的项在目录里可见
+          const target = flatChapters.value[idx]
+          if (target.level >= 1 && target.pid) {
+            const next = new Set(expandedIds.value)
+            next.add(target.pid)
+            expandedIds.value = next
+          }
           currentIndex.value = idx
           loadChapterContent()
         }
@@ -486,6 +530,61 @@ const goBack = () => {
     router.push('/admin/notes')
   }
 }
+
+// ========== 左侧笔记抽屉：默认收起，点击顶部菜单图标展开 ==========
+const noteDrawerOpen = ref(false)
+const noteList = ref([])
+const noteListLoading = ref(false)
+
+const loadNoteList = async () => {
+  if (noteList.value.length) return // 已加载过则不再重复请求
+  noteListLoading.value = true
+  try {
+    const res = await api.getNoteList()
+    const data = res && res.data ? res.data : []
+    noteList.value = Array.isArray(data) ? data : []
+  } catch (e) {
+    console.error('加载笔记列表失败', e)
+    showToast('加载笔记列表失败', 'error')
+  } finally {
+    noteListLoading.value = false
+  }
+}
+
+const openNoteDrawer = () => {
+  noteDrawerOpen.value = !noteDrawerOpen.value
+  if (noteDrawerOpen.value) loadNoteList()
+}
+
+const closeNoteDrawer = () => {
+  noteDrawerOpen.value = false
+}
+
+// 切换笔记：只更新地址栏，真正的重新加载统一交给下面的 watch
+const switchNote = (note) => {
+  const id = note && note.id != null ? String(note.id) : ''
+  if (!id) return
+  closeNoteDrawer()
+  if (id === noteId.value) return
+  router.replace({ path: route.path, query: { ...route.query, id } })
+}
+
+// 地址栏中的笔记 id 变化（抽屉切换 / 浏览器前进后退）时，重新加载该笔记
+watch(
+  () => route.query.id,
+  (v) => {
+    const id = v ? String(v) : ''
+    if (!id || id === noteId.value) return
+    noteId.value = id
+    // 清空上一本笔记的编辑态，回到「序言」
+    currentIndex.value = -1
+    chapterContent.value = ''
+    editingTitle.value = ''
+    expandedIds.value = new Set()
+    loadNoteInfo()
+    loadChapters()
+  }
+)
 
 // 完成章节：点击按钮直接调接口标记完成（GET /admin/notes/completeChapter?id=<章节id>），无二次确认
 const completing = ref(false)
@@ -542,15 +641,36 @@ const flatChapters = computed(() => {
   return result
 })
 
+// 已展开小节的父章节 id 集合（默认全部折叠，不显示小节）
+const expandedIds = ref(new Set())
+
+// 目录可见项：一级全部显示；二级仅当父级展开时显示（rawIndex 为 flatChapters 真实索引）
+const visibleChapters = computed(() => {
+  const result = []
+  flatChapters.value.forEach((item, rawIndex) => {
+    if (item.level === 0 || (item.level === 1 && expandedIds.value.has(item.pid))) {
+      result.push({ ...item, rawIndex })
+    }
+  })
+  return result
+})
+
+const toggleExpand = (id) => {
+  const next = new Set(expandedIds.value)
+  if (next.has(id)) next.delete(id)
+  else next.add(id)
+  expandedIds.value = next
+}
+
 // 加载状态
 const loading = ref(false)
 const loadError = ref('')
 
 // 查询笔记详情：获取笔记名称、作者等信息
 const loadNoteInfo = async () => {
-  if (!noteId) return
+  if (!noteId.value) return
   try {
-    const res = await api.getNoteDetail(noteId)
+    const res = await api.getNoteDetail(noteId.value)
     const data = res?.data
     if (data) {
       noteName.value = data.name || ''
@@ -564,11 +684,11 @@ const loadNoteInfo = async () => {
 
 const loadChapters = async (opts = {}) => {
   const { keepCurrent = false, silent = false } = opts
-  if (!noteId) return
+  if (!noteId.value) return
   if (!silent) loading.value = true
   loadError.value = ''
   try {
-    const res = await api.getChapterList(noteId)
+    const res = await api.getChapterList(noteId.value)
     const list = res.data || []
     book.value.chapters = list
     if (keepCurrent && currentIndex.value >= 0 && currentIndex.value < flatChapters.value.length) {
@@ -593,6 +713,23 @@ const currentIndex = ref(-1)
 const currentChapter = computed(() =>
   flatChapters.value[currentIndex.value] || { title: '', content: '', orders: 0, level: 0, label: '' }
 )
+
+// 点击目录项：一级切换内容并展开/收起小节；二级仅切换内容
+const onTocClick = (chapter) => {
+  if (chapter.level === 0) {
+    const willCollapse = expandedIds.value.has(chapter.id)
+    toggleExpand(chapter.id)
+    if (willCollapse) {
+      // 收起时若当前编辑的是该章下的小节，则回到该章，避免编辑目录里看不见的项
+      const cur = flatChapters.value[currentIndex.value]
+      if (cur && cur.level >= 1 && cur.pid === chapter.id) {
+        selectChapter(chapter.rawIndex)
+        return
+      }
+    }
+  }
+  selectChapter(chapter.rawIndex)
+}
 
 // 当前章节的编辑状态（标题 + markdown 内容）
 const chapterContent = ref('')
@@ -751,7 +888,7 @@ const saveCurrentChapter = async (silent = false) => {
   savingContent.value = true
   try {
     const res = await api.saveChapter({
-      noteId,
+      noteId: noteId.value,
       id: chapter.id,
       pid: chapter.pid || null,
       title,
