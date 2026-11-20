@@ -1,9 +1,9 @@
 // API 配置文件
 // 后端接口地址（开发环境 / 生产环境自动切换）
-export const API_BASE_URL = import.meta.env.PROD
-  ? 'https://www.mpgapay.cn/website'
-  : 'http://localhost:8014/website'
-// export const API_BASE_URL = 'https://www.mpgapay.cn/website'
+// export const API_BASE_URL = import.meta.env.PROD
+//   ? 'https://www.mpgapay.cn/website'
+//   : 'http://localhost:8014/website'
+export const API_BASE_URL = 'http://localhost:8014/website'
 // API 接口路径配置
 export const API_PATHS = {
   // 文章相关
@@ -92,6 +92,10 @@ export const API_PATHS = {
   completeChapter: (id) => `/admin/notes/completeChapter?id=${id}`,
   // 已发布笔记列表（前台展示）
   queryNoteListPublished: '/index/notes/queryNoteListPublished',
+  // 笔记标签维护（后台，传参与返参同文章标签接口）
+  noteTags: '/admin/notes/queryAllTags',
+  insertNoteTag: (id, name, color) => `/admin/notes/insertTag?id=${id || ''}&tagName=${encodeURIComponent(name)}&tagColor=${encodeURIComponent(color)}`,
+  deleteNoteTag: (tagId) => `/admin/notes/deleteTag?id=${tagId}`,
   // 前台公开接口（只读预览）
   queryNoteDetailPublic: (id) => `/index/notes/queryNoteDetail?id=${id}`,
   queryChapterListPublic: (noteId) => `/index/notes/queryChapterList?noteId=${noteId}`,
@@ -114,12 +118,28 @@ export const API_PATHS = {
   // 重点关注（前台公开，POST）：relationId 小节 id + followType
   // followType：1 点亮（设为重点关注）/ 0 取消点亮（取消重点关注）
   saveStudyLike: '/index/study/saveStudyLike',
+  // 用户登录（POST，body 传参）：loginName 登录名 / password 密码 / loginType 固定 'account'
+  // 成功返回 data: { user 基础用户信息, authorizationToken 授权token }
+  // 后续所有请求需在 header 带上 authorization_token
+  userLogin: '/user/login/userLogin',
+  // 用户登出（POST，无 body，header 带 authorization_token）
+  // 无 data 返回，根据 success 判断登出是否成功
+  userLogout: '/user/login/userLogout',
+  // 用户注册（前台公开，POST）：username 用户名 / phone 手机号 / sex 性别 / password 密码
+  // sex：1 男 / 2 女（接口路径与取值均为暂定，按后端实际调整）
+  registerUser: '/index/user/register',
   // 学习域数据（前台公开，GET）
   queryStudyDomain: '/index/study/queryStudyDomain',
   // 学习域指标对应的列表（前台公开，GET）
   // type: 0 今日已学习 / 1 今日需复习 / 2 记忆构建 / 3 记忆牢固 / 4 难标记 / 5 易标记
   //      6 重点关注 / 7 取消关注（暂定，按后端实际取值调整）
   queryStudyDomainNoticeList: (type) => `/index/study/queryStudyDomainNoticeList?type=${encodeURIComponent(type)}`,
+  // 本周每日学习概况（前台公开，GET）
+  // 返回 data 兼容三种结构：7 元素数组（周一~周日顺序） / { days: [{ day, num }] } / { 'yyyy-MM-dd': num }
+  queryWeekStudy: '/index/study/queryWeekStudy',
+  // 思维导图数据（前台公开，GET /index/notes/queryThinkingData）
+  // 返回 data 为根节点数组（通常一个根）：[{ id, pid, title, children: [...] }]，children 可递归嵌套
+  queryMindMap: '/index/notes/queryThinkingData',
 
 
   // 文章标签
@@ -134,8 +154,26 @@ export const API_PATHS = {
 // 完整 API URL
 export const getApiUrl = (path) => `${API_BASE_URL}${path}`
 
+// 当前登录用户的授权 token（登录接口返回 authorizationToken，登录成功后存入本地）
+// 所有请求都需在 header 带上 authorization_token
+export const getAuthToken = () => {
+  try {
+    return localStorage.getItem('authorization_token') || ''
+  } catch (e) {
+    return ''
+  }
+}
+
+// 带授权 token 的请求头（未登录时返回空对象）
+export const getAuthHeader = () => {
+  const token = getAuthToken()
+  return token ? { authorization_token: token } : {}
+}
+
 export default {
   API_BASE_URL,
   API_PATHS,
-  getApiUrl
+  getApiUrl,
+  getAuthToken,
+  getAuthHeader
 }

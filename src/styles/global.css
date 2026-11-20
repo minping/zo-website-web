@@ -23,6 +23,7 @@
   --gradient-start: #3b82f6;
   --gradient-end: #06b6d4;
   --navbar-bg: rgba(10, 14, 23, 0.8);
+  --grid-line: rgba(59, 130, 246, 0.04);
 }
 
 /* 亮色主题 */
@@ -40,6 +41,7 @@
   --gradient-start: #3b82f6;
   --gradient-end: #0ea5e9;
   --navbar-bg: rgba(248, 250, 252, 0.9);
+  --grid-line: rgba(59, 130, 246, 0.03);
 }
 
 /* 复古主题 */
@@ -57,6 +59,7 @@
   --gradient-start: #c06014;
   --gradient-end: #d4733b;
   --navbar-bg: rgba(253, 246, 227, 0.94);
+  --grid-line: rgba(192, 96, 20, 0.05);
 }
 
 /* 森林清新主题 */
@@ -74,6 +77,7 @@
   --gradient-start: #4a9e5c;
   --gradient-end: #6db87d;
   --navbar-bg: rgba(242, 248, 242, 0.92);
+  --grid-line: rgba(74, 158, 92, 0.06);
 }
 
 /* 夏日天空蓝主题 */
@@ -91,6 +95,7 @@
   --gradient-start: #f09848;
   --gradient-end: #5ba4e6;
   --navbar-bg: rgba(232, 244, 253, 0.92);
+  --grid-line: rgba(240, 152, 72, 0.06);
 }
 
 /* 中国风云墨主题 */
@@ -108,6 +113,31 @@
   --gradient-start: #c2463a;
   --gradient-end: #5a4e4a;
   --navbar-bg: rgba(247, 243, 238, 0.94);
+  --grid-line: rgba(194, 70, 58, 0.05);
+}
+
+/* 粉系少女主题（奶油粉白 × 莓桃粉，参考涂鸦壁纸色系） */
+[data-theme="pink"] {
+  --bg-primary: #fdf1f0;
+  --bg-secondary: #fbe4e6;
+  --bg-card: #ffffff;
+  --accent-primary: #e96a85;
+  --accent-secondary: #f7a6b8;
+  --accent-glow: rgba(233, 106, 133, 0.14);
+  --text-primary: #5c3f45;
+  --text-secondary: #a5767d;
+  --text-muted: #c49ca3;
+  --border-color: rgba(233, 106, 133, 0.14);
+  --gradient-start: #ee6a86;
+  --gradient-end: #f8aab8;
+  --navbar-bg: rgba(253, 241, 240, 0.92);
+  --grid-line: rgba(233, 106, 133, 0.09);
+}
+
+/* 粉系少女主题：关闭页面右上/左下两团大光晕（bg-glow），
+   柔粉底色上它们会显得像一块脏阴影；背景装饰由 BgScenery 承担 */
+[data-theme="pink"] .bg-glow {
+  display: none;
 }
 
 /* 赛博朋克主题 */
@@ -125,6 +155,7 @@
   --gradient-start: #ff007f;
   --gradient-end: #00f0ff;
   --navbar-bg: rgba(10, 10, 15, 0.92);
+  --grid-line: rgba(0, 240, 255, 0.04);
 }
 
 html {

@@ -8,6 +8,8 @@ import NotesPage from '../components/NotesPage.vue'
 import NoteReader from '../components/NoteReader.vue'
 import RandomStudy from '../components/RandomStudy.vue'
 import StudyDomain from '../components/StudyDomain.vue'
+import MindMap from '../components/MindMap.vue'
+import KnowledgeBase from '../components/KnowledgeBase.vue'
 import ApiPage from '../components/ApiPage.vue'
 import ApiDetail from '../components/ApiDetail.vue'
 import AdminDashboard from '../components/admin/AdminDashboard.vue'
@@ -24,6 +26,7 @@ import AdminProjectForm from '../components/admin/AdminProjectForm.vue'
 import AdminProjects from '../components/admin/AdminProjects.vue'
 import AdminSelfProjects from '../components/admin/AdminSelfProjects.vue'
 import AdminNoteList from '../components/admin/AdminNoteList.vue'
+import AdminNoteTagManagement from '../components/admin/AdminNoteTagManagement.vue'
 import AdminChapterPage from '../components/admin/AdminChapterPage.vue'
 
 const routes = [
@@ -81,6 +84,16 @@ const routes = [
     path: '/study-domain',
     name: 'StudyDomain',
     component: StudyDomain
+  },
+  {
+    path: '/mindmap',
+    name: 'MindMap',
+    component: MindMap
+  },
+  {
+    path: '/knowledge',
+    name: 'KnowledgeBase',
+    component: KnowledgeBase
   },
   {
     path: '/admin',
@@ -170,6 +183,12 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/admin/notes/tags',
+    name: 'AdminNoteTagManagement',
+    component: AdminNoteTagManagement,
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/admin/chapter',
     name: 'AdminChapterPage',
     component: AdminChapterPage,
@@ -195,9 +214,9 @@ const router = createRouter({
   }
 })
 
-// 路由守卫：检查登录状态
+// 路由守卫：检查登录状态（authorization_token 由登录接口返回并保存）
 router.beforeEach((to, from, next) => {
-  const token = localStorage.getItem('adminToken')
+  const token = localStorage.getItem('authorization_token')
 
   // 如果路由需要认证
   if (to.meta.requiresAuth) {

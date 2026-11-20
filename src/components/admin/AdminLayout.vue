@@ -105,6 +105,9 @@ const getActiveNav = () => {
   if (path.includes('/admin/apis')) {
     return 'apis'
   }
+  if (path.includes('/admin/notes/tags')) {
+    return 'notetags'
+  }
   if (path.includes('/admin/notes')) {
     return 'notes'
   }
@@ -242,7 +245,8 @@ const navItems = [
     icon: NotesIcon,
     path: '/admin/notes',
     children: [
-      { id: 'notes', label: '我的笔记', icon: NotesIcon, path: '/admin/notes' }
+      { id: 'notes', label: '我的笔记', icon: NotesIcon, path: '/admin/notes' },
+      { id: 'notetags', label: '笔记标签', icon: TagIcon, path: '/admin/notes/tags' }
     ]
   }
 ]

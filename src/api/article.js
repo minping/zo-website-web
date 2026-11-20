@@ -1,25 +1,62 @@
-import { getApiUrl, API_PATHS } from '../config.js'
+import { getApiUrl, API_PATHS, getAuthHeader } from '../config.js'
 
-// 封装 fetch 请求
-const request = async (path, options = {}) => {
-  const url = getApiUrl(path)
-  const defaultOptions = {
-    headers: {
-      'Content-Type': 'application/json'
-    }
-  }
-  const response = await fetch(url, { ...defaultOptions, ...options })
-  return response.json()
+// 会话失效状态码区间：接口返回 state 在 29400~29410 之间代表登录态已过期
+const SESSION_EXPIRED_MIN = 29400
+const SESSION_EXPIRED_MAX = 29410
+
+// 会话失效统一处理：清除本地登录态并广播事件（导航栏监听后弹出登录弹窗）
+const handleSessionExpired = () => {
+  try {
+    localStorage.removeItem('authorization_token')
+    localStorage.removeItem('adminUser')
+  } catch (e) { /* ignore */ }
+  window.dispatchEvent(new CustomEvent('session-expired'))
 }
 
-// 文件上传专用请求
+// 校验响应是否为会话失效（state/code 落在 29400~29410 区间内）
+const isSessionExpired = (res) => {
+  if (!res || typeof res !== 'object') return false
+  const code = res.state ?? res.code
+  if (typeof code !== 'number') return false
+  return code >= SESSION_EXPIRED_MIN && code <= SESSION_EXPIRED_MAX
+}
+
+// 封装 fetch 请求
+// 1. 登录后所有请求在 header 带上 authorization_token
+// 2. 只给会带请求体的方法加 Content-Type: application/json：
+//    GET/HEAD 一旦带上它就会被浏览器判定为非简单请求，每次都要多发一个 OPTIONS 预检
+//    （带上 authorization_token 后请求又变成非简单请求，预检是否频繁取决于后端 Access-Control-Max-Age）
+// 3. 返回 state=2940 时视为会话失效：自动清除本地登录态并触发 session-expired 事件
+const request = async (path, options = {}) => {
+  const url = getApiUrl(path)
+  const init = { ...options }
+  const method = (options.method || 'GET').toUpperCase()
+  const headers = { ...getAuthHeader(), ...(options.headers || {}) }
+  if (method !== 'GET' && method !== 'HEAD') {
+    headers['Content-Type'] = 'application/json'
+  }
+  init.headers = headers
+  const response = await fetch(url, init)
+  const res = await response.json()
+  if (isSessionExpired(res)) {
+    // handleSessionExpired()
+  }
+  return res
+}
+
+// 文件上传专用请求（FormData 的 Content-Type 由浏览器自动补，这里只带 token）
 const uploadRequest = async (path, formData) => {
   const url = getApiUrl(path)
   const response = await fetch(url, {
     method: 'POST',
+    headers: getAuthHeader(),
     body: formData
   })
-  return response.json()
+  const res = await response.json()
+  if (isSessionExpired(res)) {
+    // handleSessionExpired()
+  }
+  return res
 }
 
 // API 接口
@@ -270,6 +307,31 @@ export const api = {
   // 删除文章标签
   async deleteArticleTag(tagId) {
     return await request(API_PATHS.deleteArticleTag(tagId))
+  },
+
+  // 获取笔记标签列表（传参返参同文章标签）
+  async getNoteTags() {
+    const res = await request(API_PATHS.noteTags)
+    if (res.data) {
+      res.data = res.data.map(tag => ({
+        id: tag.tag_id || tag.id,
+        name: tag.tag_name || tag.name,
+        color: tag.tag_color || tag.color || '#42b883'
+      }))
+    }
+    return res
+  },
+
+  // 新增/编辑笔记标签
+  async insertNoteTag(id, name, color) {
+    return await request(API_PATHS.insertNoteTag(id || '', name, color), {
+      method: 'POST'
+    })
+  },
+
+  // 删除笔记标签
+  async deleteNoteTag(tagId) {
+    return await request(API_PATHS.deleteNoteTag(tagId))
   },
 
 
@@ -759,8 +821,11 @@ export const api = {
       id: item.id,
       name: item.name,
       author: item.author || item.author_name || '',
+      // 笔记标签：后端返回 tag_value(标签 id) / tag_text(标签名)
+      tagValue: item.tag_value,
+      tagText: item.tag_text ,
       preface: item.preface || '',
-      statusValue: Number(item.status_value ?? item.statusValue ?? item.status ?? 0),
+      statusValue: Number(item.status_value  ?? 0),
       process: Number(item.process ?? 0),
       createTime: item.created_time || item.createdTime || '',
       updateTime: item.updated_time || item.updatedTime || ''
@@ -809,8 +874,11 @@ export const api = {
         id: item.id,
         name: item.name,
         author: item.author || item.author_name || '',
+        // 笔记标签：后端返回 tag_value(标签 id) / tag_text(标签名)
+        tagValue: item.tag_value ,
+        tagText: item.tag_text,
         preface: item.preface || '',
-        statusValue: Number(item.status_value ?? item.statusValue ?? item.status ?? 0),
+        statusValue: Number(item.status_value ??  0),
         createTime: item.created_time || item.createdTime || '',
         updateTime: item.updated_time || item.updatedTime || ''
       }
@@ -975,6 +1043,22 @@ export const api = {
     return await request(API_PATHS.queryStudyDomainNoticeList(type))
   },
 
+  // 查询本周每日学习概况（前台公开，GET /index/study/queryWeekStudy）
+  // 返回 data 兼容三种结构：
+  // 1. 长度 7 的数组 [{ num }, ...]（按周一~周日顺序）
+  // 2. { days: [{ day: 'yyyy-MM-dd' / 'MM-dd' / 下标, num }] }
+  // 3. { 'yyyy-MM-dd': num } 日期映射
+  async queryWeekStudy() {
+    return await request(API_PATHS.queryWeekStudy)
+  },
+
+  // 查询思维导图数据（前台公开，GET，接口暂定，按后端实际调整）
+  // 返回 data: { title 根节点标题, children: [ '叶子标题' 或 { title, children: [...] } ] }
+  // children 项为字符串时视为叶子节点，为对象时可继续嵌套 children
+  async queryMindMap() {
+    return await request(API_PATHS.queryMindMap)
+  },
+
   // 查询笔记生命线（前台公开，GET，noteId 为笔记 id）
   // 返回 data: { name, startTime, endTime, lineList: [{ lineTime: 'YYYY年MM月DD日', lineMonth, contentList: [{ id, title, complete }] }] }
   async getNoteLine(noteId) {
@@ -996,6 +1080,33 @@ export const api = {
     return await request(API_PATHS.saveStudyLike, {
       method: 'POST',
       body: JSON.stringify(params)
+    })
+  },
+
+  // 用户注册（前台公开，POST）
+  // 参数: username 用户名, phone 手机号, sex 性别（1 男 / 2 女）, password 密码
+  async registerUser(params) {
+    return await request(API_PATHS.registerUser, {
+      method: 'POST',
+      body: JSON.stringify(params)
+    })
+  },
+
+  // 用户登录（POST，body 传参）
+  // 参数: loginName 登录名, password 密码, loginType 固定 'account'
+  // 成功返回 data: { user 基础用户信息, authorizationToken 授权token }
+  async userLogin(params) {
+    return await request(API_PATHS.userLogin, {
+      method: 'POST',
+      body: JSON.stringify(params)
+    })
+  },
+
+  // 用户登出（POST，无请求体；token 在 header 中自动携带）
+  // 无 data 返回，根据 success 判断登出是否成功
+  async userLogout() {
+    return await request(API_PATHS.userLogout, {
+      method: 'POST'
     })
   },
 

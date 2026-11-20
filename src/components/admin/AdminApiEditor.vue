@@ -265,6 +265,7 @@
 import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { api } from '../../api/article'
+import { getAuthHeader } from '../../config'
 import AdminLayout from './AdminLayout.vue'
 
 const router = useRouter()
@@ -429,8 +430,8 @@ const debugApi = async () => {
       url += (url.includes('?') ? '&' : '?') + qs
     }
 
-    // 构建 headers
-    const headers = {}
+    // 构建 headers：先带上登录 token，手动填写的同名 header 优先（方便调试不同身份）
+    const headers = { ...getAuthHeader() }
     headerParams.forEach(p => {
       if (p.name.trim()) headers[p.name.trim()] = p.defaultValue || ''
     })

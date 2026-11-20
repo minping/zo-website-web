@@ -1,7 +1,6 @@
 <template>
   <div class="study-domain-page">
     <!-- 背景效果 -->
-    <div class="bg-grid"></div>
     <div class="bg-glow bg-glow-1"></div>
     <div class="bg-glow bg-glow-2"></div>
     <!-- 主题背景装饰 -->
@@ -16,6 +15,31 @@
         <div class="domain-head">
           <h1 class="domain-title">学习域</h1>
           <span class="domain-sub">记忆宫殿</span>
+        </div>
+
+        <!-- 本周每日学习概况：周一 ~ 周日柱状图 -->
+        <div class="week-chart">
+          <div class="week-chart-head">
+            <span class="week-chart-title">本周学习</span>
+            <span class="week-chart-total">共 {{ weekTotal }} 节</span>
+          </div>
+          <p v-if="weekLoading" class="week-chart-tip">数据加载中…</p>
+          <p v-else-if="weekError" class="week-chart-tip">本周学习数据暂不可用</p>
+          <div v-else class="week-chart-bars">
+            <div
+              v-for="d in weekBars"
+              :key="d.full"
+              class="week-bar-item"
+              :class="{ 'is-today': d.isToday }"
+              :title="`${d.short} 学习 ${d.num} 节`"
+            >
+              <span class="week-bar-num" :class="{ 'is-zero': d.num === 0 }">{{ d.num }}</span>
+              <div class="week-bar-track">
+                <div class="week-bar" :style="{ height: barHeight(d.num) }"></div>
+              </div>
+              <span class="week-bar-label">{{ d.label }}</span>
+            </div>
+          </div>
         </div>
 
         <!-- 指标表格：2 列 4 行 -->
@@ -37,7 +61,21 @@
             @keydown.enter.prevent="toggleCell(item)"
           >
             <div class="stat-cell-top">
-              <span class="stat-dot"></span>
+              <span
+                class="stat-icon"
+                :class="{ 'is-attention': item.key === 'review' && item.value > 0 }"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                  v-html="item.icon"
+                ></svg>
+              </span>
               <span class="stat-label">{{ item.label }}</span>
             </div>
             <div class="stat-cell-value">
@@ -79,7 +117,11 @@
         </section>
 
         <!-- 点击列表项后展示该小节内容：只传 id，正文 / 关注状态 / 打卡都由组件自行加载 -->
-        <StudyChapterCard v-if="detailId" :chapter-id="detailId" />
+        <StudyChapterCard
+          v-if="detailId"
+          :chapter-id="detailId"
+          @checked="handleChapterChecked"
+        />
       </div>
     </main>
 
@@ -110,22 +152,55 @@ import StudyChapterCard from './StudyChapterCard.vue'
 // 指标定义：field 对应 /index/study/queryStudyDomain 返回的字段名
 // type 对应 /index/study/queryStudyDomainNoticeList 的类型参数（0-5）
 const statCards = ref([
-  { key: 'learned', field: 'todayStudyCount', type: 0, label: '今日已学习', value: 0, unit: '节', desc: '今天完成学习的小节' },
-  { key: 'review', field: 'todayNeedStudyCount', type: 1, label: '今日需复习', value: 0, unit: '节', desc: '今天到期待复习的小节' },
-  { key: 'building', field: 'ing', type: 2, label: '记忆构建', value: 0, unit: '个', desc: '正在形成长期记忆' },
-  { key: 'solid', field: 'finish', type: 3, label: '记忆牢固', value: 0, unit: '个', desc: '稳定度达标的记忆' },
-  { key: 'hard', field: 'hard', type: 4, label: '难标记', value: 0, unit: '次', desc: '首次标记为 Again' },
-  { key: 'easy', field: 'easy', type: 5, label: '易标记', value: 0, unit: '次', desc: '首次标记为 Easy' },
+  {
+    key: 'review', field: 'todayNeedStudyCount', type: 1, label: '今日需复习', value: 0, unit: '节', desc: '今天需复习的小节, 快来学习!',
+    // 需复习：闹钟（到期待复习）
+    icon: '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5"/><path d="M5 3 2 6"/><path d="m22 6-3-3"/>'
+  },
+  {
+    key: 'learned', field: 'todayStudyCount', type: 0, label: '今日已学习', value: 0, unit: '节', desc: '今天已学习的小节, 真棒!',
+    // 已学习：翻开的书
+    icon: '<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>'
+  },
+  {
+    key: 'building', field: 'ing', type: 2, label: '记忆构建', value: 0, unit: '个', desc: '正在形成长期记忆, 继续努力!',
+    // 记忆构建：层叠（搭建中）
+    icon: '<path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/>'
+  },
+  {
+    key: 'solid', field: 'finish', type: 3, label: '记忆牢固', value: 0, unit: '个', desc: '记忆稳定度相对达标, 有空记得回来复习!',
+    // 记忆牢固：盾牌打勾
+    icon: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/>'
+  },
+  {
+    key: 'hard', field: 'hard', type: 4, label: '难标记', value: 0, unit: '次', desc: '头次学习标记为 Again',
+    // 难标记：火焰
+    icon: '<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>'
+  },
+  {
+    key: 'easy', field: 'easy', type: 5, label: '易标记', value: 0, unit: '次', desc: '最近连续三次标记为 Easy',
+    // 易标记：星光
+    icon: '<path d="M12 3l1.9 5.8a2 2 0 0 0 1.3 1.3L21 12l-5.8 1.9a2 2 0 0 0-1.3 1.3L12 21l-1.9-5.8a2 2 0 0 0-1.3-1.3L3 12l5.8-1.9a2 2 0 0 0 1.3-1.3L12 3z"/>'
+  },
   // 关注状态统计：取自 queryStudyDomain 的 flow / cancelFlow
-  { key: 'flow', field: 'flow', type: 6, label: '重点关注', value: 0, unit: '节', desc: '已标记为重点关注' },
-  { key: 'cancelflow', field: 'cancelFlow', type: 7, label: '取消关注', value: 0, unit: '节', desc: '已取消关注的小节' }
+  {
+    key: 'flow', field: 'flow', type: 6, label: '重点关注', value: 0, unit: '节', desc: '你的重点关注',
+    // 重点关注：五角星
+    icon: '<path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>'
+  },
+  {
+    key: 'cancelflow', field: 'cancelFlow', type: 7, label: '取消关注', value: 0, unit: '节', desc: '已取消关注的小节, 太简单不值得回看!',
+    // 取消关注：圆圈减号
+    icon: '<circle cx="12" cy="12" r="10"/><path d="M8 12h8"/>'
+  }
 ])
 
 const loading = ref(true)
 const loadError = ref('')
 
-const loadStudyDomain = async () => {
-  loading.value = true
+const loadStudyDomain = async (silent = false) => {
+  // silent 静默刷新：不显示加载态、保留旧数据，适合打卡后的自动刷新
+  if (!silent) loading.value = true
   loadError.value = ''
   try {
     const res = await api.queryStudyDomain()
@@ -169,9 +244,10 @@ const formatReviewTime = (v) => {
 
 // type: 0-7，对应上面的 8 个类别（6 重点关注 / 7 取消关注 为暂定，按后端实际取值调整）
 // 注意：某些类别本来就可能没有数据，接口异常/空结果一律按空列表处理，不提示「加载失败」
-const loadList = async (type) => {
-  listLoading.value = true
-  listItems.value = []
+const loadList = async (type, silent = false) => {
+  if (!silent) listLoading.value = true
+  // 静默刷新时保留旧列表，拿到新数据后整体替换
+  if (!silent) listItems.value = []
   try {
     const res = await api.queryStudyDomainNoticeList(type)
     const ok = !!(res && (res.success === true || res.code === 200 || res.code === 0))
@@ -206,6 +282,23 @@ const closeList = () => {
   closeDetail()
 }
 
+// ========== 打卡成功后的自动刷新 ==========
+// 卡片内打卡成功（checked 事件）后等待 1 秒（给后端落库留时间），
+// 静默刷新：8 格指标数量 + 当前展开的列表 + 本周概况（不闪加载态、保留旧数据），
+// 同时收起下方已展开的小节内容卡片
+let refreshTimer = null
+const handleChapterChecked = () => {
+  if (refreshTimer) clearTimeout(refreshTimer)
+  refreshTimer = setTimeout(() => {
+    refreshTimer = null
+    loadStudyDomain(true)
+    const active = statCards.value.find((item) => item.key === activeKey.value)
+    if (active) loadList(active.type, true)
+    loadWeekStudy(true)
+    closeDetail()
+  }, 1000)
+}
+
 // ========== 点击列表项：展示该小节内容 + 打卡 ==========
 // 小节 id（也即打卡用的 relationId）：接口当前返回 id，
 // 后端若改用 zo_website_note_chapter_id / chapterId 也能直接兼容
@@ -228,6 +321,107 @@ const closeDetail = () => {
   detailId.value = ''
 }
 
+// ========== 本周每日学习概况 ==========
+// 周一 ~ 周日 7 天骨架，并标记今天
+const buildWeekSkeleton = () => {
+  const labels = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const monday = new Date(today)
+  // 周日 getDay() 为 0，视为第 7 天，统一回退到本周周一
+  monday.setDate(monday.getDate() - (monday.getDay() || 7) + 1)
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(monday)
+    d.setDate(monday.getDate() + i)
+    const mm = String(d.getMonth() + 1).padStart(2, '0')
+    const dd = String(d.getDate()).padStart(2, '0')
+    return {
+      label: labels[i],
+      full: `${d.getFullYear()}-${mm}-${dd}`,
+      short: `${mm}-${dd}`,
+      num: 0,
+      isToday: d.getTime() === today.getTime()
+    }
+  })
+}
+
+const weekBars = ref(buildWeekSkeleton())
+const weekLoading = ref(true)
+const weekError = ref(false)
+
+const weekTotal = computed(() => weekBars.value.reduce((s, d) => s + d.num, 0))
+const weekMax = computed(() => Math.max(...weekBars.value.map((d) => d.num), 1))
+
+// 柱高：有数据按占比（最低 16%），无数据给 3px 小柱占位
+const barHeight = (num) =>
+  num > 0 ? `${Math.max(16, Math.round((num / weekMax.value) * 100))}%` : '3px'
+
+// 兼容三种元素形态：基础值（数字/字符串，如 ["4","2"]）、对象行（{ num }）、非法值
+const parseWeekNum = (row) => {
+  if (row == null) return 0
+  if (typeof row === 'number' || typeof row === 'string') return Number(row) || 0
+  return Number(row.num ?? row.count ?? row.studyCount ?? row.studyNum ?? row.value) || 0
+}
+
+// 按 'yyyy-MM-dd' / 'MM-dd' / 数字下标 匹配到对应星期
+const matchWeekIndex = (key, fallback) => {
+  if (/^\d$/.test(key)) return Number(key)
+  const idx = weekBars.value.findIndex(
+    (d) => d.full === key || d.short === key || d.full.endsWith('-' + key)
+  )
+  return idx >= 0 ? idx : fallback
+}
+
+// 【临时】假数据预览开关：真实接口联调通过后改为 false（或整段删除）
+const USE_MOCK_WEEK = false
+const MOCK_WEEK_NUMS = [1, 3, 7, 0, 4, 6, 2] // 周一 ~ 周日，今天(周三)为 7 用于看高亮效果
+
+const loadWeekStudy = async (silent = false) => {
+  if (!silent) weekLoading.value = true
+  weekError.value = false
+  // 静默刷新时保留旧数据，避免柱子闪回 0
+  if (!silent) weekBars.value = buildWeekSkeleton()
+  if (USE_MOCK_WEEK) {
+    MOCK_WEEK_NUMS.forEach((n, i) => {
+      if (i < 7) weekBars.value[i].num = n
+    })
+    weekLoading.value = false
+    return
+  }
+  try {
+    const res = await api.queryWeekStudy()
+    const ok = !!(res && (res.success === true || res.code === 200 || res.code === 0))
+    const data = ok ? res.data : null
+    if (!data) {
+      weekError.value = true
+      return
+    }
+    if (Array.isArray(data)) {
+      // 1. 数组：按周一~周日顺序
+      data.slice(0, 7).forEach((row, i) => {
+        weekBars.value[i].num = parseWeekNum(row)
+      })
+    } else if (Array.isArray(data.days)) {
+      // 2. { days: [{ day, num }] }，day 可能是日期或下标
+      data.days.forEach((row, i) => {
+        const idx = matchWeekIndex(String(row?.day ?? i), i)
+        if (idx >= 0 && idx < 7) weekBars.value[idx].num = parseWeekNum(row)
+      })
+    } else if (typeof data === 'object') {
+      // 3. 日期映射 { 'yyyy-MM-dd': num }
+      Object.entries(data).forEach(([key, val]) => {
+        const idx = matchWeekIndex(String(key), -1)
+        if (idx >= 0 && idx < 7) weekBars.value[idx].num = Number(val) || 0
+      })
+    }
+  } catch (e) {
+    console.warn('本周学习概况加载失败', e)
+    weekError.value = true
+  } finally {
+    weekLoading.value = false
+  }
+}
+
 // ========== 回到顶部 ==========
 const showBackTop = ref(false)
 
@@ -243,12 +437,14 @@ const scrollToTop = () => {
 
 onMounted(() => {
   loadStudyDomain()
+  loadWeekStudy()
   window.addEventListener('scroll', onScroll, { passive: true })
   onScroll()
 })
 
 onUnmounted(() => {
   window.removeEventListener('scroll', onScroll)
+  if (refreshTimer) clearTimeout(refreshTimer)
 })
 </script>
 
@@ -289,6 +485,113 @@ onUnmounted(() => {
 .domain-sub {
   font-size: 13px;
   color: var(--text-muted);
+}
+
+/* ========== 本周每日学习概况 ========== */
+.week-chart {
+  margin-bottom: 16px;
+  padding: 12px 18px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  background: var(--bg-card);
+}
+
+.week-chart-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.week-chart-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.week-chart-total {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.week-chart-tip {
+  margin: 0;
+  padding: 14px 0 4px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.week-chart-bars {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
+  align-items: end;
+}
+
+.week-bar-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+}
+
+/* 数值：固定高度避免有无数字时柱子跳动 */
+.week-bar-num {
+  height: 13px;
+  line-height: 13px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 数值为 0 时弱化显示 */
+.week-bar-num.is-zero {
+  color: var(--text-muted);
+  opacity: 0.55;
+}
+
+.week-bar-track {
+  width: 100%;
+  max-width: 22px;
+  height: 40px;
+  display: flex;
+  align-items: flex-end;
+  border-radius: 5px;
+  background: var(--bg-secondary);
+  overflow: hidden;
+}
+
+.week-bar {
+  width: 100%;
+  border-radius: 5px 5px 0 0;
+  background: linear-gradient(180deg, var(--accent-primary), var(--accent-secondary));
+  opacity: 0.45;
+  transition: height 0.4s ease;
+}
+
+.week-bar-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* 今天：柱子点亮 + 光晕，标签强调 */
+.week-bar-item.is-today .week-bar {
+  opacity: 1;
+  box-shadow: 0 0 12px -2px var(--accent-primary);
+}
+
+.week-bar-item.is-today .week-bar-label {
+  color: var(--accent-primary);
+  font-weight: 600;
+}
+
+.week-bar-item.is-today .week-bar-num {
+  color: var(--accent-primary);
+  font-weight: 700;
 }
 
 /* ========== 指标表格：2 列 3 行 ========== */
@@ -336,12 +639,80 @@ onUnmounted(() => {
   gap: 8px;
 }
 
-.stat-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--cell-color);
+/* 标题前的复合图标：渐变底座 + 主题色线性图标 */
+.stat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
   flex-shrink: 0;
+  border-radius: 9px;
+  color: var(--cell-color);
+  background:
+    linear-gradient(135deg,
+      color-mix(in srgb, var(--cell-color) 16%, transparent),
+      color-mix(in srgb, var(--cell-color) 6%, transparent));
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--cell-color) 22%, transparent),
+    0 3px 8px -4px color-mix(in srgb, var(--cell-color) 55%, transparent);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.stat-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* 悬停 / 选中格子时，图标微微放大并加深光晕 */
+.stat-cell:hover .stat-icon,
+.stat-cell.is-active .stat-icon {
+  transform: scale(1.08) rotate(-4deg);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--cell-color) 35%, transparent),
+    0 4px 12px -4px color-mix(in srgb, var(--cell-color) 70%, transparent);
+}
+
+/* 今日需复习数量 > 0：闹钟摇铃动画提醒 */
+.stat-icon.is-attention {
+  animation: icon-glow 1.8s ease-in-out infinite;
+}
+
+.stat-icon.is-attention svg {
+  transform-origin: 50% 3px;
+  animation: icon-ring 1.8s ease-in-out infinite;
+}
+
+/* 摇铃：摆动几下后停顿，循环往复 */
+@keyframes icon-ring {
+  0%, 55%, 100% { transform: rotate(0deg); }
+  5%  { transform: rotate(14deg); }
+  15% { transform: rotate(-12deg); }
+  25% { transform: rotate(10deg); }
+  35% { transform: rotate(-8deg); }
+  45% { transform: rotate(5deg); }
+}
+
+/* 底座光晕同步呼吸 */
+@keyframes icon-glow {
+  0%, 55%, 100% {
+    box-shadow:
+      inset 0 0 0 1px color-mix(in srgb, var(--cell-color) 22%, transparent),
+      0 3px 8px -4px color-mix(in srgb, var(--cell-color) 55%, transparent);
+  }
+  25% {
+    box-shadow:
+      inset 0 0 0 1px color-mix(in srgb, var(--cell-color) 40%, transparent),
+      0 0 16px -2px color-mix(in srgb, var(--cell-color) 75%, transparent);
+  }
+}
+
+/* 用户偏好减少动效时停用提醒动画 */
+@media (prefers-reduced-motion: reduce) {
+  .stat-icon.is-attention,
+  .stat-icon.is-attention svg {
+    animation: none;
+  }
 }
 
 .stat-label {
@@ -536,15 +907,6 @@ onUnmounted(() => {
 .stat-cancelflow { --cell-color: #64748b; }
 
 /* 复用站点统一的背景装饰（与摇一摇页一致） */
-.bg-grid {
-  position: fixed;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(148, 163, 184, 0.08) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(148, 163, 184, 0.08) 1px, transparent 1px);
-  background-size: 44px 44px;
-  pointer-events: none;
-}
 
 .bg-glow {
   position: fixed;
@@ -642,6 +1004,18 @@ onUnmounted(() => {
 
   .domain-title {
     font-size: 22px;
+  }
+
+  .week-chart {
+    padding: 14px 12px 12px;
+  }
+
+  .week-chart-bars {
+    gap: 5px;
+  }
+
+  .week-bar-label {
+    font-size: 10px;
   }
 }
 </style>

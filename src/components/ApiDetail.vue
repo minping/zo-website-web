@@ -1,7 +1,6 @@
 <template>
   <div class="api-detail-page">
     <!-- 背景效果 -->
-    <div class="bg-grid"></div>
     <div class="bg-glow bg-glow-1"></div>
     <div class="bg-glow bg-glow-2"></div>
 
@@ -465,19 +464,6 @@ onMounted(() => {
 }
 
 /* 背景效果 */
-.bg-grid {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-image: 
-    linear-gradient(rgba(59, 130, 246, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(59, 130, 246, 0.03) 1px, transparent 1px);
-  background-size: 50px 50px;
-  pointer-events: none;
-  z-index: 0;
-}
 
 .bg-glow {
   position: fixed;

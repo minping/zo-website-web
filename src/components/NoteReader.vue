@@ -1,7 +1,6 @@
 <template>
   <div class="note-reader" @click="handleImageClick">
     <!-- 背景效果 -->
-    <div class="bg-grid"></div>
     <div class="bg-glow bg-glow-1"></div>
     <div class="bg-glow bg-glow-2"></div>
 
@@ -1155,17 +1154,6 @@ onMounted(loadAll)
 }
 
 /* ========== 背景效果 ========== */
-.bg-grid {
-  position: fixed;
-  inset: 0;
-  background-image:
-    linear-gradient(var(--border-color) 1px, transparent 1px),
-    linear-gradient(90deg, var(--border-color) 1px, transparent 1px);
-  background-size: 60px 60px;
-  opacity: 0.25;
-  pointer-events: none;
-  z-index: 0;
-}
 
 .bg-glow {
   position: fixed;

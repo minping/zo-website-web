@@ -1,135 +1,485 @@
 /* ============================================
    AdminLogin - 登录页
+   沿用全站主题变量（--bg-* / --accent-* / --gradient-*），
+   与前台页面共用同一套网格背景、光晕与渐变语言
    ============================================ */
 
 .login-container {
+  position: relative;
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--admin-bg-primary);
-  padding: 20px;
+  padding: 24px;
+  background: var(--bg-primary);
+  overflow: hidden;
 }
 
+/* -------- 背景效果（与全站一致） -------- */
+
+.bg-glow {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(120px);
+  opacity: 0.15;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.bg-glow-1 {
+  width: 480px;
+  height: 480px;
+  background: var(--accent-primary);
+  top: -120px;
+  right: -100px;
+}
+
+.bg-glow-2 {
+  width: 380px;
+  height: 380px;
+  background: var(--accent-secondary);
+  bottom: -100px;
+  left: -90px;
+}
+
+/* -------- 关闭按钮（仅弹窗模式） -------- */
+.login-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.login-close svg {
+  width: 17px;
+  height: 17px;
+}
+
+.login-close:hover {
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+}
+
+/* -------- 弹窗嵌入模式：只保留卡片本身 -------- */
+.login-container.is-embedded {
+  min-height: auto;
+  padding: 0;
+  background: transparent;
+  overflow: visible;
+}
+
+.login-container.is-embedded .login-card {
+  max-width: 100%;
+}
+
+/* -------- 登录卡片 -------- */
 .login-card {
+  position: relative;
+  z-index: 1;
   width: 100%;
-  max-width: 400px;
-  background: var(--admin-bg-card);
-  border-radius: 16px;
-  padding: 40px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border: 1px solid var(--admin-border-color);
+  max-width: 420px;
+  padding: 40px 38px 30px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  box-shadow: 0 24px 60px -30px var(--accent-primary),
+    0 10px 30px -18px rgba(0, 0, 0, 0.35);
+  animation: loginCardIn 0.5s ease both;
 }
 
-.login-header {
+@keyframes loginCardIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* -------- 品牌区 -------- */
+.login-head {
   text-align: center;
-  margin-bottom: 32px;
+  margin-bottom: 28px;
 }
 
-.login-header h1 {
-  font-size: 24px;
+.login-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  height: 54px;
+  margin-bottom: 14px;
+  border-radius: 16px;
+  color: #fff;
+  background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+  box-shadow: 0 10px 24px -12px var(--accent-primary), 0 0 0 1px var(--accent-glow);
+}
+
+.login-badge svg {
+  width: 26px;
+  height: 26px;
+}
+
+/* 文案较长，字号比原“管理后台”小一档，保证两行内排完 */
+.login-title {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.45;
+  margin: 0 0 8px;
+  background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.login-sub {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+/* -------- 登录 / 注册 切换（文字式） -------- */
+.mode-switch {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  margin-bottom: 22px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.mode-text {
+  position: relative;
+  padding: 0 2px;
+  font-size: 15px;
   font-weight: 600;
-  color: var(--admin-text-primary);
-  margin: 0 0 8px 0;
+  font-family: inherit;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.2s ease;
 }
 
-.login-header p {
-  font-size: 14px;
-  color: var(--admin-text-secondary);
-  margin: 0;
+.mode-text:hover:not(.is-active) {
+  color: var(--text-primary);
 }
 
+.mode-text.is-active {
+  color: var(--accent-primary);
+}
+
+/* 选中项下方压一条渐变短线，替代整条分隔线 */
+.mode-text::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -11px;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
+  opacity: 0;
+  transform: scaleX(0.5);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.mode-text.is-active::after {
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+/* -------- 表单 -------- */
 .login-form {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 18px;
 }
 
+/* 标签与控件同一行：标签定宽右对齐，控件占满剩余空间 */
 .login-form .form-group {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  align-items: center;
+  gap: 12px;
 }
 
 .login-form .form-group label {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--admin-text-primary);
+  flex: none;
+  width: 60px;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  color: var(--text-secondary);
 }
 
-.login-form .form-group input {
-  padding: 12px 16px;
-  border-radius: 8px;
-  border: 1px solid var(--admin-border-color);
-  background: var(--admin-bg-input);
-  color: var(--admin-text-primary);
-  font-size: 14px;
-  transition: all 0.3s;
+
+.input-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 0;
 }
 
-.login-form .form-group input:focus {
+.login-form .input-wrap input {
+  width: 100%;
+  padding: 12px 14px 12px 42px;
+  font-size: 14px;
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.login-form .input-wrap input::placeholder {
+  color: var(--text-muted);
+}
+
+.login-form .input-wrap input:focus {
   outline: none;
-  border-color: var(--admin-accent-primary);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+  border-color: var(--accent-primary);
+  background: var(--bg-card);
+  box-shadow: 0 0 0 3px var(--accent-glow);
 }
 
-.login-form .form-group input:disabled {
+.login-form .input-wrap input:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
-.login-form .form-group input::placeholder {
-  color: var(--admin-text-muted);
+.input-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  color: var(--text-muted);
+  pointer-events: none;
+  transition: color 0.2s ease;
 }
 
-.error-message {
-  padding: 12px;
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  border-radius: 8px;
-  color: #ef4444;
-  font-size: 14px;
-  text-align: center;
+.input-wrap:focus-within .input-icon {
+  color: var(--accent-primary);
 }
 
-.btn-login {
-  padding: 12px 24px;
-  border-radius: 8px;
-  border: none;
-  background: var(--admin-accent-primary);
-  color: white;
+/* -------- 性别选择 -------- */
+.sex-group {
+  display: flex;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.sex-option {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 11px 12px;
   font-size: 14px;
-  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+/* 原生单选框只保留可访问性，外观由 label 承担 */
+.sex-option input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.sex-option:hover:not(.is-active) {
+  color: var(--text-primary);
+  border-color: var(--accent-primary);
+}
+
+.sex-option.is-active {
+  color: var(--accent-primary);
+  border-color: var(--accent-primary);
+  background: var(--bg-card);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.sex-icon {
+  width: 17px;
+  height: 17px;
+  flex: none;
+}
+
+/* -------- 错误提示 -------- */
+.login-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  font-size: 13.5px;
+  color: #f43f5e;
+  background: rgba(244, 63, 94, 0.1);
+  border: 1px solid rgba(244, 63, 94, 0.28);
+  border-radius: 12px;
+}
+
+.login-error-icon {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+
+/* -------- 成功提示 -------- */
+.login-success {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  font-size: 13.5px;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.28);
+  border-radius: 12px;
+}
+
+/* 出现时轻微抖动，吸引注意 */
+.shake-enter-active {
+  animation: loginShake 0.4s ease;
+}
+
+.shake-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.shake-leave-to {
+  opacity: 0;
+}
+
+@keyframes loginShake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-5px); }
+  40% { transform: translateX(5px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(3px); }
+}
+
+/* -------- 登录按钮 -------- */
+.btn-login {
+  margin-top: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+  padding: 13px 20px;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+  box-shadow: 0 12px 26px -12px var(--accent-primary);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
 }
 
 .btn-login:hover:not(:disabled) {
-  background: #4f46e5;
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 16px 32px -12px var(--accent-primary);
+}
+
+.btn-login:active:not(:disabled) {
+  transform: translateY(0) scale(0.985);
 }
 
 .btn-login:disabled {
-  opacity: 0.6;
+  opacity: 0.65;
   cursor: not-allowed;
 }
 
+.loading-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: loginSpin 0.7s linear infinite;
+}
+
+@keyframes loginSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* -------- 底部 -------- */
 .login-footer {
-  margin-top: 24px;
+  margin-top: 22px;
   text-align: center;
 }
 
 .back-link {
-  font-size: 14px;
-  color: var(--admin-text-secondary);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13.5px;
+  color: var(--text-muted);
   text-decoration: none;
-  transition: color 0.3s;
+  transition: color 0.2s ease, gap 0.2s ease;
 }
 
 .back-link:hover {
-  color: var(--admin-accent-primary);
+  color: var(--accent-primary);
+  gap: 9px;
+}
+
+
+.back-icon {
+  width: 15px;
+  height: 15px;
+}
+
+/* -------- 窄屏适配 -------- */
+@media (max-width: 480px) {
+  .login-container {
+    padding: 16px;
+  }
+
+  .login-card {
+    padding: 32px 22px 24px;
+    border-radius: 16px;
+  }
+
+  .login-badge {
+    width: 48px;
+    height: 48px;
+  }
+
+  .login-badge svg {
+    width: 23px;
+    height: 23px;
+  }
+
+  .login-title {
+    font-size: 18px;
+  }
+
+  /* 窄屏收紧标签列宽，给输入框留更多空间 */
+  .login-form .form-group {
+    gap: 10px;
+  }
+
+  .login-form .form-group label {
+    width: 52px;
+  }
 }

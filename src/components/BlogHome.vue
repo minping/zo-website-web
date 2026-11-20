@@ -1,7 +1,6 @@
 <template>
   <div class="blog-home">
     <!-- 背景粒子效果 -->
-    <div class="bg-grid"></div>
     <div class="bg-glow bg-glow-1"></div>
     <div class="bg-glow bg-glow-2"></div>
     <!-- 主题背景装饰（随主题切换树木/风车等元素） -->
@@ -127,8 +126,8 @@
       </div>
     </section>
 
-    <!-- 精选接口 模块 -->
-    <section class="api-section">
+    <!-- 精选接口 模块（已隐藏：SHOW_API_SECTION 改回 true 即可恢复展示） -->
+    <section v-if="SHOW_API_SECTION" class="api-section">
       <div class="container">
         <div class="section-header">
           <h2 class="section-title">精选接口</h2>
@@ -281,6 +280,9 @@ import Footer from './Footer.vue'
 import ApiCard from './ApiCard.vue'
 
 const router = useRouter()
+
+// 【显示开关】精选接口模块：false 隐藏（不渲染），改回 true 恢复
+const SHOW_API_SECTION = false
 
 const articles = ref([])
 const openApis = ref([])
@@ -636,19 +638,6 @@ const getTagGradient = (tag) => {
 }
 
 /* 背景效果 */
-.bg-grid {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-image: 
-    linear-gradient(rgba(59, 130, 246, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(59, 130, 246, 0.03) 1px, transparent 1px);
-  background-size: 50px 50px;
-  pointer-events: none;
-  z-index: 0;
-}
 
 .bg-glow {
   position: fixed;

@@ -153,6 +153,47 @@
       </svg>
     </template>
 
+    <!-- ======== 粉系少女：彩虹 · 云 · 飘浮爱心 · 糖果星星 · 波浪 ======== -->
+    <template v-else-if="theme === 'pink'">
+      <svg class="art-svg art-cloud art-cloud-cream art-drift" viewBox="0 0 120 44">
+        <ellipse cx="32" cy="30" rx="27" ry="14"/>
+        <ellipse cx="62" cy="22" rx="25" ry="16"/>
+        <ellipse cx="92" cy="32" rx="22" ry="11"/>
+      </svg>
+      <svg class="art-svg art-cloud art-cloud-cream art-drift art-cloud2" viewBox="0 0 120 44">
+        <ellipse cx="32" cy="30" rx="27" ry="14"/>
+        <ellipse cx="62" cy="22" rx="25" ry="16"/>
+        <ellipse cx="92" cy="32" rx="22" ry="11"/>
+      </svg>
+      <!-- 彩虹拱：莓桃粉 / 奶油黄 / 薄荷绿，呼应涂鸦壁纸的点缀色 -->
+      <svg class="art-svg art-rainbow" viewBox="0 0 200 104">
+        <path d="M10 102 A90 90 0 0 1 190 102" style="fill:none;stroke:var(--accent-primary);stroke-width:9;stroke-linecap:round;opacity:.4"/>
+        <path d="M26 102 A74 74 0 0 1 174 102" style="fill:none;stroke:#f5d76e;stroke-width:9;stroke-linecap:round;opacity:.5"/>
+        <path d="M42 102 A58 58 0 0 1 158 102" style="fill:none;stroke:#8fdcc4;stroke-width:9;stroke-linecap:round;opacity:.55"/>
+      </svg>
+      <!-- 飘浮爱心：一大两小 -->
+      <svg class="art-svg art-heart art-heart-l art-floaty" viewBox="0 0 24 24">
+        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" style="fill:var(--accent-primary);opacity:.5"/>
+      </svg>
+      <svg class="art-svg art-heart art-heart-m art-floaty" viewBox="0 0 24 24">
+        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" style="fill:var(--accent-secondary);opacity:.55"/>
+      </svg>
+      <svg class="art-svg art-heart art-heart-s art-floaty" viewBox="0 0 24 24">
+        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" style="fill:#f5d76e;opacity:.6"/>
+      </svg>
+      <!-- 糖果星星：奶油黄，闪烁 -->
+      <span class="art art-star art-star-cream p1"></span>
+      <span class="art art-star art-star-cream p2"></span>
+      <span class="art art-star art-star-cream p3"></span>
+      <!-- 底部双层波浪：薄荷 + 桃粉 -->
+      <svg class="art-svg art-wave art-wave-mint" viewBox="0 0 1440 90" preserveAspectRatio="none">
+        <path d="M0 90 V42 Q120 12 240 42 T480 42 T720 42 T960 42 T1200 42 T1440 42 V90 Z" style="fill:#8fdcc4;opacity:.2"/>
+      </svg>
+      <svg class="art-svg art-wave art-wave-pink" viewBox="0 0 1440 70" preserveAspectRatio="none">
+        <path d="M0 70 V36 Q120 8 240 36 T480 36 T720 36 T960 36 T1200 36 T1440 36 V70 Z" style="fill:var(--accent-secondary);opacity:.24"/>
+      </svg>
+    </template>
+
     <!-- ======== 云墨：远山 · 飞鸟 · 日 ======== -->
     <template v-else>
       <span class="art art-ink-sun"></span>
@@ -439,6 +480,66 @@ const themeClass = computed(() => `theme-${theme.value}`)
   height: 270px;
 }
 
+/* ========== 粉系少女专属 ========== */
+
+/* 奶油白云：比通用云更白更实，贴涂鸦感 */
+.art-cloud-cream {
+  fill: #ffffff;
+  opacity: .85;
+}
+
+/* 彩虹拱 */
+.art-rainbow {
+  top: 110px;
+  left: 6%;
+  width: 150px;
+}
+
+/* 飘浮爱心 */
+.art-heart {
+  width: 30px;
+}
+.art-heart-l {
+  top: 96px;
+  right: 9%;
+  width: 36px;
+  animation-duration: 6s;
+}
+.art-heart-m {
+  top: 236px;
+  left: 15%;
+  width: 24px;
+  animation-duration: 5s;
+  animation-delay: 1.2s;
+}
+.art-heart-s {
+  top: 66px;
+  left: 40%;
+  width: 16px;
+  animation-duration: 7s;
+  animation-delay: 2.4s;
+}
+
+/* 奶油黄星星（复用通用星点动画，换色放大） */
+.art-star-cream {
+  background: #f5d76e;
+  box-shadow: 0 0 10px 3px rgba(245, 215, 110, 0.5);
+  width: 8px;
+  height: 8px;
+}
+.art-star-cream.p1 { top: 150px; left: 30%; }
+.art-star-cream.p2 { top: 84px; left: 55%; animation-delay: 1s; }
+.art-star-cream.p3 { top: 210px; left: 8%; width: 6px; height: 6px; animation-delay: 2s; }
+
+/* 双层波浪 */
+.art-wave {
+  left: 0;
+  bottom: 0;
+  width: 100%;
+}
+.art-wave-mint { height: 88px; }
+.art-wave-pink { height: 62px; }
+
 /* 水墨红日 */
 .art-ink-sun {
   top: 100px;
@@ -513,10 +614,13 @@ const themeClass = computed(() => `theme-${theme.value}`)
 @media (max-width: 900px) {
   .bg-scenery { height: 380px; }
   .art-leaf, .art-leaf2, .art-d2, .art-b2 { display: none; }
+  .art-heart-s, .art-star-cream.p2 { display: none; }
   .art-sun, .art-moon { top: 92px; right: 7%; width: 38px; height: 38px; }
   .art-retro-sun { top: 74px; right: 7%; width: 46px; }
   .art-ink-sun { top: 104px; right: 7%; width: 36px; height: 36px; }
   .art-cyber-moon { top: 80px; right: 6%; width: 88px; height: 88px; }
+  .art-heart-l { top: 100px; right: 7%; width: 28px; }
+  .art-rainbow { width: 110px; top: 96px; }
 }
 
 @media (max-width: 640px) {
@@ -526,5 +630,9 @@ const themeClass = computed(() => `theme-${theme.value}`)
   .art-windmill { width: 76px; right: 5%; }
   .art-balloon { width: 46px; }
   .art-city, .art-ink-mountain, .art-mountains { height: 170px; }
+  .art-wave-mint { height: 56px; }
+  .art-wave-pink { height: 40px; }
+  .art-rainbow { width: 90px; top: 84px; }
+  .art-heart-m { top: 180px; }
 }
 </style>

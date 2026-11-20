@@ -102,7 +102,7 @@
                 </div>
                 <div class="calendar-scroll">
                   <!-- 月份标签行 -->
-                  <div class="calendar-months" :style="{ display: 'grid', gridTemplateColumns: `repeat(${calendarCols}, 13px)`, gap: '2px' }">
+                  <div class="calendar-months" :style="{ '--cols': calendarCols }">
                     <span
                       v-for="(ml, i) in monthLabels"
                       :key="'m'+i"
@@ -111,7 +111,7 @@
                     >{{ ml.name }}</span>
                   </div>
                   <!-- 日期网格 -->
-                  <div class="calendar-grid" :style="{ gridTemplateColumns: `repeat(${calendarCols}, 13px)` }">
+                  <div class="calendar-grid" :style="{ '--cols': calendarCols }">
                     <div
                       v-for="(day, idx) in calendarDays"
                       :key="idx"
@@ -121,7 +121,10 @@
                         { 'today': day && day.date === todayStr }
                       ]"
                       :data-tooltip="day ? day.date + '：' + day.count + ' 篇' : ''"
-                    ></div>
+                    >
+                      <!-- 有创作的格子内显示当天篇数 -->
+                      <span v-if="day && day.count > 0" class="calendar-day-num">{{ day.count >= 100 ? '99+' : day.count }}</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -459,33 +462,42 @@ const calcStartPad = (year) => {
   return (jan1.getDay() + 6) % 7
 }
 
-// 总列数（周数）
-const calendarCols = computed(() => {
-  const pad = calcStartPad(calendarYear.value)
-  const totalDays = isLeapYear(calendarYear.value) ? 366 : 365
-  return Math.ceil((pad + totalDays) / 7)
+// 每月占用的列数（1 月列顶含周几偏移；月末列剩余行留空，下月从新列开始）
+// 这样分隔空隙正好落在列边界上，月份标签与格子严格对齐
+const monthColSpans = computed(() => {
+  const year = calendarYear.value
+  const startPad = calcStartPad(year)
+  const spans = []
+  for (let m = 0; m < 12; m++) {
+    const dim = new Date(year, m + 1, 0).getDate()
+    spans.push(Math.ceil(((m === 0 ? startPad : 0) + dim) / 7))
+  }
+  return spans
 })
 
-// 生成扁平日期数组
+// 总列数（周数）＝ 各月份列数之和（含月末列的留空部分）
+const calendarCols = computed(() => monthColSpans.value.reduce((a, b) => a + b, 0))
+
+// 生成扁平日期数组（列优先；每月排完后补齐到列边界，实现月份分隔）
 const calendarDays = computed(() => {
   const year = calendarYear.value
   const data = calendarData.value
   const days = []
   const startPad = calcStartPad(year)
 
-  // 开头填充
-  for (let i = 0; i < startPad; i++) days.push(null)
-
-  const total = isLeapYear(year) ? 366 : 365
-  for (let i = 0; i < total; i++) {
-    const d = new Date(year, 0, i + 1)
-    const dateStr = fmtDate(year, d.getMonth(), d.getDate())
-    days.push({ date: dateStr, count: data[dateStr] || 0 })
+  for (let m = 0; m < 12; m++) {
+    const dim = new Date(year, m + 1, 0).getDate()
+    // 1 月列顶补周几偏移，其余月从列首开始
+    for (let i = 0; i < (m === 0 ? startPad : 0); i++) days.push(null)
+    for (let d = 1; d <= dim; d++) {
+      const dateStr = fmtDate(year, m, d)
+      days.push({ date: dateStr, count: data[dateStr] || 0 })
+    }
+    // 月末列剩余的行留空到列尾，下月从新的一列开始（月份分隔）
+    const used = (m === 0 ? startPad : 0) + dim
+    const tail = (7 - (used % 7)) % 7
+    for (let i = 0; i < tail; i++) days.push(null)
   }
-
-  // 末尾补齐整行
-  const tail = (7 - (days.length % 7)) % 7
-  for (let i = 0; i < tail; i++) days.push(null)
 
   return days
 })
@@ -496,27 +508,19 @@ const dayOfYear = (date) => {
   return Math.floor((date - start) / 86400000)
 }
 
-// 月份标签：计算每个月的起始列和跨度
+// 月份标签：按每月实际占用列数累计，标签精确压在该月的列组上
 const monthLabels = computed(() => {
-  const year = calendarYear.value
-  const startPad = calcStartPad(year)
+  const spans = monthColSpans.value
   const labels = []
-
+  let col = 1
   for (let m = 0; m < 12; m++) {
-    const firstDay = new Date(year, m, 1)
-    const lastDay = new Date(year, m + 1, 0)
-    const firstPos = startPad + dayOfYear(firstDay)
-    const lastPos = startPad + dayOfYear(lastDay)
-    const startCol = Math.floor(firstPos / 7) + 1
-    const endCol = Math.floor(lastPos / 7) + 1
-
     labels.push({
       name: (m + 1) + '月',
-      col: startCol,
-      span: endCol - startCol + 1
+      col,
+      span: spans[m]
     })
+    col += spans[m]
   }
-
   return labels
 })
 

@@ -127,6 +127,18 @@
             <input v-model="formData.author" class="form-input" type="text" placeholder="请输入作者" maxlength="50" />
           </div>
           <div class="form-group">
+            <label class="form-label">笔记标签</label>
+            <select
+              v-model="formData.tagId"
+              class="form-input"
+              :disabled="tagLoading"
+              @change="syncTagName"
+            >
+              <option value="">未选择标签</option>
+              <option v-for="t in noteTags" :key="t.id" :value="t.id">{{ t.name }}</option>
+            </select>
+          </div>
+          <div class="form-group">
             <label class="form-label">序言</label>
             <textarea v-model="formData.preface" class="form-textarea" placeholder="请输入序言" rows="5"></textarea>
           </div>
@@ -229,10 +241,36 @@ const formData = reactive({
   id: null,
   name: '',
   author: '',
+  tagId: '',
+  tagName: '',
   preface: '',
   statusValue: 0
 })
 const saving = ref(false)
+
+// 笔记标签下拉数据
+const noteTags = ref([])
+const tagLoading = ref(false)
+
+const loadNoteTags = async () => {
+  tagLoading.value = true
+  try {
+    const res = await api.getNoteTags()
+    if (res.success && res.data) {
+      noteTags.value = res.data
+    }
+  } catch (e) {
+    console.error('加载笔记标签失败:', e)
+  } finally {
+    tagLoading.value = false
+  }
+}
+
+// 选中标签 id 变化时同步 tagName
+const syncTagName = () => {
+  const tag = noteTags.value.find((t) => String(t.id) === String(formData.tagId))
+  formData.tagName = tag ? tag.name : ''
+}
 
 // 更多操作菜单状态
 const menuOpenId = ref(null)
@@ -247,6 +285,7 @@ const closeMenu = () => {
 
 onMounted(() => {
   loadNotes()
+  loadNoteTags()
   document.addEventListener('click', closeMenu)
 })
 
@@ -275,6 +314,8 @@ const openAddDialog = () => {
   formData.id = null
   formData.name = ''
   formData.author = ''
+  formData.tagId = ''
+  formData.tagName = ''
   formData.preface = ''
   formData.statusValue = 0
   dialog.mode = 'add'
@@ -289,6 +330,8 @@ const openEditDialog = async (note) => {
   formData.id = note.id
   formData.name = note.name || ''
   formData.author = note.author || ''
+  formData.tagId = note.tagValue ?? ''
+  formData.tagName = note.tagText || ''
   formData.preface = note.preface || ''
   formData.statusValue = note.statusValue === 1 ? 1 : 0
   // 再通过详情接口拉取最新数据（返回字段与传入一致）
@@ -298,8 +341,13 @@ const openEditDialog = async (note) => {
       formData.id = res.data.id
       formData.name = res.data.name || ''
       formData.author = res.data.author || ''
+      // 详情映射后的标签字段：tagValue(标签 id) / tagText(标签名)
+      formData.tagId = res.data.tagValue ?? formData.tagId
+      formData.tagName = res.data.tagText || formData.tagName
       formData.preface = res.data.preface || ''
       formData.statusValue = res.data.statusValue === 1 ? 1 : 0
+      // 详情只回传 tagId 时，按下拉数据补齐 tagName
+      syncTagName()
     }
   } catch (e) {
     console.error('加载笔记详情失败:', e)
@@ -319,10 +367,12 @@ const handleSave = async () => {
   }
   saving.value = true
   try {
-    // 需传 id, name, author, preface, statusValue（0 未发布 / 1 已发布）
+    // 需传 id, name, author, tagId, tagName, preface, statusValue（0 未发布 / 1 已发布）
     const payload = {
       name: formData.name.trim(),
       author: formData.author.trim(),
+      tagId: formData.tagId || '',
+      tagName: formData.tagName || '',
       preface: formData.preface.trim(),
       statusValue: formData.statusValue === 1 ? 1 : 0
     }

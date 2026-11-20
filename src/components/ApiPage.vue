@@ -1,7 +1,6 @@
 <template>
   <div class="api-page">
     <!-- 背景效果 -->
-    <div class="bg-grid"></div>
     <div class="bg-glow bg-glow-1"></div>
     <div class="bg-glow bg-glow-2"></div>
     <!-- 主题背景装饰（随主题切换树木/风车等元素） -->
@@ -223,19 +222,6 @@ onMounted(async () => {
 }
 
 /* 背景效果 */
-.bg-grid {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-image: 
-    linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
-  background-size: 50px 50px;
-  pointer-events: none;
-  z-index: 0;
-}
 
 .bg-glow {
   position: fixed;
